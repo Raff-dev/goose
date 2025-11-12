@@ -234,6 +234,20 @@ def create_sale(products: dict[str, int], buyer_info: dict[str, Any]) -> dict[st
         return str(error)
 
 
+@tool
+def trigger_system_fault() -> str:
+    """Always raise an error to simulate a failing diagnostic tool.
+
+    Args:
+        None
+
+    Returns:
+        This tool never returns successfully. It always raises a RuntimeError.
+    """
+
+    raise RuntimeError("System diagnostic failed: simulated infrastructure outage.")
+
+
 # Export all tools for the agent
 TOOLS = [
     get_product_details,
@@ -242,4 +256,5 @@ TOOLS = [
     calculate_revenue,
     find_products_by_category,
     create_sale,
+    trigger_system_fault,
 ]

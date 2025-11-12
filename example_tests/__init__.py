@@ -1,0 +1,1 @@
+"""Goose example test suite."""

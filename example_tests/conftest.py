@@ -1,18 +1,17 @@
-"""Shared pytest fixtures for Goose agent behaviour tests."""
+"""Shared fixtures for Goose agent behaviour tests."""
 
 from __future__ import annotations
 
 from datetime import datetime
 
-import pytest
 from django.utils import timezone
 
 from example_system.agent import Agent
 from example_system.models import Product, ProductInventory, Transaction, TransactionItem, create_transaction
-from goose.testing import Goose
+from goose.testing import Goose, fixture
 
 
-@pytest.fixture(autouse=True)
+@fixture(autouse=True)
 def setup_data() -> None:
     """Populate the database with sample data before each test."""
     TransactionItem.objects.all().delete()
@@ -55,7 +54,7 @@ def setup_data() -> None:
     )
 
 
-@pytest.fixture
+@fixture(name="goose")
 def goose_fixture() -> Goose:
     """Provide a Goose testing instance for the agent."""
     agent = Agent()
