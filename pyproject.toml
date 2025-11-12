@@ -7,19 +7,27 @@ authors = [{ name = "Rafał Łazicki", email = "rafal.lazicki99@gmail.com" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.13"
 dependencies = [
-    "django>=5.2.8",
-    "django-stubs[compatible-mypy]>=5.2.7",
     "langchain>=1.0.4",
     "langchain-openai>=0.1.0",
     "openai>=2.7.1",
-    "psycopg[binary]>=3.2.12",
     "pydantic>=2.12.4",
-    "pytest>=8.4.2",
     "python-dotenv>=1.0.1",
-    "typer>=0.20.0",
 ]
 
 [dependency-groups]
+core = [
+    "langchain>=1.0.4",
+    "langchain-openai>=0.1.0",
+    "openai>=2.7.1",
+    "pydantic>=2.12.4",
+    "python-dotenv>=1.0.1",
+]
+example = [
+    "django>=5.2.8",
+    "psycopg[binary]>=3.2.12",
+    "streamlit>=1.40.0",
+    "typer>=0.20.0",
+]
 dev = [
     "absolufy-imports>=0.3.1",
     "pre-commit>=4.4.0",
@@ -30,14 +38,13 @@ dev = [
     "pylint>=4.0.2",
     "mypy>=1.18.2",
     "twine>=6.2.0",
-    "pytest-asyncio>=1.2.0",
-    "pytest-django>=4.11.1",
     "django-stubs[compatible-mypy]>=5.2.7",
 ]
 
 [project.scripts]
 chat = "example_system.entrypoints:chat"
 ask = "example_system.entrypoints:ask"
+goose-tests = "goose.runner:main"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
@@ -49,15 +56,6 @@ include = ["goose*"]
 
 [tool.setuptools.package-data]
 goose = ["**/*.py"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = "test_*.py"
-python_classes = "Test*"
-python_functions = "test_*"
-asyncio_mode = "auto"
-DJANGO_SETTINGS_MODULE = "example_system.settings"
-pythonpath = ["."]
 
 [tool.black]
 line-length = 120

@@ -5,6 +5,7 @@
 -   Always use `uv` to run Python code and manage dependencies
 -   Use `uv run` for executing scripts and commands
 -   Use `uv add` for adding dependencies
+-   Limit changes to only what the user explicitly requests; avoid extra adjustments unless confirmed
 
 ## Code Style
 

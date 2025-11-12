@@ -10,6 +10,7 @@ from example_system.tools import (
     find_products_by_category,
     get_product_details,
     get_sales_history,
+    trigger_system_fault,
 )
 
 TOOLS = list(EXAMPLE_TOOLS)
@@ -21,5 +22,6 @@ __all__ = [
     "find_products_by_category",
     "get_product_details",
     "get_sales_history",
+    "trigger_system_fault",
     "TOOLS",
 ]
