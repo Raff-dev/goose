@@ -26,7 +26,8 @@ DATABASES = {
     }
 }
 
-USE_TZ = True
+# Goose example data uses naive datetimes, so we disable timezone support to prevent runtime warnings.
+USE_TZ = False
 TIME_ZONE = os.getenv("GOOSE_TIME_ZONE", "UTC")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
