@@ -1,0 +1,55 @@
+"""Agent building and query functions for the Goose Outfitters system."""
+
+from typing import Any
+
+from dotenv import load_dotenv
+from langchain.agents import create_agent
+from langchain_core.messages import BaseMessage, HumanMessage
+
+from example_system.tools import TOOLS
+
+load_dotenv()
+
+
+class Agent:
+    """Encapsulated Goose Outfitters agent for querying."""
+
+    def __init__(self) -> None:
+        self.agent = self._build_agent()
+
+    def _build_agent(self):
+        """Build the LangChain agent with tools and system prompt.
+
+        Returns:
+            The configured LangChain agent.
+        """
+
+        return create_agent(
+            model="gpt-4o-mini",
+            tools=TOOLS,
+            system_prompt="""
+You are a helpful assistant for Goose Outfitters, a retail store specializing in trail and backcountry gear.
+
+You have access to various tools to help answer questions about the store, products, sales, and operations.
+Use the tools when needed to provide accurate information.
+
+When answering questions:
+- Be concise but informative
+- Use the tools to get current data
+- Format numbers appropriately (currency, percentages)
+- If multiple tools are needed, use them in sequence""",
+        )
+
+    def query(self, question: str, history: list[BaseMessage] | None = None) -> dict[str, Any]:
+        """Query the agent with a question.
+
+        Args:
+            question: The question to ask the agent.
+            history: Optional list of previous conversation messages.
+
+        Returns:
+            The agent's response payload.
+        """
+        messages = (history or []) + [HumanMessage(content=question)]
+        result = self.agent.invoke({"messages": messages})
+        return result

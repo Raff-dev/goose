@@ -1,0 +1,88 @@
+questions:
+  - question: "What is the store's focus and when was it founded?"
+    expectations:
+      - "Agent provided store focus and founding date"
+      - "Response was factual and direct"
+
+  - question: "What are the store locations and their foot traffic rankings?"
+    expectations:
+      - "Agent listed all store locations"
+      - "Agent included foot traffic rankings for each location"
+
+  - question: "What products does Goose Outfitters sell?"
+    expectations:
+      - "Agent listed the main product categories"
+      - "Response was comprehensive but organized"
+
+  - question: "What promotions are currently available?"
+    expectations:
+      - "Agent listed current promotions"
+      - "Included details like discount amounts or special offers"
+
+  - question: "What were the sales figures for the Pacific Northwest region?"
+    expectations:
+      - "Agent provided sales data for Pacific Northwest"
+      - "Included specific numbers or figures"
+
+  - question: "Which products have stock levels below 1000 units?"
+    expectations:
+      - "Agent identified products with low stock"
+      - "Specified which products and their stock levels"
+      - "Focused on products below 1000 units"
+
+  - question: "What is the most expensive product and how many are in stock?"
+    expectations:
+      - "Agent identified the single most expensive product"
+      - "Included both price and stock information"
+      - "Clearly stated which product was most expensive"
+
+  - question: "Find products under $150 with stock greater than 800 units"
+    expectations:
+      - "Agent found products meeting both criteria: under $150 AND over 800 stock"
+      - "Listed specific products that matched both conditions"
+      - "Did not include products that only met one criterion"
+
+  - question: "Which product has the highest total sales revenue?"
+    expectations:
+      - "Agent identified the product with highest revenue"
+      - "Calculated or looked up total revenue figures"
+      - "Clearly identified which product had the highest revenue"
+
+  - question: "Compare the stock levels and prices of all Footwear products"
+    expectations:
+      - "Agent listed all Footwear products"
+      - "Showed both stock levels and prices for each"
+      - "Presented information in a comparable format"
+
+  - question: "Based on sales growth, which region should we expand inventory for Summit Packs?"
+    expectations:
+      - "Agent analyzed sales growth trends"
+      - "Focused on Summit Packs specifically"
+      - "Recommended a region for inventory expansion"
+      - "Recommendation was based on sales growth data"
+
+  - question: "Compare the performance of Footwear vs Accessories categories in terms of stock turnover"
+    expectations:
+      - "Agent compared Footwear and Accessories categories"
+      - "Focused on stock turnover performance"
+      - "Provided comparative analysis between the two categories"
+
+  - question: "Analyze the relationship between product price and sales volume across all products"
+    expectations:
+      - "Agent analyzed price vs sales volume relationship"
+      - "Looked across all products"
+      - "Identified patterns or correlations between price and sales"
+
+  - question: "Create a table comparing the monthly sales performance of all products for July 2024"
+    expectations:
+      - "Agent created a table format"
+      - "Included all products"
+      - "Focused on July 2024 monthly sales"
+      - "Table showed sales performance comparison"
+
+  - question: "Create a comparison table of product categories by average price, total stock, and sales revenue"
+    expectations:
+      - "Agent created a comparison table"
+      - "Organized by product categories"
+      - "Included average price, total stock, and sales revenue for each category"
+      - "Table enabled category comparison"
