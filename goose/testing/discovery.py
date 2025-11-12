@@ -17,15 +17,15 @@ def ensure_django_ready(settings_module: str = "example_system.settings") -> Non
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
 
     try:
-        import example_system  # noqa: F401  # pylint: disable=unused-import
+        import example_system  # noqa: F401  # pylint: disable=unused-import, import-outside-toplevel
 
         return
     except ImportError:
         pass
 
     try:
-        import django
-        from django.apps import apps
+        import django  # pylint: disable=import-outside-toplevel
+        from django.apps import apps  # pylint: disable=import-outside-toplevel
     except ImportError:  # pragma: no cover - Django not installed
         return
 

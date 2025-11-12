@@ -171,6 +171,8 @@ def test_failure_expectation_inventory_stock(goose: Goose) -> None:
         query="What is the stock for Hiking Boots?",
         expectations=[
             "Agent reported that Hiking Boots are out of stock",  # known incorrect expectation
+            "Agent checked inventory for Hiking Boots",
+            "Agent provided stock quantity information",
         ],
         expected_tool_calls=[check_inventory],
     )

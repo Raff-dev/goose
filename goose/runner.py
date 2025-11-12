@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 from collections.abc import Sequence
+from pathlib import Path
 
 from goose.testing import list_tests, run_tests
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Entry point for the ``goose-tests`` CLI command."""
+
     parser = argparse.ArgumentParser(description="Run Goose validation tests without pytest.")
     parser.add_argument(
         "path",

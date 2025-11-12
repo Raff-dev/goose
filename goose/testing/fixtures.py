@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
-from collections.abc import Callable
 
 
 @dataclass(slots=True)
@@ -24,11 +24,15 @@ class FixtureRegistry:
         self._fixtures: dict[str, FixtureDefinition] = {}
 
     def register(self, name: str, func: Callable[..., Any], *, autouse: bool = False) -> None:
+        """Register a fixture factory under *name*."""
+
         if name in self._fixtures:
             raise ValueError(f"Fixture '{name}' already registered")
         self._fixtures[name] = FixtureDefinition(func=func, autouse=autouse)
 
     def resolve(self, name: str, cache: dict[str, Any]) -> Any:
+        """Resolve a fixture value, caching the result in *cache*."""
+
         definition = self._fixtures.get(name)
         if definition is None:
             raise KeyError(f"Unknown fixture '{name}'")
@@ -49,11 +53,15 @@ class FixtureRegistry:
         return value
 
     def apply_autouse(self, cache: dict[str, Any]) -> None:
+        """Populate autouse fixtures into *cache*."""
+
         for name, definition in self._fixtures.items():
             if definition.autouse:
                 self.resolve(name, cache)
 
     def _invoke(self, func: Callable[..., Any], cache: dict[str, Any]) -> Any:
+        """Invoke *func* with fixture arguments resolved from *cache*."""
+
         parameters = inspect.signature(func).parameters
         kwargs = {param: self.resolve(param, cache) for param in parameters}
 

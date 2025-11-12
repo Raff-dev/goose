@@ -1,5 +1,7 @@
 """Agent validator for testing LLM agent behavior."""
 
+from __future__ import annotations
+
 from datetime import datetime
 
 from dotenv import load_dotenv  # pylint: disable=import-error
@@ -13,9 +15,13 @@ load_dotenv()
 
 
 class ValidationResponse(BaseModel):
-    """Structured output for agent behavior validation"""
+    """Structured output for agent behavior validation."""
 
     reasoning: str = Field(description="Detailed reasoning about whether the agent behavior matches expectations")
+    unmet_expectation_numbers: list[int] = Field(
+        description="List of expectation numbers that were not met",
+        default_factory=list,
+    )
     error: bool = Field(description="True if the agent behavior does NOT match expectations, False if it does")
     expectations_unmet: list[str] = Field(description="List of expectations that were not met", default_factory=list)
 
@@ -23,9 +29,18 @@ class ValidationResponse(BaseModel):
 class ValidationResult:
     """Simple result class for test validation."""
 
-    def __init__(self, success: bool, reasoning: str = ""):
+    def __init__(
+        self,
+        success: bool,
+        reasoning: str = "",
+        *,
+        expectations_unmet: list[str] | None = None,
+        unmet_expectation_numbers: list[int] | None = None,
+    ) -> None:
         self.success = success
         self.reasoning = reasoning
+        self.expectations_unmet = list(expectations_unmet or [])
+        self.unmet_expectation_numbers = list(unmet_expectation_numbers or [])
 
 
 class AgentValidator:
@@ -62,7 +77,9 @@ When validating:
 - Clearly state whether expectations are met
 - Provide specific reasoning for your assessment
 - Focus on the agent's actual behavior vs expected behavior
-- If any expectations are not met, list them exactly as provided in the expectations_unmet field""",
+- Each expectation will be numbered. Use these numbers when referring to expectations.
+- If any expectations are not met, list them exactly as provided in expectations_unmet
+    and include their numbers in unmet_expectation_numbers""",
         )
         return agent
 
@@ -91,7 +108,7 @@ AGENT OUTPUT:
 {agent_output}
 
 EXPECTATIONS:
-{chr(10).join(f"- {exp}" for exp in expectations)}
+{chr(10).join(f"{index}. {exp}" for index, exp in enumerate(expectations, start=1))}
 
 Analyze if the agent behavior matches these expectations.
 """

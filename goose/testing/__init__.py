@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 from goose.agent_validator import ValidationResult
-
 from goose.testing.core import Goose, RetryConfig, TestCase
 from goose.testing.fixtures import fixture
-from goose.testing.runner import list_tests, run_tests
-from goose.testing.types import TestDefinition, TestResult
+from goose.testing.runner import list_tests, run_single_test, run_tests
+from goose.testing.types import ExecutionRecord, TestDefinition, TestResult
 
 __all__ = [
     "Goose",
@@ -16,7 +15,9 @@ __all__ = [
     "ValidationResult",
     "fixture",
     "list_tests",
+    "run_single_test",
     "run_tests",
     "TestResult",
     "TestDefinition",
+    "ExecutionRecord",
 ]
