@@ -44,7 +44,7 @@ dev = [
 [project.scripts]
 chat = "example_system.entrypoints:chat"
 ask = "example_system.entrypoints:ask"
-goose-tests = "goose.runner:main"
+goose = "goose.runner:main"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

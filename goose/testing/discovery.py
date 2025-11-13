@@ -16,6 +16,10 @@ def ensure_django_ready(settings_module: str = "example_system.settings") -> Non
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
 
+    project_root = Path.cwd().resolve()
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+
     try:
         import example_system  # noqa: F401  # pylint: disable=unused-import, import-outside-toplevel
 

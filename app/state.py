@@ -14,6 +14,10 @@ _SESSION_DEFAULTS: dict[str, Any] = {
     "test_errors": {},
     "global_error": None,
     "last_run_time": None,
+    "selected_test": None,
+    "only_failures": False,
+    "active_view": "dashboard",
+    "show_global_error_details": False,
 }
 
 
@@ -59,6 +63,54 @@ def set_last_run_time(timestamp: datetime | None) -> None:
     """Persist the timestamp of the most recent test execution."""
 
     st.session_state["last_run_time"] = timestamp
+
+
+def get_selected_test() -> str | None:
+    """Return the fully-qualified name of the currently selected test."""
+
+    return st.session_state.get("selected_test")
+
+
+def set_selected_test(qualified_name: str | None) -> None:
+    """Persist the selected test name for the detail view."""
+
+    st.session_state["selected_test"] = qualified_name
+
+
+def get_only_failures_filter() -> bool:
+    """Return whether the suite view should show only failing tests."""
+
+    return bool(st.session_state.get("only_failures", False))
+
+
+def set_only_failures_filter(value: bool) -> None:
+    """Persist the current failing-only filter value."""
+
+    st.session_state["only_failures"] = bool(value)
+
+
+def get_active_view() -> str:
+    """Return the current dashboard view identifier."""
+
+    return st.session_state.get("active_view", "dashboard")
+
+
+def set_active_view(view: str) -> None:
+    """Persist the current dashboard view identifier."""
+
+    st.session_state["active_view"] = view
+
+
+def get_show_global_error_details() -> bool:
+    """Return whether the global error panel should display full details."""
+
+    return bool(st.session_state.get("show_global_error_details", False))
+
+
+def set_show_global_error_details(value: bool) -> None:
+    """Persist the expansion state for the global error panel."""
+
+    st.session_state["show_global_error_details"] = bool(value)
 
 
 def set_test_result(qualified_name: str, result: TestResult) -> None:

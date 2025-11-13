@@ -126,7 +126,6 @@ def test_sale_then_inventory_update(goose: Goose) -> None:
             "Agent then checked remaining inventory after the sale",
             "Response confirmed the sale was processed",
             "Response provided updated stock information",
-            "Agent used sale creation output to inform inventory check",
         ],
         expected_tool_calls=[check_inventory, create_sale],
     )

@@ -23,7 +23,6 @@ class ValidationResponse(BaseModel):
         default_factory=list,
     )
     error: bool = Field(description="True if the agent behavior does NOT match expectations, False if it does")
-    expectations_unmet: list[str] = Field(description="List of expectations that were not met", default_factory=list)
 
 
 class ValidationResult:
@@ -78,8 +77,8 @@ When validating:
 - Provide specific reasoning for your assessment
 - Focus on the agent's actual behavior vs expected behavior
 - Each expectation will be numbered. Use these numbers when referring to expectations.
-- If any expectations are not met, list them exactly as provided in expectations_unmet
-    and include their numbers in unmet_expectation_numbers""",
+- If any expectations are not met, include their numbers in unmet_expectation_numbers and
+    reference those numbers in your reasoning""",
         )
         return agent
 

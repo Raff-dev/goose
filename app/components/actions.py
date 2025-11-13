@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import streamlit as st  # type: ignore[import-not-found]
 
+from app import state
 from app.services import test_execution
 
 
@@ -12,3 +13,4 @@ def handle_run_all_tests() -> None:
 
     with st.spinner("Running all Goose tests. This can take a minute..."):
         test_execution.execute_run_all_tests()
+    state.set_active_view("dashboard")

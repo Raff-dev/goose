@@ -7,8 +7,9 @@ import traceback
 from pathlib import Path
 from typing import Any
 
-from goose.testing.core import Goose, TestCase
+from goose.testing.case import TestCase
 from goose.testing.discovery import discover_tests, ensure_django_ready
+from goose.testing.engine import Goose
 from goose.testing.fixtures import FIXTURE_REGISTRY, build_call_arguments
 from goose.testing.types import ExecutionRecord, TestDefinition, TestResult
 

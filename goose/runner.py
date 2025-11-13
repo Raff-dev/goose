@@ -3,14 +3,32 @@
 from __future__ import annotations
 
 import argparse
+import os
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 
 from goose.testing import list_tests, run_tests
 
+RESET = "\033[0m"
+GREEN = "\033[32m"
+RED = "\033[31m"
+YELLOW = "\033[33m"
+CYAN = "\033[36m"
+
+
+def _supports_color() -> bool:
+    return sys.stdout.isatty() and os.environ.get("TERM") not in {"", "dumb"}
+
+
+def _colorize(text: str, color: str) -> str:
+    if not _supports_color():
+        return text
+    return f"{color}{text}{RESET}"
+
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Entry point for the ``goose-tests`` CLI command."""
+    """Entry point for the ``goose`` CLI command."""
 
     parser = argparse.ArgumentParser(description="Run Goose validation tests without pytest.")
     parser.add_argument(
@@ -39,11 +57,18 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     for result in results:
         status = "PASS" if result.passed else "FAIL"
-        print(f"{status} {result.name} ({result.duration:.2f}s)")
+        status_color = GREEN if result.passed else RED
+        status_text = _colorize(status, status_color)
+        duration_text = _colorize(f"{result.duration:.2f}s", CYAN)
+        print(f"{status_text} {result.name} ({duration_text})")
         if result.error:
-            print(result.error)
+            error_color = YELLOW if result.passed else RED
+            print(_colorize(result.error, error_color))
         if not result.passed:
             failures += 1
+
+    summary = f"{_colorize(str(len(results) - failures), GREEN)} passed, " f"{_colorize(str(failures), RED)} failed"
+    print(summary)
 
     return 1 if failures else 0
 

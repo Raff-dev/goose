@@ -18,12 +18,15 @@ def load_tests() -> list[TestDefinition]:
 def execute_run_all_tests() -> None:
     """Run the full Goose test suite and update session state."""
 
+    state.set_show_global_error_details(False)
     try:
         results = run_tests()
     except Exception:  # pragma: no cover - unexpected runner errors  # pylint: disable=broad-exception-caught
         state.set_global_error(traceback.format_exc())
+        state.set_show_global_error_details(False)
     else:
         state.set_global_error(None)
+        state.set_show_global_error_details(False)
         for result in results:
             state.set_test_result(result.name, result)
             state.clear_test_error(result.name)
@@ -42,5 +45,6 @@ def execute_single_test(definition: TestDefinition) -> None:
         state.set_test_result(definition.qualified_name, result)
         state.clear_test_error(definition.qualified_name)
         state.set_global_error(None)
+        state.set_show_global_error_details(False)
     finally:
         state.set_last_run_time(datetime.now())
