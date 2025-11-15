@@ -42,6 +42,13 @@ repos:
         entry: uv run pylint
         language: system
         types: [python]
+        # Don't run pylint on generated Django migration files; they
+        # frequently contain stylistic issues and are safe to skip in
+        # pre-commit checks. We keep broader ignore rules in
+        # `pyproject.toml`, but pre-commit hands explicit filenames to
+        # hooks which bypasses project-level ignore patterns — this
+        # per-hook exclude ensures migrations are not linted here.
+        exclude: '^(.*/)?migrations/.*'
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.9.0

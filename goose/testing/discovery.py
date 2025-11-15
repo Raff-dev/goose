@@ -4,37 +4,10 @@ from __future__ import annotations
 
 import importlib
 import inspect
-import os
 import sys
 from pathlib import Path
 
 from goose.testing.types import TestDefinition
-
-
-def ensure_django_ready(settings_module: str = "example_system.settings") -> None:
-    """Ensure Django is configured when available."""
-
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
-
-    project_root = Path.cwd().resolve()
-    if str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
-
-    try:
-        import example_system  # noqa: F401  # pylint: disable=unused-import, import-outside-toplevel
-
-        return
-    except ImportError:
-        pass
-
-    try:
-        import django  # pylint: disable=import-outside-toplevel
-        from django.apps import apps  # pylint: disable=import-outside-toplevel
-    except ImportError:  # pragma: no cover - Django not installed
-        return
-
-    if not apps.ready:
-        django.setup()
 
 
 def discover_test_files(start_dir: str | Path) -> list[Path]:
@@ -79,10 +52,26 @@ def discover_tests(start_dir: str | Path = "example_tests") -> list[TestDefiniti
     return definitions
 
 
+def load_test_definition(module_name: str, function_name: str) -> TestDefinition:
+    """Load a single test function by module and function name."""
+
+    project_root = Path.cwd().resolve()
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+
+    module = importlib.import_module(module_name)
+    func = getattr(module, function_name)
+
+    if not inspect.isfunction(func):  # pragma: no cover - defensive guard
+        raise ValueError(f"{module_name}.{function_name} is not a test function")
+
+    return TestDefinition(module=module.__name__, name=function_name, func=func)
+
+
 def _module_sort_key(path: Path) -> tuple[int, str]:
     name = path.name.lower()
     priority = 0 if ("fixture" in name or "conftest" in name) else 1
     return (priority, str(path))
 
 
-__all__ = ["ensure_django_ready", "discover_tests"]
+__all__ = ["discover_tests", "load_test_definition"]

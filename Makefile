@@ -1,4 +1,4 @@
-.PHONY: up app down migrations migrate
+.PHONY: up app down migrations migrate web
 
 COMPOSE_FILE := example_system/docker-compose.yaml
 STREAMLIT_PORT ?= 8501
@@ -38,3 +38,7 @@ migrations:
 # Apply Django migrations
 migrate:
 	uv run python -m django migrate --settings=example_system.settings
+
+# Start the web development server
+web:
+	cd web && npm run dev

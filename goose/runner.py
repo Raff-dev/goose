@@ -45,6 +45,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     target_path = Path(args.path)
+    test_root = target_path.resolve()
+    if test_root.is_file():
+        test_root = test_root.parent
+
+    for candidate in (test_root, test_root.parent):
+        if str(candidate) not in sys.path:
+            sys.path.insert(0, str(candidate))
+
+    settings_module = os.environ.get("GOOSE_TEST_SETTINGS")
+    if settings_module:
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
 
     if args.list:
         tests = list_tests(target_path)
@@ -53,25 +64,28 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     results = run_tests(target_path)
-    failures = 0
-
-    for result in results:
-        status = "PASS" if result.passed else "FAIL"
-        status_color = GREEN if result.passed else RED
-        status_text = _colorize(status, status_color)
-        duration_text = _colorize(f"{result.duration:.2f}s", CYAN)
-        print(f"{status_text} {result.name} ({duration_text})")
-        if result.error:
-            error_color = YELLOW if result.passed else RED
-            print(_colorize(result.error, error_color))
-        if not result.passed:
-            failures += 1
-
-    summary = f"{_colorize(str(len(results) - failures), GREEN)} passed, " f"{_colorize(str(failures), RED)} failed"
-    print(summary)
+    failures = _print_results(results)
 
     return 1 if failures else 0
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+def _print_results(results: list) -> int:
+    """Print test results to stdout and return the number of failures.
+
+    This helper extracts formatting and printing logic out of ``main`` to
+    reduce the number of local variables in that function (keeps
+    linting happy) while keeping output formatting centralized.
+    """
+
+    failures = 0
+    for result in results:
+        status_text = _colorize("PASS" if result.passed else "FAIL", GREEN if result.passed else RED)
+        duration_text = _colorize(f"{result.duration:.2f}s", CYAN)
+        print(f"{status_text} {result.name} ({duration_text})")
+        if result.error:
+            print(_colorize(result.error, YELLOW if result.passed else RED))
+        if not result.passed:
+            failures += 1
+
+    print(f"{_colorize(str(len(results) - failures), GREEN)} passed, " f"{_colorize(str(failures), RED)} failed")
+    return failures

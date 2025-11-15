@@ -14,6 +14,10 @@ dependencies = [
     "python-dotenv>=1.0.1",
 ]
 
+[project.optional-dependencies]
+ui = ["streamlit>=1.40.0"]
+api = ["fastapi>=0.115.0", "uvicorn>=0.32.0"]
+
 [dependency-groups]
 core = [
     "langchain>=1.0.4",
@@ -28,6 +32,7 @@ example = [
     "streamlit>=1.40.0",
     "typer>=0.20.0",
 ]
+api = ["fastapi>=0.115.0", "uvicorn>=0.32.0"]
 dev = [
     "absolufy-imports>=0.3.1",
     "pre-commit>=4.4.0",
@@ -40,11 +45,20 @@ dev = [
     "twine>=6.2.0",
     "django-stubs[compatible-mypy]>=5.2.7",
 ]
+all = [
+    { include-group = "core" },
+    { include-group = "api" },
+    { include-group = "example" },
+    { include-group = "dev" },
+]
 
 [project.scripts]
+# always use 1 word
 chat = "example_system.entrypoints:chat"
 ask = "example_system.entrypoints:ask"
 goose = "goose.runner:main"
+dash = "goose.ui.cli:launch_dashboard"
+api = "goose.entrypoints:serve_api"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
@@ -68,6 +82,13 @@ target-version = "py313"
 [tool.pylint.main]
 max-line-length = 120
 disable = ["too-few-public-methods"]
+# Exclude Django migration packages from linting; they contain generated
+# boilerplate that frequently violates stylistic rules and is not useful
+# to check in pre-commit runs.
+ignore = ["migrations"]
+# Use a regular expression for ignore-patterns; match any path segment
+# containing a `migrations` directory.
+ignore-patterns = [".*/migrations/.*"]
 
 [tool.pylint.format]
 max-line-length = 120
@@ -87,3 +108,11 @@ plugins = ["mypy_django_plugin.main"]
 
 [tool.django-stubs]
 django_settings_module = "example_system.settings"
+
+[tool.autoflake]
+# Configure autoflake defaults for local development and pre-commit.
+# These options match the previous args provided directly to the hook.
+in-place = true
+remove-all-unused-imports = true
+remove-unused-variables = true
+ignore-init-module-imports = true

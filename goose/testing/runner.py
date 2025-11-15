@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import os
 import time
 import traceback
 from pathlib import Path
 from typing import Any
 
 from goose.testing.case import TestCase
-from goose.testing.discovery import discover_tests, ensure_django_ready
+from goose.testing.discovery import discover_tests
 from goose.testing.engine import Goose
 from goose.testing.fixtures import FIXTURE_REGISTRY, build_call_arguments
 from goose.testing.types import ExecutionRecord, TestDefinition, TestResult
@@ -17,14 +18,12 @@ from goose.testing.types import ExecutionRecord, TestDefinition, TestResult
 def list_tests(start_dir: str | Path = "example_tests") -> list[TestDefinition]:
     """Return metadata for all discovered tests."""
 
-    ensure_django_ready()
     return discover_tests(start_dir)
 
 
 def run_tests(start_dir: str | Path = "example_tests") -> list[TestResult]:
     """Execute all discovered tests and return their results."""
 
-    ensure_django_ready()
     db_state, django_active = _prepare_test_environment(setup_database=True)
     try:
         definitions = discover_tests(start_dir)
@@ -36,7 +35,6 @@ def run_tests(start_dir: str | Path = "example_tests") -> list[TestResult]:
 def run_single_test(definition: TestDefinition) -> TestResult:
     """Execute a single test definition and return its result."""
 
-    ensure_django_ready()
     db_state, django_active = _prepare_test_environment(setup_database=True)
     try:
         return _execute_test(definition)
@@ -45,6 +43,9 @@ def run_single_test(definition: TestDefinition) -> TestResult:
 
 
 def _prepare_test_environment(*, setup_database: bool) -> tuple[Any | None, bool]:
+    if not os.environ.get("DJANGO_SETTINGS_MODULE"):
+        return None, False
+
     try:
         from django.test.utils import (  # type: ignore[attr-defined]  # pylint: disable=import-outside-toplevel
             setup_databases,
