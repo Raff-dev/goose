@@ -1,5 +1,6 @@
 import type { ExecutionRecordModel, TestResultModel, TestSummary } from '../api/types';
 import MessageCards from './MessageCards';
+import CodeBlock from './CodeBlock';
 
 interface TestDetailProps {
   test: TestSummary;
@@ -115,9 +116,7 @@ function ExecutionCard({ execution }: ExecutionCardProps) {
             // If the response contains a `messages` array, render it as message cards
             <MessageCards messages={(execution.response as any).messages} />
           ) : (
-            <pre className="text-sm whitespace-pre-wrap bg-gray-50 p-2 rounded border">
-              {execution.response ? JSON.stringify(execution.response, null, 2) : 'No response'}
-            </pre>
+            <CodeBlock value={execution.response ?? 'No response'} className="text-sm whitespace-pre-wrap" />
           )}
         </div>
       </div>

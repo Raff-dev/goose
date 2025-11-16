@@ -1,4 +1,5 @@
 import { ChatBubbleIcon, GearIcon, PersonIcon, RocketIcon } from '@radix-ui/react-icons';
+import CodeBlock from './CodeBlock';
 
 type MessageType = 'human' | 'ai' | 'tool' | string;
 
@@ -60,13 +61,18 @@ function renderMarkdownToHtml(md: string) {
   if (!md) return '';
   // Normalize line endings
   let text = String(md).replace(/\r\n?/g, '\n');
-
   // Escape HTML first
   text = escapeHtml(text);
 
-  // Fenced code blocks ```\n...\n```
+  // Preserve fenced code blocks by replacing them with placeholders
+  // so later transforms (like replacing newlines) don't break their
+  // internal formatting.
+  const codeBlocks: string[] = [];
   text = text.replace(/```([\s\S]*?)```/g, (_m, code) => {
-    return `<pre class="bg-gray-900 text-white p-2 rounded"><code>${escapeHtml(code)}</code></pre>`;
+    const pre = `<pre class="bg-gray-900 text-white p-2 rounded"><code>${escapeHtml(code)}</code></pre>`;
+    const idx = codeBlocks.length;
+    codeBlocks.push(pre);
+    return `@@CODE_BLOCK_${idx}@@`;
   });
 
   // Unordered lists: convert lines starting with - to <ul>
@@ -105,8 +111,19 @@ function renderMarkdownToHtml(md: string) {
   // Links [text](url)
   text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label, href) => `<a class="underline text-blue-600" href="${href}">${label}</a>`);
 
-  // Convert remaining line breaks to <br /> for simple paragraphs
-  text = text.replace(/\n/g, '<br/>');
+  // Paragraphize: split on two or more newlines into paragraphs. Single
+  // newlines inside a paragraph become spaces (prevents excessive <br/>).
+  const parts = text.split(/\n{2,}/g).map(p => p.trim()).filter(Boolean);
+  text = parts.map(p => {
+    // If the part is exactly a preserved code block placeholder, restore it
+    const codeMatch = p.match(/^@@CODE_BLOCK_(\d+)@@$/);
+    if (codeMatch) {
+      return codeBlocks[Number(codeMatch[1])] || '';
+    }
+    // Otherwise collapse single newlines into spaces and wrap in <p>
+    const inner = p.replace(/\n/g, ' ');
+    return `<p>${inner}</p>`;
+  }).join('\n');
 
   return text;
 }
@@ -119,34 +136,29 @@ export function MessageCards({ messages }: MessageCardsProps) {
         const isAI = m.type === 'ai';
         const isTool = m.type === 'tool';
 
-        // Separate background color from label text color so the
-        // message body keeps the default text color.
-        const bgBgClass = isHuman
-          ? 'bg-blue-50'
-          : isAI
-          ? 'bg-violet-50'
-          : isTool
-          ? 'bg-orange-50'
-          : 'bg-gray-50';
+        // Render all messages in card wrappers for consistent alignment.
+        // Backgrounds are fully transparent per request so the visual
+        // appearance stays minimal while layout remains consistent.
+        const containerClass = 'rounded-lg shadow-sm border border-gray-200 p-3 bg-transparent';
 
-        const labelColorClass = isHuman
-          ? 'text-blue-800'
+        // Icon background colors (rounded colored rectangles). Use
+        // darker shades for higher opacity/contrast.
+        const iconBgClass = isHuman
+          ? 'bg-blue-800/70'
           : isAI
-          ? 'text-violet-800'
+          ? 'bg-violet-800/70'
           : isTool
-          ? 'text-orange-800'
-          : 'text-gray-800';
+          ? 'bg-orange-800/70'
+          : 'bg-gray-600/70';
 
-        // Use Radix icons for consistent monochrome icons. Keep icons
-        // neutral (gray) and slightly opaque so they don't dominate.
         const icon = isHuman ? (
-          <PersonIcon className="w-6 h-6 text-gray-600 opacity-80" aria-hidden />
+          <PersonIcon className="w-5 h-5 text-white opacity-100" aria-hidden />
         ) : isAI ? (
-          <RocketIcon className="w-6 h-6 text-gray-600 opacity-80" aria-hidden />
+          <RocketIcon className="w-5 h-5 text-white opacity-100" aria-hidden />
         ) : isTool ? (
-          <GearIcon className="w-6 h-6 text-gray-600 opacity-80" aria-hidden />
+          <GearIcon className="w-5 h-5 text-white opacity-100" aria-hidden />
         ) : (
-          <ChatBubbleIcon className="w-6 h-6 text-gray-600 opacity-80" aria-hidden />
+          <ChatBubbleIcon className="w-5 h-5 text-white opacity-100" aria-hidden />
         );
 
         // If content parses as JSON, show it as a formatted code block.
@@ -154,32 +166,48 @@ export function MessageCards({ messages }: MessageCardsProps) {
         const contentIsJSON = parsed !== null;
 
         return (
-          <div key={i} className={`rounded-lg shadow-sm border border-gray-200 p-3 ${bgBgClass} bg-opacity-90`}>
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 text-2xl">{icon}</div>
+          <div key={i} className={containerClass}>
+            <div className={`flex items-start gap-3 ${isHuman ? '' : 'py-3'}`}>
+              <div className="flex-shrink-0">
+                <div className={`w-10 h-10 flex items-center justify-center rounded-md ${iconBgClass}`}>
+                  {icon}
+                </div>
+              </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <div className={`font-semibold capitalize ${labelColorClass}`}>{m.type}</div>
-                  {m.tool_name && <div className="text-xs opacity-80">{m.tool_name}</div>}
+                  <div className="flex flex-col">
+                      {m.tool_calls && m.tool_calls.length > 0 && (
+                        <div className="text-xs font-semibold mb-1">Tool calls</div>
+                      )}
+                      {m.tool_name && (
+                        <>
+                          <div className="text-xs font-semibold mb-1">Tool response</div>
+                          <div className="text-xs">{m.tool_name}</div>
+                        </>
+                      )}
+                    </div>
+                  <div />
                 </div>
 
-                <div className="mt-2 text-sm text-gray-900">
-                  {contentIsJSON ? (
-                    <pre className="bg-black bg-opacity-80 text-white text-xs p-2 rounded overflow-auto">{prettyJSON(parsed)}</pre>
-                  ) : (
-                    <div className="prose max-w-none text-gray-900" dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(m.content) }} />
-                  )}
-                </div>
+                        <div className="mt-2 text-sm text-gray-900">
+
+                          {contentIsJSON ? (
+                            <CodeBlock value={parsed} />
+                          ) : (
+                            <div className="prose max-w-none text-gray-900" dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(m.content) }} />
+                          )}
+                        </div>
 
                 {m.tool_calls && m.tool_calls.length > 0 && (
                   <div className="mt-2">
-                    <div className="text-xs font-semibold mb-1">Tool calls</div>
                     <div className="flex flex-col gap-1">
                       {m.tool_calls.map((tc, idx) => (
                         <div key={idx} className="text-xs">
                           <div className="font-medium">{tc.name ?? tc.id ?? 'call'}</div>
                           {tc.args != null && (
-                            <pre className="bg-gray-900 text-white text-xs p-2 rounded mt-1 overflow-auto">{prettyJSON(tc.args)}</pre>
+                            <div className="mt-1">
+                              <CodeBlock value={tc.args} className="text-xs mt-1" />
+                            </div>
                           )}
                         </div>
                       ))}

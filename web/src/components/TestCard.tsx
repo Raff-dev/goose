@@ -46,8 +46,15 @@ export function TestCard({ name, status, duration, error, onViewDetails, onRunTe
       )}
       <div className="mt-auto flex justify-end gap-2">
         <button
-          className="flex items-center gap-1 border border-gray-300 rounded-md px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+          className={
+            `flex items-center gap-1 border rounded-md px-3 py-1 text-sm font-medium transition ` +
+            (status === 'running' || status === 'queued'
+              ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed opacity-70'
+              : 'border-gray-300 text-gray-700 hover:bg-gray-50')
+          }
           onClick={onRunTest}
+          disabled={status === 'running' || status === 'queued'}
+          title={status === 'running' || status === 'queued' ? 'Test is running or queued' : 'Run test'}
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z"/>
