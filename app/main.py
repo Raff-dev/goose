@@ -56,7 +56,3 @@ def main() -> None:
         if selected_name is None and tests:
             state.set_selected_test(tests[0].qualified_name)
         render_test_details(tests, only_failures)
-
-
-# Streamlit executes this module as a script.
-main()

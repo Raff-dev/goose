@@ -57,7 +57,7 @@ all = [
 chat = "example_system.entrypoints:chat"
 ask = "example_system.entrypoints:ask"
 goose = "goose.runner:main"
-dash = "goose.ui.cli:launch_dashboard"
+dash = "app.main:main"
 api = "goose.entrypoints:serve_api"
 
 [build-system]
@@ -110,8 +110,6 @@ plugins = ["mypy_django_plugin.main"]
 django_settings_module = "example_system.settings"
 
 [tool.autoflake]
-# Configure autoflake defaults for local development and pre-commit.
-# These options match the previous args provided directly to the hook.
 in-place = true
 remove-all-unused-imports = true
 remove-unused-variables = true
