@@ -1,14 +1,29 @@
 
+import type { TestResultModel } from '../api/types';
+
 interface TestCardProps {
   name: string;
   status: 'passed' | 'failed' | 'queued' | 'running' | 'not-run';
   duration?: number;
   error?: string;
+  result?: TestResultModel | undefined;
   onViewDetails: () => void;
   onRunTest: () => void;
 }
 
-export function TestCard({ name, status, duration, error, onViewDetails, onRunTest }: TestCardProps) {
+export function TestCard({ name, status, duration, error, result, onViewDetails, onRunTest }: TestCardProps) {
+  // Determine a compact failure type badge using top-level error_type with
+  // a fallback to the latest execution record when needed.
+  const getFailureType = (res?: TestResultModel | undefined) => {
+    if (!res) return null;
+    if (res.error_type) return res.error_type;
+    const execs = res.executions || [];
+    if (execs.length === 0) return null;
+    const latest = execs[execs.length - 1];
+    return latest?.error_type ?? null;
+  };
+
+  const failureType = getFailureType(result);
   const statusColor =
     status === 'passed' ? 'bg-green-50 text-green-700' :
     status === 'failed' ? 'bg-red-50 text-red-700' :
@@ -39,11 +54,20 @@ export function TestCard({ name, status, duration, error, onViewDetails, onRunTe
       <div className="flex items-center gap-2 mb-2">
         <span className={`text-xs font-semibold px-2 py-1 rounded ${statusColor}`}>{statusLabel}{duration !== undefined && (status === 'passed' || status === 'failed') ? ` (${duration.toFixed(2)}s)` : ''}</span>
       </div>
-      {status === 'failed' && error && (
-        <div className="bg-red-50 text-red-700 text-xs rounded-md px-3 py-2 mb-2 border border-red-100">
-          {error}
+      {failureType && status !== 'queued' && status !== 'running' && (
+        <div className="mb-2">
+          <span className={`text-xs font-semibold px-2 py-1 rounded-full bg-red-50 text-red-800 border border-red-100`}>
+            {failureType === 'tool_call'
+              ? 'Tool Call Mismatch'
+              : failureType === 'expectation'
+              ? 'Expectations Unmet'
+              : failureType === 'validation'
+              ? 'Validation Failure'
+              : 'Unexpected Error'}
+          </span>
         </div>
       )}
+      {/* Error details are intentionally omitted from the card; use View Details for full context */}
       <div className="mt-auto flex justify-end gap-2">
         <button
           className={

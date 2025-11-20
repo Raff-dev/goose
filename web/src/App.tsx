@@ -9,7 +9,7 @@ import { useCreateRun, useRun, useRuns, useTests } from './hooks';
 
 function App() {
   const { data: tests = [], isLoading: testsLoading } = useTests();
-  const { data: runs = [], isLoading: runsLoading, refetch: refetchRuns } = useRuns();
+  const { data: runs = [], isLoading: runsLoading } = useRuns();
   const createRunMutation = useCreateRun();
 
   const [view, setView] = useState<'dashboard' | 'detail'>('dashboard');
@@ -77,19 +77,56 @@ function App() {
   useEffect(() => {
     if (currentJob && (currentJob.status === 'succeeded' || currentJob.status === 'failed')) {
       setCurrentJobId(null);
-      refetchRuns(); // Refresh the runs list
     }
-  }, [currentJob, refetchRuns]);
+  }, [currentJob]);
 
   const handleViewDetails = (testName: string) => {
+    // push a navigable URL so browser back/forward works
+    try {
+      const url = `/tests/${encodeURIComponent(testName)}`;
+      window.history.pushState({}, '', url);
+    } catch (e) {
+      // ignore
+    }
     setSelectedTest(testName);
     setView('detail');
   };
 
   const handleBack = () => {
+    // Try to go back in history first so browser back behaves naturally.
+    if (window.history.length > 1) {
+      window.history.back();
+      // also optimistically update UI
+      setView('dashboard');
+      setSelectedTest(null);
+      return;
+    }
     setView('dashboard');
     setSelectedTest(null);
   };
+
+  // Sync app state with URL on mount and when user navigates with back/forward
+  useEffect(() => {
+    const syncFromLocation = () => {
+      const path = window.location.pathname || '/';
+      const match = path.match(/^\/tests\/(.+)$/);
+      if (match) {
+        const testName = decodeURIComponent(match[1]);
+        setSelectedTest(testName);
+        setView('detail');
+      } else {
+        setSelectedTest(null);
+        setView('dashboard');
+      }
+    };
+
+    // initial sync
+    syncFromLocation();
+
+    const onPop = () => syncFromLocation();
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   const handleRunTest = async (testName: string) => {
     await createRunMutation.mutateAsync({ tests: [testName] });
@@ -111,24 +148,26 @@ function App() {
 
   return (
     <div className="max-w-7xl mx-auto py-8">
-      <Summary tests={tests} resultsMap={resultsMap} />
       <GlobalError error={latestRun?.error || null} />
-      <RunControls
-        tests={tests}
-        onlyFailures={onlyFailures}
-        onOnlyFailuresChange={setOnlyFailures}
-        onRunAll={handleRunAll}
-        isRunning={isRunning}
-      />
       {view === 'dashboard' ? (
-        <TestGrid
-          tests={tests}
-          resultsMap={resultsMap}
-          statusMap={statusMap}
-          onlyFailures={onlyFailures}
-          onViewDetails={handleViewDetails}
-          onRunTest={handleRunTest}
-        />
+        <>
+          <Summary tests={tests} resultsMap={resultsMap} />
+          <RunControls
+            tests={tests}
+            onlyFailures={onlyFailures}
+            onOnlyFailuresChange={setOnlyFailures}
+            onRunAll={handleRunAll}
+            isRunning={isRunning}
+          />
+          <TestGrid
+            tests={tests}
+            resultsMap={resultsMap}
+            statusMap={statusMap}
+            onlyFailures={onlyFailures}
+            onViewDetails={handleViewDetails}
+            onRunTest={handleRunTest}
+          />
+        </>
       ) : selectedTestData ? (
         <TestDetail
           test={selectedTestData}

@@ -25,23 +25,6 @@ class ValidationResponse(BaseModel):
     error: bool = Field(description="True if the agent behavior does NOT match expectations, False if it does")
 
 
-class ValidationResult:
-    """Simple result class for test validation."""
-
-    def __init__(
-        self,
-        success: bool,
-        reasoning: str = "",
-        *,
-        expectations_unmet: list[str] | None = None,
-        unmet_expectation_numbers: list[int] | None = None,
-    ) -> None:
-        self.success = success
-        self.reasoning = reasoning
-        self.expectations_unmet = list(expectations_unmet or [])
-        self.unmet_expectation_numbers = list(unmet_expectation_numbers or [])
-
-
 class AgentValidator:
     """Encapsulated agent validator for testing LLM behavior."""
 

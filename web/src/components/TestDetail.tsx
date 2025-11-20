@@ -1,6 +1,6 @@
 import type { ExecutionRecordModel, TestResultModel, TestSummary } from '../api/types';
-import MessageCards from './MessageCards';
 import CodeBlock from './CodeBlock';
+import MessageCards from './MessageCards';
 
 interface TestDetailProps {
   test: TestSummary;
@@ -103,8 +103,10 @@ function ExecutionCard({ execution }: ExecutionCardProps) {
 
           {execution.validation && (
             <div className="mt-2">
-              <div className="font-bold">Validation:</div>
-              <div className={execution.validation.success ? 'text-green-500' : 'text-red-500'}>
+              <div className="font-bold mb-1">Validation:</div>
+              <div className={`rounded-md border p-3 text-sm whitespace-pre-wrap ` +
+                (execution.validation.success ? 'bg-green-50 border-green-100 text-green-800' : 'bg-red-50 border-red-100 text-red-800')
+              }>
                 {execution.validation.reasoning}
               </div>
             </div>

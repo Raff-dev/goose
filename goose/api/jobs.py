@@ -7,6 +7,7 @@ import queue
 import threading
 import traceback
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -183,17 +184,26 @@ class JobStore:
 class ExecutionService:
     """Coordinates job submission and sequential background execution."""
 
-    def __init__(self) -> None:
+    def __init__(self, on_job_update: Callable[[Job], None] | None = None) -> None:
         self._store = JobStore()
         self._queue: queue.Queue[str] = queue.Queue()
+        self._on_job_update = on_job_update
         self._worker = threading.Thread(target=self._worker_loop, name="goose-api-worker", daemon=True)
         self._worker.start()
+
+    def _emit(self, job: Job | None) -> None:
+        """Invoke the optional job update callback."""
+
+        if job is None or self._on_job_update is None:
+            return
+        self._on_job_update(job)
 
     def submit(self, tests: list[str] | None) -> Job:
         """Queue a new job for execution."""
 
         targets, mode = self._resolve_targets(tests)
         job = self._store.create_job(targets=targets, mode=mode)
+        self._emit(job)
         self._queue.put(job.id)
         return job
 
@@ -245,15 +255,16 @@ class ExecutionService:
             job = self._store.mark_running(job_id)
             if job is None:
                 continue
+            self._emit(job)
 
             try:
                 results = self._execute_job(job)
             except Exception:  # pylint: disable=broad-exception-caught
                 message = traceback.format_exc()
-                self._store.mark_failed(job_id, message)
+                self._emit(self._store.mark_failed(job_id, message))
                 continue
 
-            self._store.mark_succeeded(job_id, results)
+            self._emit(self._store.mark_succeeded(job_id, results))
 
     def _execute_job(self, job: Job) -> list[TestResult]:
         """Execute tests for the provided job snapshot."""
@@ -267,22 +278,26 @@ class ExecutionService:
             definitions = list_tests()
             for definition in definitions:
                 target_name = definition.qualified_name
-                self._store.update_test_status(job.id, target_name, "running")
+                updated = self._store.update_test_status(job.id, target_name, "running")
+                self._emit(updated)
                 result = run_single_test(definition)
                 results.append(result)
                 status = "passed" if result.passed else "failed"
-                self._store.update_test_status(job.id, target_name, status)
+                updated = self._store.update_test_status(job.id, target_name, status)
+                self._emit(updated)
             return results
 
         for target in job.targets:
             # Update status to running before executing
-            self._store.update_test_status(job.id, target.qualified_name, "running")
+            updated = self._store.update_test_status(job.id, target.qualified_name, "running")
+            self._emit(updated)
             definition = load_test_definition(target.module, target.name)
             result = run_single_test(definition)
             results.append(result)
             # Update status to passed/failed after executing
             status = "passed" if result.passed else "failed"
-            self._store.update_test_status(job.id, target.qualified_name, status)
+            updated = self._store.update_test_status(job.id, target.qualified_name, status)
+            self._emit(updated)
         return results
 
 

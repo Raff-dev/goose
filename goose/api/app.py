@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException, status  # type: ignore[import-not-found]
+import json
+
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status  # type: ignore[import-not-found]
 from fastapi.middleware.cors import CORSMiddleware  # type: ignore[import-not-found]
 
-from goose.api.jobs import ExecutionService, UnknownTestError
+from goose.api.events import JobEventBroker
+from goose.api.jobs import ExecutionService, Job, UnknownTestError
 from goose.api.schema import JobResource, RunRequest, TestSummary
 from goose.testing.runner import list_tests
 
@@ -31,7 +34,12 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    execution_service = ExecutionService()
+    broker = JobEventBroker()
+
+    def _publish_job(job: Job) -> None:
+        broker.publish(JobResource.from_job(job))
+
+    execution_service = ExecutionService(on_job_update=_publish_job)
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -71,6 +79,28 @@ def create_app() -> FastAPI:
         if job is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
         return JobResource.from_job(job)
+
+    @app.websocket("/ws/runs")
+    async def runs_stream(websocket: WebSocket) -> None:
+        """Stream job updates to connected clients."""
+
+        await websocket.accept()
+        queue = broker.subscribe()
+        try:
+            snapshot = execution_service.list_jobs()
+            payload = {
+                "type": "snapshot",
+                "jobs": [JobResource.from_job(job).model_dump(mode="json") for job in snapshot],
+            }
+            await websocket.send_text(json.dumps(payload))
+
+            while True:
+                job_resource = await queue.get()
+                await websocket.send_text(json.dumps({"type": "job", "job": job_resource.model_dump(mode="json")}))
+        except WebSocketDisconnect:
+            pass
+        finally:
+            broker.unsubscribe(queue)
 
     return app
 

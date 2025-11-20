@@ -8,6 +8,7 @@ import traceback
 from pathlib import Path
 from typing import Any
 
+from goose.error_type import ErrorType
 from goose.testing.case import TestCase
 from goose.testing.discovery import discover_tests
 from goose.testing.engine import Goose
@@ -95,6 +96,7 @@ def _execute_test(definition: TestDefinition) -> TestResult:
             passed=False,
             duration=duration,
             error=message,
+            error_type=_derive_error_type(executions, ErrorType.VALIDATION),
             executions=executions,
         )
     except Exception:  # pragma: no cover - unexpected failure path  # pylint: disable=broad-exception-caught
@@ -105,6 +107,7 @@ def _execute_test(definition: TestDefinition) -> TestResult:
             passed=False,
             duration=duration,
             error=traceback.format_exc(),
+            error_type=_derive_error_type(executions, ErrorType.UNEXPECTED),
             executions=executions,
         )
 
@@ -148,6 +151,13 @@ def _collect_execution_history(cache: dict[str, Any]) -> list[ExecutionRecord]:
     if goose_instance is None:
         return []
     return goose_instance.consume_execution_history()
+
+
+def _derive_error_type(executions: list[ExecutionRecord], fallback: ErrorType | None) -> ErrorType | None:
+    for record in reversed(executions):
+        if record.error_type is not None:
+            return record.error_type
+    return fallback
 
 
 __all__ = ["list_tests", "run_tests", "run_single_test"]

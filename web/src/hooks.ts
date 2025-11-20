@@ -1,6 +1,29 @@
+import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from './api/client';
+import { API_BASE_URL, apiClient } from './api/client';
 import type { JobResource, RunRequestPayload, TestStatus } from './api/types';
+
+type RunsStreamMessage =
+  | { type: 'snapshot'; jobs: JobResource[] }
+  | { type: 'job'; job: JobResource };
+
+const sortRuns = (runs: JobResource[]): JobResource[] => {
+  return [...runs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+};
+
+const buildRunsWebSocketUrl = (): string | null => {
+  try {
+    const url = new URL(API_BASE_URL);
+    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    const trimmedPath = url.pathname.replace(/\/+$/, '');
+    url.pathname = `${trimmedPath}/ws/runs`.replace(/\/{2,}/g, '/');
+    url.search = '';
+    url.hash = '';
+    return url.toString();
+  } catch {
+    return null;
+  }
+};
 
 export const useTests = () => {
   return useQuery({
@@ -10,11 +33,75 @@ export const useTests = () => {
 };
 
 export const useRuns = () => {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const queryResult = useQuery({
     queryKey: ['runs'],
     queryFn: apiClient.listRuns,
-    refetchInterval: 500, // Poll every 500ms for faster updates
+    refetchInterval: false,
   });
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('WebSocket' in window)) {
+      return;
+    }
+
+    const socketUrl = buildRunsWebSocketUrl();
+    if (!socketUrl) {
+      return;
+    }
+
+    let ws: WebSocket | null = null;
+    let shouldReconnect = true;
+    let retryHandle: ReturnType<typeof setTimeout> | null = null;
+
+    const handleMessage = (event: MessageEvent<string>) => {
+      try {
+        const payload = JSON.parse(event.data) as RunsStreamMessage;
+        if (payload.type === 'snapshot') {
+          const jobs = sortRuns(payload.jobs || []);
+          queryClient.setQueryData(['runs'], jobs);
+          jobs.forEach(job => {
+            queryClient.setQueryData(['runs', job.id], job);
+          });
+        } else if (payload.type === 'job' && payload.job) {
+          const job = payload.job;
+          queryClient.setQueryData(['runs'], (current: JobResource[] | undefined) => {
+            const next = (current || []).filter(item => item.id !== job.id);
+            next.push(job);
+            return sortRuns(next);
+          });
+          queryClient.setQueryData(['runs', job.id], job);
+        }
+      } catch (err) {
+        console.error('Failed to process runs websocket payload', err);
+      }
+    };
+
+    const connect = () => {
+      ws = new WebSocket(socketUrl);
+      ws.onmessage = handleMessage;
+      ws.onerror = () => {
+        ws?.close();
+      };
+      ws.onclose = () => {
+        if (shouldReconnect) {
+          retryHandle = window.setTimeout(connect, 2000);
+        }
+      };
+    };
+
+    connect();
+
+    return () => {
+      shouldReconnect = false;
+      if (retryHandle) {
+        window.clearTimeout(retryHandle);
+      }
+      ws?.close();
+    };
+  }, [queryClient]);
+
+  return queryResult;
 };
 
 export const useRun = (id: string, enabled: boolean = true) => {
@@ -22,7 +109,7 @@ export const useRun = (id: string, enabled: boolean = true) => {
     queryKey: ['runs', id],
     queryFn: () => apiClient.getRun(id),
     enabled: enabled && !!id,
-    refetchInterval: enabled && id ? 500 : false, // Poll every 500ms if enabled
+    refetchInterval: false,
   });
 };
 

@@ -31,6 +31,7 @@ export function TestGrid({ tests, resultsMap, statusMap, onlyFailures, onViewDet
               status={status}
               duration={result?.duration}
               error={result?.error ?? undefined}
+              result={result}
               onViewDetails={() => onViewDetails(test.qualified_name)}
               onRunTest={() => onRunTest(test.qualified_name)}
             />

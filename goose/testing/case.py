@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from langchain_core.tools import BaseTool
 
-from goose.agent_validator import ValidationResult
 from goose.models import AgentResponse
-from goose.testing.retry import RetryConfig
+from goose.testing.types import ValidationResult
 
 
 class TestCase:  # pylint: disable=too-many-instance-attributes
@@ -18,14 +17,10 @@ class TestCase:  # pylint: disable=too-many-instance-attributes
         expectations: list[str],
         *,
         expected_tool_calls: list[BaseTool] | None = None,
-        retry: RetryConfig | None = None,
     ):  # pylint: disable=too-many-arguments
         self.query = query
         self.expectations = expectations
         self.expected_tool_calls = list(expected_tool_calls) if expected_tool_calls is not None else None
-        retry_config = retry or RetryConfig()
-        self.attempts = max(1, int(retry_config.attempts))
-        self.sleep_between_attempts = float(retry_config.sleep_between_attempts)
         self._result: ValidationResult | None = None
         self.last_response: AgentResponse | None = None
 

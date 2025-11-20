@@ -1,4 +1,3 @@
-import React from 'react';
 import highlightJSON from '../utils/syntaxHighlight';
 
 interface CodeBlockProps {

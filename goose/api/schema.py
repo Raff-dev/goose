@@ -19,9 +19,9 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from goose.agent_validator import ValidationResult
 from goose.api.jobs import Job, JobStatus
-from goose.testing.types import ExecutionRecord, TestDefinition, TestResult
+from goose.error_type import ErrorType
+from goose.testing.types import ExecutionRecord, TestDefinition, TestResult, ValidationResult
 
 
 def _first_line(text: str | None) -> str | None:
@@ -117,6 +117,7 @@ class ExecutionRecordModel(BaseModel):
     response: dict[str, Any] | None = None
     validation: ValidationPayload | None = None
     error: str | None = None
+    error_type: ErrorType | None = None
 
     @classmethod
     def from_execution(cls, execution: ExecutionRecord) -> ExecutionRecordModel:
@@ -137,6 +138,7 @@ class ExecutionRecordModel(BaseModel):
             response=response_payload,
             validation=validation_payload,
             error=execution.error,
+            error_type=execution.error_type,
         )
 
 
@@ -155,6 +157,7 @@ class TestResultModel(BaseModel):
     passed: bool
     duration: float
     error: str | None = None
+    error_type: ErrorType | None = None
     executions: list[ExecutionRecordModel] = Field(default_factory=list)
 
     @classmethod
@@ -175,6 +178,7 @@ class TestResultModel(BaseModel):
             passed=result.passed,
             duration=result.duration,
             error=result.error,
+            error_type=result.error_type,
             executions=executions,
         )
 

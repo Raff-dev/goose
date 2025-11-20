@@ -9,8 +9,7 @@ from streamlit.delta_generator import DeltaGenerator  # type: ignore[import-not-
 
 from app.components.common import render_scrollable_text, render_status_badge
 from app.components.test_details.shared import STATUS_COLORS, failure_summary
-from goose.agent_validator import ValidationResult
-from goose.testing.types import ExecutionRecord, TestResult
+from goose.testing.types import ExecutionRecord, TestResult, ValidationResult
 
 
 def render_execution_history(qualified_name: str, result: TestResult | None) -> None:

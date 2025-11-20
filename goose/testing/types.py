@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from goose.agent_validator import ValidationResult
+from goose.error_type import ErrorType
 from goose.models import AgentResponse
 
 
@@ -26,6 +26,17 @@ class TestDefinition:
 
 
 @dataclass(slots=True)
+class ValidationResult:
+    """Validator outcome for a single agent execution."""
+
+    success: bool
+    reasoning: str = ""
+    expectations_unmet: list[str] = field(default_factory=list)
+    unmet_expectation_numbers: list[int] = field(default_factory=list)
+    error_type: ErrorType | None = None
+
+
+@dataclass(slots=True)
 class TestResult:
     """Outcome from executing a Goose test."""
 
@@ -33,6 +44,7 @@ class TestResult:
     passed: bool
     duration: float
     error: str | None = None
+    error_type: ErrorType | None = None
     executions: list[ExecutionRecord] = field(default_factory=list)
 
     @property
@@ -52,6 +64,8 @@ class ExecutionRecord:
     response: AgentResponse | None
     validation: ValidationResult | None = None
     error: str | None = None
+    # Backend-supplied explicit classification of the failure (if any)
+    error_type: ErrorType | None = None
 
 
-__all__ = ["TestDefinition", "TestResult", "ExecutionRecord"]
+__all__ = ["TestDefinition", "ValidationResult", "TestResult", "ExecutionRecord"]

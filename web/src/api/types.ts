@@ -21,6 +21,15 @@ export interface ExecutionRecordModel {
   response: Record<string, unknown> | null;
   validation: ValidationPayload | null;
   error: string | null;
+  /** Optional explicit failure classification supplied by the API. */
+  error_type?: ErrorType | null;
+}
+
+export enum ErrorType {
+  Expectation = 'expectation',
+  Validation = 'validation',
+  ToolCall = 'tool_call',
+  Unexpected = 'unexpected',
 }
 
 export interface TestResultModel {
@@ -30,6 +39,7 @@ export interface TestResultModel {
   passed: boolean;
   duration: number;
   error: string | null;
+  error_type?: ErrorType | null;
   executions: ExecutionRecordModel[];
 }
 
