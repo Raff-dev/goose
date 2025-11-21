@@ -19,7 +19,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from goose.api.jobs import Job, JobStatus
+from goose.api.jobs import Job, JobStatus, TestStatus
 from goose.testing.error_type import ErrorType
 from goose.testing.types import ExecutionRecord, TestDefinition, TestResult, ValidationResult
 
@@ -199,7 +199,7 @@ class JobResource(BaseModel):
     updated_at: datetime
     error: str | None = None
     results: list[TestResultModel] = Field(default_factory=list)
-    test_statuses: dict[str, str] = Field(default_factory=dict)
+    test_statuses: dict[str, TestStatus] = Field(default_factory=dict)
 
     model_config = ConfigDict(use_enum_values=True)
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from goose.api.jobs.enums import JobStatus
+from goose.api.jobs.enums import JobStatus, TestStatus
 from goose.testing.types import TestDefinition, TestResult
 
 
@@ -51,7 +51,7 @@ class Job:
     updated_at: datetime
     results: list[TestResult] = field(default_factory=list)
     error: str | None = None
-    test_statuses: dict[str, str] = field(default_factory=dict)
+    test_statuses: dict[str, TestStatus] = field(default_factory=dict)
 
 
 __all__ = ["Job", "TestTarget"]

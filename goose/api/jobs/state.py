@@ -7,7 +7,7 @@ import threading
 import uuid
 from datetime import datetime, timezone
 
-from goose.api.jobs.enums import JobStatus
+from goose.api.jobs.enums import JobStatus, TestStatus
 from goose.api.jobs.models import Job, TestTarget
 from goose.testing.types import TestResult
 
@@ -30,7 +30,7 @@ class JobStore:
             targets=list(targets),
             created_at=now,
             updated_at=now,
-            test_statuses={target.qualified_name: "queued" for target in targets},
+            test_statuses={target.qualified_name: TestStatus.QUEUED for target in targets},
         )
         with self._lock:
             self._jobs[job_id] = job
@@ -62,9 +62,9 @@ class JobStore:
             job.updated_at = datetime.now(timezone.utc)
             job.results.clear()
             job.error = None
-            job.test_statuses = {target.qualified_name: "queued" for target in job.targets}
+            job.test_statuses = {target.qualified_name: TestStatus.QUEUED for target in job.targets}
             if job.targets:
-                job.test_statuses[job.targets[0].qualified_name] = "running"
+                job.test_statuses[job.targets[0].qualified_name] = TestStatus.RUNNING
             return copy.deepcopy(job)
 
     def mark_succeeded(self, job_id: str, results: list[TestResult]) -> Job | None:
@@ -80,10 +80,11 @@ class JobStore:
             job.error = None
             if results:
                 job.test_statuses = {
-                    result.definition.qualified_name: "passed" if result.passed else "failed" for result in results
+                    result.definition.qualified_name: (TestStatus.PASSED if result.passed else TestStatus.FAILED)
+                    for result in results
                 }
             else:
-                job.test_statuses = {target.qualified_name: "passed" for target in job.targets}
+                job.test_statuses = {target.qualified_name: TestStatus.PASSED for target in job.targets}
             return copy.deepcopy(job)
 
     def mark_failed(self, job_id: str, message: str) -> Job | None:
@@ -97,10 +98,10 @@ class JobStore:
             job.updated_at = datetime.now(timezone.utc)
             job.error = message
             job.results.clear()
-            job.test_statuses = {target.qualified_name: "failed" for target in job.targets}
+            job.test_statuses = {target.qualified_name: TestStatus.FAILED for target in job.targets}
             return copy.deepcopy(job)
 
-    def update_test_status(self, job_id: str, test_name: str, status: str) -> Job | None:
+    def update_test_status(self, job_id: str, test_name: str, status: TestStatus) -> Job | None:
         """Update the status of a specific test in a job."""
 
         with self._lock:

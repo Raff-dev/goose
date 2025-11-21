@@ -14,11 +14,13 @@ class JobStatus(str, Enum):
     FAILED = "failed"
 
 
-class JobMode(str, Enum):
-    """Specifies how a job selects tests for execution."""
+class TestStatus(str, Enum):
+    """Per-test lifecycle states reported to clients."""
 
-    ALL = "all"
-    SELECTIVE = "selective"
+    QUEUED = "queued"
+    RUNNING = "running"
+    PASSED = "passed"
+    FAILED = "failed"
 
 
-__all__ = ["JobMode", "JobStatus"]
+__all__ = ["JobStatus", "TestStatus"]

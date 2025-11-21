@@ -7,7 +7,7 @@ import json
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status  # type: ignore[import-not-found]
 from fastapi.middleware.cors import CORSMiddleware  # type: ignore[import-not-found]
 
-from goose.api.jobs import ExecutionService, Job, JobEventBroker, UnknownTestError
+from goose.api.jobs import Job, JobNotifier, JobQueue, JobTargetResolver, UnknownTestError
 from goose.api.schema import JobResource, RunRequest, TestSummary
 from goose.testing.runner import list_tests
 
@@ -33,12 +33,13 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    broker = JobEventBroker()
+    notifier = JobNotifier()
+    resolver = JobTargetResolver()
 
     def _publish_job(job: Job) -> None:
-        broker.publish(job)
+        notifier.publish(job)
 
-    execution_service = ExecutionService(on_job_update=_publish_job)
+    job_queue = JobQueue(on_job_update=_publish_job)
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -58,7 +59,8 @@ def create_app() -> FastAPI:
 
         request = payload or RunRequest()
         try:
-            job = execution_service.submit(request.tests)
+            targets = resolver.resolve(request.tests)
+            job = job_queue.enqueue(targets)
         except UnknownTestError as exc:  # pragma: no cover - validation depends on environment
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
         return JobResource.from_job(job)
@@ -67,14 +69,14 @@ def create_app() -> FastAPI:
     def list_runs() -> list[JobResource]:
         """Return snapshots for all known execution jobs."""
 
-        jobs = execution_service.list_jobs()
+        jobs = job_queue.list_jobs()
         return [JobResource.from_job(job) for job in jobs]
 
     @app.get("/runs/{job_id}", response_model=JobResource)
     def get_run(job_id: str) -> JobResource:
         """Return status details for a single execution job."""
 
-        job = execution_service.get_job(job_id)
+        job = job_queue.get_job(job_id)
         if job is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
         return JobResource.from_job(job)
@@ -84,9 +86,9 @@ def create_app() -> FastAPI:
         """Stream job updates to connected clients."""
 
         await websocket.accept()
-        queue = broker.subscribe()
+        queue = notifier.subscribe()
         try:
-            snapshot = execution_service.list_jobs()
+            snapshot = job_queue.list_jobs()
             payload = {
                 "type": "snapshot",
                 "jobs": [JobResource.from_job(job).model_dump(mode="json") for job in snapshot],
@@ -100,7 +102,7 @@ def create_app() -> FastAPI:
         except WebSocketDisconnect:
             pass
         finally:
-            broker.unsubscribe(queue)
+            notifier.unsubscribe(queue)
 
     return app
 

@@ -1,4 +1,4 @@
-"""Event broadcasting primitives for Goose API jobs."""
+"""Broadcast job updates to websocket subscribers."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ import threading
 from goose.api.jobs.models import Job
 
 
-class JobEventBroker:
-    """Simple pub/sub broker that fan-outs job updates to websocket clients."""
+class JobNotifier:
+    """Simple pub/sub broker that fans out job updates to websocket clients."""
 
     def __init__(self) -> None:
         self._subscribers: dict[asyncio.Queue[Job], asyncio.AbstractEventLoop] = {}
@@ -50,4 +50,4 @@ class JobEventBroker:
             pass
 
 
-__all__ = ["JobEventBroker"]
+__all__ = ["JobNotifier"]
