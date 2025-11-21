@@ -7,8 +7,7 @@ import json
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status  # type: ignore[import-not-found]
 from fastapi.middleware.cors import CORSMiddleware  # type: ignore[import-not-found]
 
-from goose.api.events import JobEventBroker
-from goose.api.jobs import ExecutionService, Job, UnknownTestError
+from goose.api.jobs import ExecutionService, Job, JobEventBroker, UnknownTestError
 from goose.api.schema import JobResource, RunRequest, TestSummary
 from goose.testing.runner import list_tests
 
@@ -37,7 +36,7 @@ def create_app() -> FastAPI:
     broker = JobEventBroker()
 
     def _publish_job(job: Job) -> None:
-        broker.publish(JobResource.from_job(job))
+        broker.publish(job)
 
     execution_service = ExecutionService(on_job_update=_publish_job)
 
@@ -95,7 +94,8 @@ def create_app() -> FastAPI:
             await websocket.send_text(json.dumps(payload))
 
             while True:
-                job_resource = await queue.get()
+                job_snapshot = await queue.get()
+                job_resource = JobResource.from_job(job_snapshot)
                 await websocket.send_text(json.dumps({"type": "job", "job": job_resource.model_dump(mode="json")}))
         except WebSocketDisconnect:
             pass

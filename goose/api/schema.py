@@ -20,7 +20,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from goose.api.jobs import Job, JobStatus
-from goose.error_type import ErrorType
+from goose.testing.error_type import ErrorType
 from goose.testing.types import ExecutionRecord, TestDefinition, TestResult, ValidationResult
 
 

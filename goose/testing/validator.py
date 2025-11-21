@@ -9,7 +9,7 @@ from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
 
-from goose.models import AgentResponse
+from goose.testing.models import AgentResponse
 
 load_dotenv()
 
@@ -98,3 +98,6 @@ Analyze if the agent behavior matches these expectations.
         messages = [HumanMessage(content=prompt)]
         result = self.agent.invoke({"messages": messages})
         return result["structured_response"]
+
+
+__all__ = ["AgentValidator", "ValidationResponse"]

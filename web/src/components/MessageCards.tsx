@@ -144,12 +144,12 @@ export function MessageCards({ messages }: MessageCardsProps) {
         // Icon background colors (rounded colored rectangles). Use
         // darker shades for higher opacity/contrast.
         const iconBgClass = isHuman
-          ? 'bg-blue-800/70'
+          ? 'bg-blue-800/60'
           : isAI
-          ? 'bg-violet-800/70'
+          ? 'bg-violet-800/60'
           : isTool
-          ? 'bg-orange-800/70'
-          : 'bg-gray-600/70';
+          ? 'bg-orange-800/60'
+          : 'bg-gray-600/60';
 
         const icon = isHuman ? (
           <PersonIcon className="w-5 h-5 text-white opacity-100" aria-hidden />

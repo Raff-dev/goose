@@ -8,11 +8,11 @@ from typing import Any
 
 from langchain_core.tools import BaseTool
 
-from goose.agent_validator import AgentValidator
-from goose.error_type import ErrorType
-from goose.models import AgentResponse
 from goose.testing.case import TestCase
+from goose.testing.error_type import ErrorType
+from goose.testing.models import AgentResponse
 from goose.testing.types import ExecutionRecord, ValidationResult
+from goose.testing.validator import AgentValidator
 
 
 class Goose:

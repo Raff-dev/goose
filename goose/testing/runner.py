@@ -8,10 +8,10 @@ import traceback
 from pathlib import Path
 from typing import Any
 
-from goose.error_type import ErrorType
 from goose.testing.case import TestCase
 from goose.testing.discovery import discover_tests
 from goose.testing.engine import Goose
+from goose.testing.error_type import ErrorType
 from goose.testing.fixtures import FIXTURE_REGISTRY, build_call_arguments
 from goose.testing.types import ExecutionRecord, TestDefinition, TestResult
 

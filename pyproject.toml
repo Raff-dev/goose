@@ -32,11 +32,7 @@ example = [
     "streamlit>=1.40.0",
     "typer>=0.20.0",
 ]
-api = [
-    "fastapi>=0.115.0",
-    "uvicorn>=0.32.0",
-    "websockets>=15.0.1",
-]
+api = ["fastapi>=0.115.0", "uvicorn>=0.32.0", "websockets>=15.0.1"]
 dev = [
     "absolufy-imports>=0.3.1",
     "pre-commit>=4.4.0",
@@ -60,9 +56,9 @@ all = [
 # always use 1 word
 chat = "example_system.entrypoints:chat"
 ask = "example_system.entrypoints:ask"
-goose = "goose.runner:main"
+goose = "goose.cli:main"
 dash = "app.main:main"
-api = "goose.entrypoints:serve_api"
+api = "goose.api.main:main"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

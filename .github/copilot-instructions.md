@@ -14,17 +14,9 @@
 -   Never use dynamic imports (e.g., `importlib.import_module()`)
 -   Always use `from __future__ import annotations` at the top of files with type annotations
 -   Never use quoted forward references (e.g., `"AgentResponse"` - just use `AgentResponse`)
+-   Never guard imports or logic with `typing.TYPE_CHECKING`; restructure dependencies instead
 -   Always use 120 character line length maximum
 -   Follow PEP 8 style guidelines
-
-## Project Structure
-
--   Keep tools in `goose/tools.py`
--   Keep agent logic in `goose/agent.py`
--   Keep data models in `goose/models.py`
--   Keep data instances in `goose/data.py`
--   Keep CLI entrypoints in `goose/entrypoints.py`
--   Keep examples in `examples/` directory
 
 ## LangChain Usage
 
@@ -45,5 +37,4 @@
 
 -   Use Pydantic models for all data structures
 -   Keep static data in `goose/data.py` as instantiated model objects
--   Export tools list from `goose/tools.py` as `TOOLS`
 -   Use proper error handling and JSON serialization for tool responses

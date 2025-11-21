@@ -6,8 +6,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from goose.error_type import ErrorType
-from goose.models import AgentResponse
+from goose.testing.error_type import ErrorType
+from goose.testing.models import AgentResponse
 
 
 @dataclass(slots=True)

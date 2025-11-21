@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from langchain_core.tools import BaseTool
 
-from goose.models import AgentResponse
+from goose.testing.models import AgentResponse
 from goose.testing.types import ValidationResult
 
 

@@ -1,9 +1,4 @@
-"""Shared ErrorType enum used across backend modules.
-
-Defines a stable set of failure classifications that the backend will
-return to the frontend. Using a dedicated module avoids circular
-imports between validator, testing, and schema modules.
-"""
+"""Shared ErrorType enum used across testing and API modules."""
 
 from __future__ import annotations
 

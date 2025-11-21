@@ -1,4 +1,4 @@
-"""CLI entrypoints for Goose auxiliary services."""
+"""CLI entrypoint for launching the Goose FastAPI server."""
 
 from __future__ import annotations
 
@@ -6,11 +6,11 @@ import os
 
 from uvicorn import Config, Server
 
-from goose.api import create_app
+from goose.api.app import create_app
 
 
-def serve_api() -> None:
-    """Launch the Goose FastAPI server using uvicorn."""
+def main() -> None:
+    """Launch the Goose FastAPI server via uvicorn."""
 
     host = os.environ.get("GOOSE_API_HOST", "127.0.0.1")
     port = int(os.environ.get("GOOSE_API_PORT", "8000"))
@@ -24,6 +24,3 @@ def serve_api() -> None:
     config = Config(app=app, host=host, port=port, reload=reload_enabled)
     server = Server(config)
     raise SystemExit(server.run())
-
-
-__all__ = ["serve_api"]
