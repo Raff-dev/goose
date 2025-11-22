@@ -1,12 +1,20 @@
-"""Command-line entrypoints for running Goose tests."""
+"""Command-line entrypoints for Goose.
+
+This module exposes a single ``goose`` command implemented with Typer.
+
+End-users interact with the installed console script::
+
+    goose run path/to/tests
+    goose run --list path/to/tests
+"""
 
 from __future__ import annotations
 
-import argparse
 import os
 import sys
-from collections.abc import Sequence
 from pathlib import Path
+
+import typer
 
 from goose.testing import list_tests, run_tests
 
@@ -15,6 +23,9 @@ GREEN = "\033[32m"
 RED = "\033[31m"
 YELLOW = "\033[33m"
 CYAN = "\033[36m"
+
+
+app = typer.Typer(help="Goose LLM testing CLI")
 
 
 def _supports_color() -> bool:
@@ -27,24 +38,8 @@ def _colorize(text: str, color: str) -> str:
     return f"{color}{text}{RESET}"
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    """Entry point for the ``goose`` CLI command."""
-
-    parser = argparse.ArgumentParser(description="Run Goose validation tests without pytest.")
-    parser.add_argument(
-        "path",
-        nargs="?",
-        default="example_tests",
-        help="Directory containing Goose tests to discover",
-    )
-    parser.add_argument(
-        "--list",
-        action="store_true",
-        help="List discovered tests without executing them",
-    )
-    args = parser.parse_args(argv)
-
-    target_path = Path(args.path)
+def _run_tests_command(path: str, list_only: bool) -> int:
+    target_path = Path(path)
     test_root = target_path.resolve()
     if test_root.is_file():
         test_root = test_root.parent
@@ -57,7 +52,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if settings_module:
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
 
-    if args.list:
+    if list_only:
         tests = list_tests(target_path)
         for definition in tests:
             print(definition.qualified_name)
@@ -65,8 +60,31 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     results = run_tests(target_path)
     failures = _print_results(results)
-
     return 1 if failures else 0
+
+
+@app.command()
+def run(
+    path: str = typer.Argument("example_tests", help="Directory containing Goose tests to discover"),
+    list_only: bool = typer.Option(False, "--list", help="List discovered tests without executing them"),
+) -> None:
+    """Discover and run Goose tests under PATH.
+
+    This mirrors the legacy ``goose run`` behavior and remains the
+    default when the ``goose`` command is invoked without a subcommand.
+    """
+
+    exit_code = _run_tests_command(path, list_only)
+    raise typer.Exit(code=exit_code)
+
+
+def main() -> None:  # pragma: no cover - Typer handles dispatch
+    """Entry point for the ``goose`` CLI command.
+
+    This keeps the existing console script while delegating to Typer.
+    """
+
+    app()
 
 
 def _print_results(results: list) -> int:

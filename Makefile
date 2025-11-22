@@ -1,4 +1,4 @@
-.PHONY: up app down migrations migrate web
+.PHONY: up down migrations migrate web
 
 COMPOSE_FILE := example_system/docker-compose.yaml
 STREAMLIT_PORT ?= 8501
@@ -26,10 +26,6 @@ up:
 # Stop Docker Compose services and remove volumes
 down:
 	docker compose -f $(COMPOSE_FILE) down -v
-
-# Launch the Streamlit test explorer
-app:
-	uv run streamlit run app/main.py --server.port $(STREAMLIT_PORT) --server.headless true
 
 # Create new Django migrations
 migrations:

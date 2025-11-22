@@ -12,10 +12,10 @@ dependencies = [
     "openai>=2.7.1",
     "pydantic>=2.12.4",
     "python-dotenv>=1.0.1",
+    "typer>=0.12.5",
 ]
 
 [project.optional-dependencies]
-ui = ["streamlit>=1.40.0"]
 api = ["fastapi>=0.115.0", "uvicorn>=0.32.0"]
 
 [dependency-groups]
@@ -26,12 +26,7 @@ core = [
     "pydantic>=2.12.4",
     "python-dotenv>=1.0.1",
 ]
-example = [
-    "django>=5.2.8",
-    "psycopg[binary]>=3.2.12",
-    "streamlit>=1.40.0",
-    "typer>=0.20.0",
-]
+example = ["django>=5.2.8", "psycopg[binary]>=3.2.12"]
 api = ["fastapi>=0.115.0", "uvicorn>=0.32.0", "websockets>=15.0.1"]
 dev = [
     "absolufy-imports>=0.3.1",
@@ -57,7 +52,6 @@ all = [
 chat = "example_system.entrypoints:chat"
 ask = "example_system.entrypoints:ask"
 goose = "goose.cli:main"
-dash = "app.main:main"
 api = "goose.api.main:main"
 
 [build-system]
