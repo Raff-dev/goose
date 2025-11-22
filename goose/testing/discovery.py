@@ -23,7 +23,7 @@ def discover_test_files(start_dir: str | Path) -> list[Path]:
     )
 
 
-def discover_tests(start_dir: str | Path = "example_tests") -> list[TestDefinition]:
+def discover_tests(start_dir: str | Path) -> list[TestDefinition]:
     """Import modules beneath *start_dir* and collect test functions."""
 
     project_root = Path.cwd().resolve()

@@ -1,6 +1,6 @@
 [project]
-name = "goose-llm"
-version = "0.1.0"
+name = "llm-goose"
+version = "0.1.5"
 description = "LLM testing framework for validating agent behavior and tool usage"
 license = "MIT"
 authors = [{ name = "Rafał Łazicki", email = "rafal.lazicki99@gmail.com" }]
@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-api = ["fastapi>=0.115.0", "uvicorn>=0.32.0"]
+api = ["fastapi>=0.115.0", "uvicorn>=0.32.0", "websockets>=15.0.1"]
 
 [dependency-groups]
 core = [
@@ -27,7 +27,6 @@ core = [
     "python-dotenv>=1.0.1",
 ]
 example = ["django>=5.2.8", "psycopg[binary]>=3.2.12"]
-api = ["fastapi>=0.115.0", "uvicorn>=0.32.0", "websockets>=15.0.1"]
 dev = [
     "absolufy-imports>=0.3.1",
     "pre-commit>=4.4.0",
@@ -42,7 +41,6 @@ dev = [
 ]
 all = [
     { include-group = "core" },
-    { include-group = "api" },
     { include-group = "example" },
     { include-group = "dev" },
 ]
@@ -51,8 +49,8 @@ all = [
 # always use 1 word
 chat = "example_system.entrypoints:chat"
 ask = "example_system.entrypoints:ask"
-goose = "goose.cli:main"
-api = "goose.api.main:main"
+goose = "goose.cli:app"
+api = "goose.api.app:cli"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
@@ -75,7 +73,7 @@ target-version = "py313"
 
 [tool.pylint.main]
 max-line-length = 120
-disable = ["too-few-public-methods"]
+disable = ["too-few-public-methods", "missing-module-docstring"]
 # Exclude Django migration packages from linting; they contain generated
 # boilerplate that frequently violates stylistic rules and is not useful
 # to check in pre-commit runs.

@@ -1,7 +1,7 @@
 # Goose Streamlit Dashboard PRD
 
 ## Overview
-The Goose Streamlit dashboard is a packaged user interface for inspecting, running, and troubleshooting Goose LLM tests. It ships alongside the Goose library so teams can install `goose-llm[ui]` and launch an interactive test console (`goose-dashboard`). The dashboard surfaces suite-wide health, individual test status, execution history, and run controls that trigger Goose’s testing engine.
+The Goose Streamlit dashboard is a packaged user interface for inspecting, running, and troubleshooting Goose LLM tests. It ships alongside the Goose library so teams can install `llm-goose[ui]` and launch an interactive test console (`goose-dashboard`). The dashboard surfaces suite-wide health, individual test status, execution history, and run controls that trigger Goose’s testing engine.
 
 ## Objectives
 - Enable non-Python specialists (QA, product) to trigger Goose test suites and review results without navigating code.
@@ -16,7 +16,7 @@ The Goose Streamlit dashboard is a packaged user interface for inspecting, runni
 
 ## Core User Flows
 1. **Launch Dashboard**
-   - User installs goose-llm with the UI extra.
+   - User installs llm-goose with the UI extra.
    - Runs `goose-dashboard`; Streamlit boots `goose.ui.app.main`.
    - Session state initializes with result/error storage and default view (dashboard).
 

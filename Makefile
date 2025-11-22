@@ -1,7 +1,11 @@
-.PHONY: up down migrations migrate web
+
+.PHONY: up down migrations migrate web pub-front pub-back
+
+export TWINE_CONFIG_FILE := $(abspath .pypirc)
 
 COMPOSE_FILE := example_system/docker-compose.yaml
 STREAMLIT_PORT ?= 8501
+
 up:
 	docker compose -f $(COMPOSE_FILE) up -d postgres
 	@echo "Waiting for Postgres container to become healthy..."
@@ -38,3 +42,17 @@ migrate:
 # Start the web development server
 web:
 	cd web && npm run dev
+
+pub-back:
+	uv version --bump patch
+	rm -rf dist *.egg-info
+	uv build
+	uv run twine check dist/*
+	uv run twine upload dist/* --config-file .pypirc
+
+pub-front:
+	cd web && npm version patch --no-git-tag-version
+	cd web && npm install
+	cd web && npm run build
+	cd web && npm run build:cli
+	cd web && npm publish --access public

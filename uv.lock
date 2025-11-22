@@ -355,142 +355,6 @@ wheels = [
 ]
 
 [[package]]
-name = "goose-llm"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "langchain" },
-    { name = "langchain-openai" },
-    { name = "openai" },
-    { name = "pydantic" },
-    { name = "python-dotenv" },
-    { name = "typer" },
-]
-
-[package.optional-dependencies]
-api = [
-    { name = "fastapi" },
-    { name = "uvicorn" },
-]
-
-[package.dev-dependencies]
-all = [
-    { name = "absolufy-imports" },
-    { name = "autoflake" },
-    { name = "black" },
-    { name = "django" },
-    { name = "django-stubs", extra = ["compatible-mypy"] },
-    { name = "fastapi" },
-    { name = "isort" },
-    { name = "langchain" },
-    { name = "langchain-openai" },
-    { name = "mypy" },
-    { name = "openai" },
-    { name = "pre-commit" },
-    { name = "psycopg", extra = ["binary"] },
-    { name = "pydantic" },
-    { name = "pylint" },
-    { name = "python-dotenv" },
-    { name = "pyupgrade" },
-    { name = "twine" },
-    { name = "uvicorn" },
-    { name = "websockets" },
-]
-api = [
-    { name = "fastapi" },
-    { name = "uvicorn" },
-    { name = "websockets" },
-]
-core = [
-    { name = "langchain" },
-    { name = "langchain-openai" },
-    { name = "openai" },
-    { name = "pydantic" },
-    { name = "python-dotenv" },
-]
-dev = [
-    { name = "absolufy-imports" },
-    { name = "autoflake" },
-    { name = "black" },
-    { name = "django-stubs", extra = ["compatible-mypy"] },
-    { name = "isort" },
-    { name = "mypy" },
-    { name = "pre-commit" },
-    { name = "pylint" },
-    { name = "pyupgrade" },
-    { name = "twine" },
-]
-example = [
-    { name = "django" },
-    { name = "psycopg", extra = ["binary"] },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", marker = "extra == 'api'", specifier = ">=0.115.0" },
-    { name = "langchain", specifier = ">=1.0.4" },
-    { name = "langchain-openai", specifier = ">=0.1.0" },
-    { name = "openai", specifier = ">=2.7.1" },
-    { name = "pydantic", specifier = ">=2.12.4" },
-    { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "typer", specifier = ">=0.12.5" },
-    { name = "uvicorn", marker = "extra == 'api'", specifier = ">=0.32.0" },
-]
-provides-extras = ["api"]
-
-[package.metadata.requires-dev]
-all = [
-    { name = "absolufy-imports", specifier = ">=0.3.1" },
-    { name = "autoflake", specifier = ">=2.3.1" },
-    { name = "black", specifier = ">=25.9.0" },
-    { name = "django", specifier = ">=5.2.8" },
-    { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=5.2.7" },
-    { name = "fastapi", specifier = ">=0.115.0" },
-    { name = "isort", specifier = ">=7.0.0" },
-    { name = "langchain", specifier = ">=1.0.4" },
-    { name = "langchain-openai", specifier = ">=0.1.0" },
-    { name = "mypy", specifier = ">=1.18.2" },
-    { name = "openai", specifier = ">=2.7.1" },
-    { name = "pre-commit", specifier = ">=4.4.0" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.2.12" },
-    { name = "pydantic", specifier = ">=2.12.4" },
-    { name = "pylint", specifier = ">=4.0.2" },
-    { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "pyupgrade", specifier = ">=3.21.1" },
-    { name = "twine", specifier = ">=6.2.0" },
-    { name = "uvicorn", specifier = ">=0.32.0" },
-    { name = "websockets", specifier = ">=15.0.1" },
-]
-api = [
-    { name = "fastapi", specifier = ">=0.115.0" },
-    { name = "uvicorn", specifier = ">=0.32.0" },
-    { name = "websockets", specifier = ">=15.0.1" },
-]
-core = [
-    { name = "langchain", specifier = ">=1.0.4" },
-    { name = "langchain-openai", specifier = ">=0.1.0" },
-    { name = "openai", specifier = ">=2.7.1" },
-    { name = "pydantic", specifier = ">=2.12.4" },
-    { name = "python-dotenv", specifier = ">=1.0.1" },
-]
-dev = [
-    { name = "absolufy-imports", specifier = ">=0.3.1" },
-    { name = "autoflake", specifier = ">=2.3.1" },
-    { name = "black", specifier = ">=25.9.0" },
-    { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=5.2.7" },
-    { name = "isort", specifier = ">=7.0.0" },
-    { name = "mypy", specifier = ">=1.18.2" },
-    { name = "pre-commit", specifier = ">=4.4.0" },
-    { name = "pylint", specifier = ">=4.0.2" },
-    { name = "pyupgrade", specifier = ">=3.21.1" },
-    { name = "twine", specifier = ">=6.2.0" },
-]
-example = [
-    { name = "django", specifier = ">=5.2.8" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.2.12" },
-]
-
-[[package]]
 name = "h11"
 version = "0.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -815,6 +679,128 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/dc/7d/5c658251230b233958cbf8be46600254d6248613081d670dc7fe9b241778/langsmith-0.4.41.tar.gz", hash = "sha256:b88d03bb157cf69d1afee250a658d847003babbbd9647f720edcc9b03a0857cd", size = 949854, upload-time = "2025-11-04T22:31:32.367Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/98/4c/6c0c338ca7182e4ecb7af61049415e7b3513cc6cea9aa5bf8ca508f53539/langsmith-0.4.41-py3-none-any.whl", hash = "sha256:5cdc554e5f0361bf791fdd5e8dea16d5ba9dfce09b3b8f8bba5e99450c569b27", size = 399279, upload-time = "2025-11-04T22:31:30.268Z" },
+]
+
+[[package]]
+name = "llm-goose"
+version = "0.1.5"
+source = { editable = "." }
+dependencies = [
+    { name = "langchain" },
+    { name = "langchain-openai" },
+    { name = "openai" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "typer" },
+]
+
+[package.optional-dependencies]
+api = [
+    { name = "fastapi" },
+    { name = "uvicorn" },
+    { name = "websockets" },
+]
+
+[package.dev-dependencies]
+all = [
+    { name = "absolufy-imports" },
+    { name = "autoflake" },
+    { name = "black" },
+    { name = "django" },
+    { name = "django-stubs", extra = ["compatible-mypy"] },
+    { name = "isort" },
+    { name = "langchain" },
+    { name = "langchain-openai" },
+    { name = "mypy" },
+    { name = "openai" },
+    { name = "pre-commit" },
+    { name = "psycopg", extra = ["binary"] },
+    { name = "pydantic" },
+    { name = "pylint" },
+    { name = "python-dotenv" },
+    { name = "pyupgrade" },
+    { name = "twine" },
+]
+core = [
+    { name = "langchain" },
+    { name = "langchain-openai" },
+    { name = "openai" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+]
+dev = [
+    { name = "absolufy-imports" },
+    { name = "autoflake" },
+    { name = "black" },
+    { name = "django-stubs", extra = ["compatible-mypy"] },
+    { name = "isort" },
+    { name = "mypy" },
+    { name = "pre-commit" },
+    { name = "pylint" },
+    { name = "pyupgrade" },
+    { name = "twine" },
+]
+example = [
+    { name = "django" },
+    { name = "psycopg", extra = ["binary"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", marker = "extra == 'api'", specifier = ">=0.115.0" },
+    { name = "langchain", specifier = ">=1.0.4" },
+    { name = "langchain-openai", specifier = ">=0.1.0" },
+    { name = "openai", specifier = ">=2.7.1" },
+    { name = "pydantic", specifier = ">=2.12.4" },
+    { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "typer", specifier = ">=0.12.5" },
+    { name = "uvicorn", marker = "extra == 'api'", specifier = ">=0.32.0" },
+    { name = "websockets", marker = "extra == 'api'", specifier = ">=15.0.1" },
+]
+provides-extras = ["api"]
+
+[package.metadata.requires-dev]
+all = [
+    { name = "absolufy-imports", specifier = ">=0.3.1" },
+    { name = "autoflake", specifier = ">=2.3.1" },
+    { name = "black", specifier = ">=25.9.0" },
+    { name = "django", specifier = ">=5.2.8" },
+    { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=5.2.7" },
+    { name = "isort", specifier = ">=7.0.0" },
+    { name = "langchain", specifier = ">=1.0.4" },
+    { name = "langchain-openai", specifier = ">=0.1.0" },
+    { name = "mypy", specifier = ">=1.18.2" },
+    { name = "openai", specifier = ">=2.7.1" },
+    { name = "pre-commit", specifier = ">=4.4.0" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2.12" },
+    { name = "pydantic", specifier = ">=2.12.4" },
+    { name = "pylint", specifier = ">=4.0.2" },
+    { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "pyupgrade", specifier = ">=3.21.1" },
+    { name = "twine", specifier = ">=6.2.0" },
+]
+core = [
+    { name = "langchain", specifier = ">=1.0.4" },
+    { name = "langchain-openai", specifier = ">=0.1.0" },
+    { name = "openai", specifier = ">=2.7.1" },
+    { name = "pydantic", specifier = ">=2.12.4" },
+    { name = "python-dotenv", specifier = ">=1.0.1" },
+]
+dev = [
+    { name = "absolufy-imports", specifier = ">=0.3.1" },
+    { name = "autoflake", specifier = ">=2.3.1" },
+    { name = "black", specifier = ">=25.9.0" },
+    { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=5.2.7" },
+    { name = "isort", specifier = ">=7.0.0" },
+    { name = "mypy", specifier = ">=1.18.2" },
+    { name = "pre-commit", specifier = ">=4.4.0" },
+    { name = "pylint", specifier = ">=4.0.2" },
+    { name = "pyupgrade", specifier = ">=3.21.1" },
+    { name = "twine", specifier = ">=6.2.0" },
+]
+example = [
+    { name = "django", specifier = ">=5.2.8" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2.12" },
 ]
 
 [[package]]

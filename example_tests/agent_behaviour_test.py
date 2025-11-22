@@ -143,12 +143,9 @@ def test_sale_then_inventory_update(goose: Goose) -> None:
 def test_sales_history_with_revenue_analysis(goose: Goose) -> None:
     """Complex workflow: What were sales in October 2025 and the total revenue?"""
 
-    transactions = list(Transaction.objects.prefetch_related("items__product").all())
-    total_revenue = (
-        sum(item.price_usd * item.quantity for transaction in transactions for item in transaction.items.all())
-        if transactions
-        else 0
-    )
+    transactions = Transaction.objects.prefetch_related("items__product").all()
+    total_revenue = sum(item.price_usd * item.quantity for txn in transactions for item in txn.items.all())
+
     goose.case(
         query="What were our sales in October 2025 and how much total revenue?",
         expectations=[

@@ -16,13 +16,13 @@ from goose.testing.fixtures import FIXTURE_REGISTRY, build_call_arguments
 from goose.testing.types import ExecutionRecord, TestDefinition, TestResult
 
 
-def list_tests(start_dir: str | Path = "example_tests") -> list[TestDefinition]:
+def list_tests(start_dir: str | Path) -> list[TestDefinition]:
     """Return metadata for all discovered tests."""
 
     return discover_tests(start_dir)
 
 
-def run_tests(start_dir: str | Path = "example_tests") -> list[TestResult]:
+def run_tests(start_dir: str | Path) -> list[TestResult]:
     """Execute all discovered tests and return their results."""
 
     db_state, django_active = _prepare_test_environment(setup_database=True)

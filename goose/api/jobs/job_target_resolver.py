@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from goose.api import config
 from goose.api.jobs.exceptions import UnknownTestError
 from goose.api.jobs.models import TestTarget
 from goose.testing.discovery import load_test_definition
@@ -19,7 +20,7 @@ class JobTargetResolver:
     def resolve_all(self) -> list[TestTarget]:
         """Return targets for every discovered test function."""
 
-        tests = list_tests()
+        tests = list_tests(config.get_tests_root())
         return [TestTarget.from_definition(test) for test in tests]
 
     def resolve_specific(self, requested: list[str]) -> list[TestTarget]:

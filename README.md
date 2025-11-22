@@ -1,5 +1,3 @@
-![Goose wordmark](images/goose.png)
-
 # Goose LLM 🪿
 
 Goose is a batteries‑included **Python library and CLI** for validating LLM agents end‑to‑end.
@@ -22,7 +20,7 @@ Think of Goose as **pytest for LLM agents**:
 Install the core library and CLI from PyPI:
 
 ```bash
-pip install goose-llm
+pip install llm-goose
 ```
 
 ## Writing & running tests ✅
@@ -66,11 +64,11 @@ from goose.testing import Goose
 def test_sales_history_with_revenue_analysis(goose: Goose) -> None:
     """What were sales in October 2025 and the total revenue?"""
 
-    transactions = list(Transaction.objects.prefetch_related("items__product").all())
-    total_revenue = (
-        sum(item.price_usd * item.quantity for transaction in transactions for item in transaction.items.all())
-        if transactions
-        else 0
+    transactions = Transaction.objects.prefetch_related("items__product").all()
+    total_revenue = sum(
+        item.price_usd * item.quantity
+        for txn in transactions
+        for item in txn.items.all()
     )
 
     goose.case(
@@ -158,7 +156,7 @@ When you install the `api` extra, you get an additional console script:
 Install with extras:
 
 ```bash
-pip install "goose-llm[api]"
+pip install "llm-goose[api]"
 ```
 
 Then launch the service from your project (for example, after wiring Goose into your own system):
