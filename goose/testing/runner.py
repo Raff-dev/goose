@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import time
 import traceback
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -22,15 +23,20 @@ def list_tests(start_dir: str | Path) -> list[TestDefinition]:
     return discover_tests(start_dir)
 
 
-def run_tests(start_dir: str | Path) -> list[TestResult]:
-    """Execute all discovered tests and return their results."""
+def run_tests(start_dir: str | Path) -> Iterator[TestResult]:
+    """Yield test results as soon as each test finishes."""
 
     db_state, django_active = _prepare_test_environment(setup_database=True)
-    try:
-        definitions = discover_tests(start_dir)
-        return [_execute_test(definition) for definition in definitions]
-    finally:
-        _teardown_test_environment(db_state, django_active, keep_database=True)
+    definitions = discover_tests(start_dir)
+
+    def _runner() -> Iterator[TestResult]:
+        try:
+            for definition in definitions:
+                yield _execute_test(definition)
+        finally:
+            _teardown_test_environment(db_state, django_active, keep_database=True)
+
+    return _runner()
 
 
 def run_single_test(definition: TestDefinition) -> TestResult:

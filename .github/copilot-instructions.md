@@ -17,6 +17,8 @@
 -   Never guard imports or logic with `typing.TYPE_CHECKING`; restructure dependencies instead
 -   Always use 120 character line length maximum
 -   Follow PEP 8 style guidelines
+-   Never use inline conditional expressions (`x if cond else y`); always use explicit `if` / `else` blocks
+-   Always adhere to the Zen of Python (read `import this`) when making design decisions
 
 ## LangChain Usage
 

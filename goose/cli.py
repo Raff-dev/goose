@@ -18,6 +18,7 @@ import typer
 from typer import colors
 
 from goose.testing import list_tests, run_tests
+from goose.testing.types import TestResult
 
 app = typer.Typer(help="Goose LLM testing CLI")
 
@@ -49,12 +50,20 @@ def run(
     if list_only:
         tests = list_tests(target_path)
         for definition in tests:
-            print(definition.qualified_name)
-
+            typer.echo(definition.qualified_name)
         raise typer.Exit(code=0)
 
-    results = run_tests(target_path)
-    failures = _print_results(results)
+    failures = 0
+    total = 0
+
+    for result in run_tests(target_path):
+        total += 1
+        failures += display_result(result)
+
+    passed_count = total - failures
+    passed_text = typer.style(str(passed_count), fg=colors.GREEN)
+    failed_text = typer.style(str(failures), fg=colors.RED)
+    typer.echo(f"{passed_text} passed, {failed_text} failed")
 
     if failures:
         raise typer.Exit(code=1)
@@ -62,30 +71,40 @@ def run(
     raise typer.Exit(code=0)
 
 
-def _print_results(results: list) -> int:
-    """Print test results to stdout and return the number of failures.
+def display_result(result: TestResult) -> int:
+    """Render a single test result and report whether it failed.
 
-    This helper extracts formatting and printing logic out of ``main`` to
-    reduce the number of local variables in that function (keeps
-    linting happy) while keeping output formatting centralized.
+    Args:
+        result: Test execution outcome yielded from ``run_tests``.
+
+    Returns:
+        int: ``0`` when the test passed, ``1`` when it failed.
     """
+    if result.passed:
+        status_label = "PASS"
+        status_color = colors.GREEN
+    else:
+        status_label = "FAIL"
+        status_color = colors.RED
 
-    failures = 0
-    for result in results:
+    status_text = typer.style(status_label, fg=status_color)
+    duration_text = typer.style(f"{result.duration:.2f}s", fg=colors.CYAN)
+    typer.echo(f"{status_text} {result.name} ({duration_text})")
+
+    if result.error:
+        divider = typer.style("-" * 40, fg=colors.WHITE)
         if result.passed:
-            status_text = typer.style("PASS", fg=colors.GREEN)
+            marker = typer.style("[WARN]", fg=colors.YELLOW)
+            body = typer.style(result.error, fg=colors.YELLOW)
         else:
-            status_text = typer.style("FAIL", fg=colors.RED)
+            marker = typer.style("[ERROR]", fg=colors.RED)
+            body = typer.style(result.error, fg=colors.RED)
 
-        duration_text = typer.style(f"{result.duration:.2f}s", fg=colors.CYAN)
-        typer.echo(f"{status_text} {result.name} ({duration_text})")
-        if result.error:
-            typer.echo(typer.style(result.error, fg=colors.YELLOW if result.passed else colors.RED))
-        if not result.passed:
-            failures += 1
+        typer.echo(divider)
+        typer.echo(f"{marker} {body}")
+        typer.echo(divider)
 
-    typer.echo(
-        f"{typer.style(str(len(results) - failures), fg=colors.GREEN)} passed, "
-        f"{typer.style(str(failures), fg=colors.RED)} failed"
-    )
-    return failures
+    if result.passed:
+        return 0
+
+    return 1
