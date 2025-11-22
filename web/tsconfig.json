@@ -11,7 +11,8 @@
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
         "baseUrl": "./src",
-        "types": ["node", "react", "react-dom", "vite/client"]
+        "types": ["node", "react", "react-dom", "vite/client"],
+        "noEmit": true
     },
     "include": ["src"],
     "references": [{ "path": "tsconfig.node.json" }]

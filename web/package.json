@@ -1,11 +1,16 @@
 {
-  "name": "goose-dashboard",
-  "version": "0.1.0",
-  "private": true,
+  "name": "@llm-goose/dashboard-cli",
+  "version": "0.1.2",
+  "private": false,
   "type": "module",
+  "bin": {
+    "goose-dashboard": "dist/cli.js"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && mkdir -p dist && mv dist dist-tmp && mkdir -p dist && mv dist-tmp dist/client",
+    "build:cli": "tsc -p tsconfig.cli.json",
+    "prepublishOnly": "npm run build && npm run build:cli",
     "preview": "vite preview",
     "lint": "eslint \"src/**/*.{ts,tsx}\""
   },

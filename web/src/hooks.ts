@@ -52,7 +52,7 @@ export const useRuns = () => {
 
     let ws: WebSocket | null = null;
     let shouldReconnect = true;
-    let retryHandle: ReturnType<typeof setTimeout> | null = null;
+    let retryHandle: number | null = null;
 
     const handleMessage = (event: MessageEvent<string>) => {
       try {
@@ -94,7 +94,7 @@ export const useRuns = () => {
 
     return () => {
       shouldReconnect = false;
-      if (retryHandle) {
+      if (retryHandle !== null) {
         window.clearTimeout(retryHandle);
       }
       ws?.close();
