@@ -17,22 +17,18 @@ class TestCase:  # pylint: disable=too-many-instance-attributes
         expectations: list[str],
         *,
         expected_tool_calls: list[BaseTool] | None = None,
-    ):  # pylint: disable=too-many-arguments
+    ):
         self.query = query
         self.expectations = expectations
-        self.expected_tool_calls = list(expected_tool_calls) if expected_tool_calls is not None else None
-        self._result: ValidationResult | None = None
+        self.expected_tool_calls = expected_tool_calls
         self.last_response: AgentResponse | None = None
 
-    def record_result(self, result: ValidationResult) -> None:
-        """Persist the latest validation result."""
-
-        self._result = result
-
-    def get_result(self) -> ValidationResult | None:
-        """Return the cached validation result if available."""
-
-        return self._result
+    @property
+    def expected_tool_names(self) -> list[str]:
+        """Return the names of the expected tool calls."""
+        if not self.expected_tool_calls:
+            return []
+        return [tool.name for tool in self.expected_tool_calls]
 
     def validate_tool_calls(self, response: AgentResponse) -> ValidationResult:
         """Ensure that expected tool calls were made."""

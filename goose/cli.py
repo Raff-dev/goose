@@ -47,16 +47,17 @@ def run(
     if settings_module:
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
 
+    definitions = list_tests(target_path)
+
     if list_only:
-        tests = list_tests(target_path)
-        for definition in tests:
+        for definition in definitions:
             typer.echo(definition.qualified_name)
         raise typer.Exit(code=0)
 
     failures = 0
     total = 0
 
-    for result in run_tests(target_path):
+    for result in run_tests(definitions):
         total += 1
         failures += display_result(result)
 
@@ -72,14 +73,7 @@ def run(
 
 
 def display_result(result: TestResult) -> int:
-    """Render a single test result and report whether it failed.
-
-    Args:
-        result: Test execution outcome yielded from ``run_tests``.
-
-    Returns:
-        int: ``0`` when the test passed, ``1`` when it failed.
-    """
+    """Render a single test result and report whether it failed."""
     if result.passed:
         status_label = "PASS"
         status_color = colors.GREEN
@@ -93,12 +87,8 @@ def display_result(result: TestResult) -> int:
 
     if result.error:
         divider = typer.style("-" * 40, fg=colors.WHITE)
-        if result.passed:
-            marker = typer.style("[WARN]", fg=colors.YELLOW)
-            body = typer.style(result.error, fg=colors.YELLOW)
-        else:
-            marker = typer.style("[ERROR]", fg=colors.RED)
-            body = typer.style(result.error, fg=colors.RED)
+        marker = typer.style("[ERROR]", fg=colors.RED)
+        body = typer.style(result.error, fg=colors.RED)
 
         typer.echo(divider)
         typer.echo(f"{marker} {body}")

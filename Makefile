@@ -1,5 +1,5 @@
 
-.PHONY: up down migrations migrate web pub-front pub-back
+.PHONY: up down migrations migrate web pub-front pub-back pub
 
 export TWINE_CONFIG_FILE := $(abspath .pypirc)
 
@@ -43,6 +43,12 @@ migrate:
 web:
 	cd web && npm run dev
 
+# Publish both backend and frontend packages
+pub:
+	$(MAKE) pub-back
+	$(MAKE) pub-front
+
+#  Publish backend package to PyPI
 pub-back:
 	uv version --bump patch
 	rm -rf dist *.egg-info
@@ -50,6 +56,7 @@ pub-back:
 	uv run twine check dist/*
 	uv run twine upload dist/* --config-file .pypirc
 
+#  Publish frontend package to npm
 pub-front:
 	cd web && npm version patch --no-git-tag-version
 	cd web && npm install

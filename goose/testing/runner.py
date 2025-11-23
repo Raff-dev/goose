@@ -2,168 +2,136 @@
 
 from __future__ import annotations
 
-import os
 import time
 import traceback
 from collections.abc import Iterator
-from pathlib import Path
 from typing import Any
 
-from goose.testing.case import TestCase
-from goose.testing.discovery import discover_tests
 from goose.testing.engine import Goose
-from goose.testing.error_type import ErrorType
 from goose.testing.fixtures import FIXTURE_REGISTRY, build_call_arguments
 from goose.testing.types import ExecutionRecord, TestDefinition, TestResult
 
 
-def list_tests(start_dir: str | Path) -> list[TestDefinition]:
-    """Return metadata for all discovered tests."""
+class BaseTestRunner:
+    """Base runner that exposes setup/teardown hooks."""
 
-    return discover_tests(start_dir)
+    def __init__(self) -> None:
+        self._active_depth = 0
+        self._active = False
 
+    def setup(self) -> None:  # pylint: disable=unused-argument
+        pass
 
-def run_tests(start_dir: str | Path) -> Iterator[TestResult]:
-    """Yield test results as soon as each test finishes."""
+    def teardown(self) -> None:  # pylint: disable=unused-argument
+        pass
 
-    db_state, django_active = _prepare_test_environment(setup_database=True)
-    definitions = discover_tests(start_dir)
-
-    def _runner() -> Iterator[TestResult]:
+    def run_suite(self, definitions: list[TestDefinition]) -> Iterator[TestResult]:
+        self.setup()
         try:
             for definition in definitions:
                 yield _execute_test(definition)
         finally:
-            _teardown_test_environment(db_state, django_active, keep_database=True)
+            self.teardown()
 
-    return _runner()
-
-
-def run_single_test(definition: TestDefinition) -> TestResult:
-    """Execute a single test definition and return its result."""
-
-    db_state, django_active = _prepare_test_environment(setup_database=True)
-    try:
-        return _execute_test(definition)
-    finally:
-        _teardown_test_environment(db_state, django_active, keep_database=True)
+    def run_single(self, definition: TestDefinition) -> TestResult:
+        self.setup()
+        try:
+            return _execute_test(definition)
+        finally:
+            self.teardown()
 
 
-def _prepare_test_environment(*, setup_database: bool) -> tuple[Any | None, bool]:
-    if not os.environ.get("DJANGO_SETTINGS_MODULE"):
-        return None, False
+class DjangoTestRunner(BaseTestRunner):
+    """Runner that configures Django's test environment when available."""
 
-    try:
-        from django.test.utils import (  # type: ignore[attr-defined]  # pylint: disable=import-outside-toplevel
-            setup_databases,
-            setup_test_environment,
-        )
-    except ImportError:  # pragma: no cover - Django not installed
-        return None, False
+    def __init__(self) -> None:
+        super().__init__()
+        self._db_state: Any | None = None
 
-    setup_test_environment()
-    if setup_database:
-        db_state = setup_databases(verbosity=0, interactive=False, keepdb=True)
-    else:
-        db_state = None
-    return db_state, True
+    def setup(self) -> None:
+        from django.test.utils import setup_databases, setup_test_environment  # noqa
 
+        setup_test_environment()
+        self._db_state = setup_databases(verbosity=0, interactive=False, keepdb=True)
+        self._active = True
 
-def _teardown_test_environment(db_state: Any | None, active: bool, *, keep_database: bool) -> None:
-    if not active:
-        return
+    def teardown(self) -> None:
+        from django.test.utils import teardown_databases, teardown_test_environment  # noqa
 
-    from django.test.utils import (  # type: ignore[attr-defined]  # pylint: disable=import-outside-toplevel
-        teardown_databases,
-        teardown_test_environment,
-    )
+        if not self._active:
+            return
 
-    if db_state is not None:
-        teardown_databases(db_state, verbosity=0, keepdb=keep_database)
-    teardown_test_environment()
+        teardown_databases(self._db_state, verbosity=0, keepdb=True)
+        teardown_test_environment()
+
 
 
 def _execute_test(definition: TestDefinition) -> TestResult:
     start = time.time()
     fixture_cache: dict[str, Any] = {}
-    executions: list[ExecutionRecord] = []
+    execution: ExecutionRecord | None = None
 
     try:
         FIXTURE_REGISTRY.apply_autouse(fixture_cache)
         kwargs = build_call_arguments(definition.func, fixture_cache)
-        outcome = definition.func(**kwargs)
-        executions = _process_test_outcome(outcome, fixture_cache)
+
+        # run the test here
+        definition.func(**kwargs)
+
+        execution = _get_execution(fixture_cache)
     except AssertionError as exc:
+
         duration = time.time() - start
-        message = str(exc) or repr(exc)
-        executions = _collect_execution_history(fixture_cache) or executions
+        execution = _get_execution(fixture_cache)
         return TestResult(
             definition=definition,
             passed=False,
             duration=duration,
-            error=message,
-            error_type=_derive_error_type(executions, ErrorType.VALIDATION),
-            executions=executions,
+            error=str(exc),
+            error_type=execution.error_type,
+            execution=execution,
         )
-    except Exception:  # pragma: no cover - unexpected failure path  # pylint: disable=broad-exception-caught
+    except Exception:  # pylint: disable=broad-exception-caught
+
         duration = time.time() - start
-        executions = _collect_execution_history(fixture_cache) or executions
+        execution = _get_execution(fixture_cache)
         return TestResult(
             definition=definition,
             passed=False,
             duration=duration,
             error=traceback.format_exc(),
-            error_type=_derive_error_type(executions, ErrorType.UNEXPECTED),
-            executions=executions,
+            error_type=execution.error_type,
+            execution=execution,
         )
 
     duration = time.time() - start
-    executions = _collect_execution_history(fixture_cache) or executions
-    return TestResult(definition=definition, passed=True, duration=duration, executions=executions)
+    execution = _get_execution(fixture_cache)
+    return TestResult(
+        definition=definition,
+        passed=True,
+        duration=duration,
+        execution=execution
+    )
 
 
-def _process_test_outcome(outcome: Any, fixture_cache: dict[str, Any]) -> list[ExecutionRecord]:
-    if outcome is None:
-        return _collect_execution_history(fixture_cache)
 
-    cases: list[TestCase]
-    if isinstance(outcome, TestCase):
-        cases = [outcome]
-    elif isinstance(outcome, (list, tuple)) and all(isinstance(item, TestCase) for item in outcome):
-        cases = list(outcome)
-    else:
-        return _collect_execution_history(fixture_cache)
-
-    goose_instance = _extract_goose_fixture(fixture_cache)
-    if goose_instance is None:
-        raise AssertionError("No Goose fixture available to execute TestCase instances.")
-
-    for case in cases:
-        goose_instance.assert_case(case)
-
-    return goose_instance.consume_execution_history()
-
-
-def _extract_goose_fixture(cache: dict[str, Any]) -> Goose | None:
+def _extract_goose_fixture(cache: dict[str, Any]) -> Goose:
     for candidate in ("goose", "goose_fixture"):
         value = cache.get(candidate)
-        if isinstance(value, Goose):
+        if hasattr(value, "get_execution"):
             return value
-    return None
+
+    raise AssertionError("No Goose fixture available to retrieve execution history.")
 
 
-def _collect_execution_history(cache: dict[str, Any]) -> list[ExecutionRecord]:
+def _get_execution(cache: dict[str, Any]) -> ExecutionRecord:
     goose_instance = _extract_goose_fixture(cache)
-    if goose_instance is None:
-        return []
-    return goose_instance.consume_execution_history()
+    return goose_instance.get_execution()
 
 
-def _derive_error_type(executions: list[ExecutionRecord], fallback: ErrorType | None) -> ErrorType | None:
-    for record in reversed(executions):
-        if record.error_type is not None:
-            return record.error_type
-    return fallback
 
 
-__all__ = ["list_tests", "run_tests", "run_single_test"]
+__all__ = [
+    "BaseTestRunner",
+    "DjangoTestRunner",
+]

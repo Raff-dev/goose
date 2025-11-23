@@ -11,7 +11,7 @@ from goose.api.jobs.enums import TestStatus
 from goose.api.jobs.models import Job, TestTarget
 from goose.api.jobs.state import JobStore
 from goose.testing.discovery import load_test_definition
-from goose.testing.runner import run_single_test
+from goose.testing.runner import run_test
 from goose.testing.types import TestResult
 
 
@@ -45,12 +45,14 @@ class JobQueue:
             qualified_name = target.qualified_name
             running_snapshot = self.job_store.update_test_status(job_id, qualified_name, TestStatus.RUNNING)
             self._notify(running_snapshot)
+
             definition = load_test_definition(target.module, target.name)
-            result = run_single_test(definition)
+            result = run_test(definition)
             results.append(result)
             status = TestStatus.PASSED if result.passed else TestStatus.FAILED
             snapshot = self.job_store.update_test_status(job_id, qualified_name, status)
             self._notify(snapshot)
+
         return results
 
     def list_jobs(self) -> list[Job]:

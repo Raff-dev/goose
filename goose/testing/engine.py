@@ -11,84 +11,79 @@ from langchain_core.tools import BaseTool
 from goose.testing.case import TestCase
 from goose.testing.error_type import ErrorType
 from goose.testing.models import AgentResponse
+from goose.testing.runner import BaseTestRunner
 from goose.testing.types import ExecutionRecord, ValidationResult
 from goose.testing.validator import AgentValidator
 
 
 class Goose:
-    """Testing helper that wraps the agent and validator logic."""
+    """Testing helper that wraps the agent, validator, and runner logic."""
 
-    def __init__(self, agent_query_func: Callable[[str], dict[str, Any]]):
+    def __init__(
+        self,
+        agent_query_func: Callable[[str], dict[str, Any]],
+        *,
+        test_runner: BaseTestRunner = BaseTestRunner(),
+    ) -> None:
         self._agent_query_func = agent_query_func
         self._validation_agent = AgentValidator()
-        self._execution_history: list[ExecutionRecord] = []
+        self._execution: ExecutionRecord | None = None
+        self.runner = test_runner
 
     def case(
         self,
         query: str,
         expectations: list[str],
         *,
-        expected_tool_calls: Iterable[BaseTool] | None = None,
+        expected_tool_calls: list[BaseTool] | None = None,
     ) -> ValidationResult:
         """Build a test case and execute it immediately."""
-        # pylint: disable=too-many-arguments
 
         test_case = TestCase(
             query=query,
             expectations=expectations,
-            expected_tool_calls=list(expected_tool_calls) if expected_tool_calls is not None else None,
+            expected_tool_calls=expected_tool_calls,
         )
-
-        return self.assert_case(test_case)
-
-    def assert_case(self, test_case: TestCase) -> ValidationResult:
-        """Run a test case and raise if it fails."""
-        expected_tool_names = self._expected_tool_names(test_case)
 
         try:
             result = self._execute_case(test_case)
-            test_case.record_result(result)
         except Exception as exc:  # pragma: no cover - propagate but ensure execution recorded
-            err_type = self._classify_exception(exc)
-            self._execution_history.append(
-                ExecutionRecord(
-                    query=test_case.query,
-                    expectations=list(test_case.expectations),
-                    expected_tool_calls=expected_tool_names,
-                    response=test_case.last_response,
-                    validation=None,
-                    error=str(exc),
-                    error_type=err_type,
-                )
-            )
+            self._record_execution(test_case=test_case, result=None, exc=exc)
             raise
 
-        if not result.success and result.error_type is None:
-            raise RuntimeError("Failing ValidationResult missing error_type")
-
-        self._execution_history.append(
-            ExecutionRecord(
-                query=test_case.query,
-                expectations=list(test_case.expectations),
-                expected_tool_calls=expected_tool_names,
-                response=test_case.last_response,
-                validation=result,
-                error_type=result.error_type,
-            )
-        )
+        self._record_execution(test_case=test_case, result=result, exc=None)
 
         if not result.success:
             raise AssertionError(result.reasoning or "Goose validation failed")
+
         return result
 
-    def consume_execution_history(self) -> list[ExecutionRecord]:
+    def _record_execution(self, test_case: TestCase, result: ValidationResult | None, exc: Exception | None) -> None:
+        """Record an execution in the history log."""
+        self._execution = ExecutionRecord(
+            query=test_case.query,
+            expectations=list(test_case.expectations),
+            expected_tool_calls=test_case.expected_tool_names,
+            response=test_case.last_response,
+            validation=result,
+            exception=exc,
+        )
+
+    def consume_execution_history(self) -> ExecutionRecord | None:
         """Return and clear recorded execution history."""
 
-        history = list(self._execution_history)
-        self._execution_history.clear()
-        return history
+        execution = self._execution
+        self._execution = None
+        return execution
+
+    def get_execution(self) -> ExecutionRecord | None:
+        """Compatibility shim for legacy runner helpers."""
+
+        return self.consume_execution_history()
 
     def _execute_case(self, test_case: TestCase) -> ValidationResult:
+        """Run a single test case and return the validation result."""
+
         start_time = time.time()
         raw_response = self._agent_query_func(test_case.query)
         execution_time = time.time() - start_time
@@ -126,15 +121,6 @@ class Goose:
             error_type=ErrorType.TOOL_CALL,
         )
 
-    @staticmethod
-    def _classify_exception(exc: Exception) -> ErrorType:
-        return ErrorType.VALIDATION if isinstance(exc, AssertionError) else ErrorType.UNEXPECTED
-
-    @staticmethod
-    def _expected_tool_names(test_case: TestCase) -> list[str]:
-        if not test_case.expected_tool_calls:
-            return []
-        return [tool.name for tool in test_case.expected_tool_calls]
 
 
 __all__ = ["Goose"]

@@ -45,7 +45,7 @@ class TestResult:
     duration: float
     error: str | None = None
     error_type: ErrorType | None = None
-    executions: list[ExecutionRecord] = field(default_factory=list)
+    execution: ExecutionRecord | None = None
 
     @property
     def name(self) -> str:
@@ -63,9 +63,29 @@ class ExecutionRecord:
     expected_tool_calls: list[str]
     response: AgentResponse | None
     validation: ValidationResult | None = None
-    error: str | None = None
-    # Backend-supplied explicit classification of the failure (if any)
-    error_type: ErrorType | None = None
+    exception: Exception | None = None
+
+    @property
+    def error(self) -> str | None:
+        """Return the error message from validation or exception."""
+
+        if self.validation and not self.validation.success:
+            return self.validation.reasoning
+        if self.exception:
+            return str(self.exception)
+        return None
+
+    @property
+    def error_type(self) -> ErrorType | None:
+        """Return the error type from validation or exception."""
+
+        if self.validation and not self.validation.success:
+            return self.validation.error_type
+        if self.exception:
+            if isinstance(self.exception, AssertionError):
+                return ErrorType.VALIDATION
+            return ErrorType.UNEXPECTED
+        return None
 
 
 __all__ = ["TestDefinition", "ValidationResult", "TestResult", "ExecutionRecord"]
