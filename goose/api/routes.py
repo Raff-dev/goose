@@ -5,21 +5,15 @@ import json
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, status  # type: ignore[import-not-found]
 
 from goose.api import config
-from goose.api.jobs import Job, JobNotifier, JobQueue, JobTargetResolver, UnknownTestError
+from goose.api.jobs import JobNotifier, JobQueue, UnknownTestError
+from goose.api.jobs.job_target_resolver import resolve_targets
 from goose.api.schema import JobResource, RunRequest, TestSummary
-from goose.testing.runner import list_tests
+from goose.testing.discovery import discover_tests
 
 router = APIRouter()
 
 notifier = JobNotifier()
-resolver = JobTargetResolver()
-
-
-def _publish_job(job: Job) -> None:
-    notifier.publish(job)
-
-
-job_queue = JobQueue(on_job_update=_publish_job)
+job_queue = JobQueue(on_job_update=notifier.publish)
 
 
 @router.get("/health")
@@ -32,7 +26,7 @@ def health() -> dict[str, str]:
 @router.get("/tests", response_model=list[TestSummary])
 def get_tests() -> list[TestSummary]:
     """Return metadata for all discovered Goose tests."""
-    definitions = list_tests(config.get_tests_root())
+    definitions = discover_tests(config.get_tests_root())
     return [TestSummary.from_definition(definition) for definition in definitions]
 
 
@@ -42,7 +36,7 @@ def create_run(payload: RunRequest | None = None) -> JobResource:
 
     request = payload or RunRequest()
     try:
-        targets = resolver.resolve(request.tests)
+        targets = resolve_targets(request.tests)
         job = job_queue.enqueue(targets)
     except UnknownTestError as exc:  # pragma: no cover - validation depends on environment
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

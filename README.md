@@ -84,8 +84,10 @@ def test_sales_history_with_revenue_analysis(goose: Goose) -> None:
     )
 ```
 
-In the full example suite, the `goose` fixture comes from `example_tests/conftest.py`, where it wraps
-the example agent and seeds sample data using `@fixture` from `goose.testing`.
+In the full example suite, the `goose` fixture is registered automatically through
+`example_tests/goose_config.py`, which wires up the example agent and runner. The remaining fixtures in
+`example_tests/conftest.py` (like the `setup_data` autouse fixture) continue to seed data using
+`@fixture` from `goose.testing`.
 
 ### 3. Pytest‑inspired style (including failures)
 
@@ -115,15 +117,27 @@ assertion in the same run, just like you’d expect from a testing framework.
 
 ### 4. Run tests from the CLI
 
-Use the bundled CLI (installed as the `goose` command) to discover and execute your test modules:
+Use the bundled CLI (installed as the `goose` command) to discover and execute your test modules. Point
+it at a Goose application using `module.path:factory` syntax:
 
 ```bash
 # execute every test module under example_tests/
-goose run example_tests
+goose run example_tests.goose_config:get_goose_config
 
 # list discovered tests without running them
-goose run --list example_tests
+goose run --list example_tests.goose_config:get_goose_config
 ```
+
+### 5. Custom lifecycle hooks (optional)
+
+Goose detects framework integrations via lifecycle hook classes:
+
+- `TestLifecycleHooks` – default no-op setup that works everywhere.
+- `DjangoTestHooks` – automatically used when `DJANGO_SETTINGS_MODULE` is set and Django is installed.
+
+If you need special setup/teardown logic, subclass `TestLifecycleHooks`, override `setup()` /
+`teardown()` or the new `pre_test()` / `post_test()` hooks, and pass an instance to
+`Goose(..., hooks=MyHooks())` when wiring your test config.
 
 ## Example system & jobs API (optional) 🌐
 

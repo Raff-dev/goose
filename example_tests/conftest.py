@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from example_system.agent import Agent
 from example_system.models import Product, ProductInventory, Transaction, TransactionItem, create_transaction
-from goose.testing import Goose, fixture
+from goose.testing import DjangoTestHooks, Goose, fixture
 
 
 @fixture(autouse=True)
@@ -58,4 +58,4 @@ def setup_data() -> None:
 def goose_fixture() -> Goose:
     """Provide a Goose testing instance for the agent."""
     agent = Agent()
-    return Goose(agent.query)
+    return Goose(agent.query, hooks=DjangoTestHooks())

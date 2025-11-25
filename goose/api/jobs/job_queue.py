@@ -8,11 +8,10 @@ import traceback
 from collections.abc import Callable
 
 from goose.api.jobs.enums import TestStatus
-from goose.api.jobs.models import Job, TestTarget
+from goose.api.jobs.models import Job
 from goose.api.jobs.state import JobStore
-from goose.testing.discovery import load_test_definition
-from goose.testing.runner import run_test
-from goose.testing.types import TestResult
+from goose.testing.runner import execute_test
+from goose.testing.types import TestDefinition, TestResult
 
 
 class JobQueue:
@@ -22,14 +21,14 @@ class JobQueue:
         self,
         *,
         on_job_update: Callable[[Job], None] | None = None,
-        job_store: JobStore | None = None,
+        job_store: JobStore = JobStore(),
     ) -> None:
-        self.job_store = job_store or JobStore()
-        self._queue: queue.Queue[tuple[str, list[TestTarget]]] = queue.Queue()
+        self.job_store = job_store
+        self._queue: queue.Queue[tuple[str, list[TestDefinition]]] = queue.Queue()
         self._on_job_update = on_job_update
         threading.Thread(target=self._worker_loop, daemon=True, name="GooseJobWorker").start()
 
-    def enqueue(self, targets: list[TestTarget]) -> Job:
+    def enqueue(self, targets: list[TestDefinition]) -> Job:
         """Create a job and place it on the execution queue."""
 
         job = self.job_store.create_job(targets=targets)
@@ -37,17 +36,16 @@ class JobQueue:
         self._notify(job)
         return job
 
-    def _execute_targets(self, job_id: str, targets: list[TestTarget]) -> list[TestResult]:
+    def _execute_targets(self, job_id: str, targets: list[TestDefinition]) -> list[TestResult]:
         """Run the provided tests sequentially, updating per-test status."""
 
         results: list[TestResult] = []
-        for target in targets:
-            qualified_name = target.qualified_name
+        for definition in targets:
+            qualified_name = definition.qualified_name
             running_snapshot = self.job_store.update_test_status(job_id, qualified_name, TestStatus.RUNNING)
             self._notify(running_snapshot)
 
-            definition = load_test_definition(target.module, target.name)
-            result = run_test(definition)
+            result = execute_test(definition)
             results.append(result)
             status = TestStatus.PASSED if result.passed else TestStatus.FAILED
             snapshot = self.job_store.update_test_status(job_id, qualified_name, status)
@@ -72,7 +70,7 @@ class JobQueue:
             return
         self._on_job_update(job)
 
-    def _run_job(self, job_id: str, targets: list[TestTarget]) -> Job | None:
+    def _run_job(self, job_id: str, targets: list[TestDefinition]) -> Job | None:
         """Execute a queued job and update observers."""
 
         job = self.job_store.mark_running(job_id)

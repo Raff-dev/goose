@@ -169,7 +169,7 @@ class TestResultModel(BaseModel):
         present a self-contained result object.
         """
 
-        executions = [ExecutionRecordModel.from_execution(record) for record in result.executions]
+        executions = [ExecutionRecordModel.from_execution(result.execution)]
         definition = result.definition
         return cls(
             qualified_name=definition.qualified_name,

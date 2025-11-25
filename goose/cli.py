@@ -10,14 +10,14 @@ End-users interact with the installed console script::
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
 import typer
 from typer import colors
 
-from goose.testing import list_tests, run_tests
+from goose.testing.discovery import discover_tests
+from goose.testing.runner import execute_test
 from goose.testing.types import TestResult
 
 app = typer.Typer(help="Goose LLM testing CLI")
@@ -43,11 +43,7 @@ def run(
         if str(candidate) not in sys.path:
             sys.path.insert(0, str(candidate))
 
-    settings_module = os.environ.get("GOOSE_TEST_SETTINGS")
-    if settings_module:
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
-
-    definitions = list_tests(target_path)
+    definitions = discover_tests(target_path)
 
     if list_only:
         for definition in definitions:
@@ -57,7 +53,8 @@ def run(
     failures = 0
     total = 0
 
-    for result in run_tests(definitions):
+    for definition in definitions:
+        result = execute_test(definition)
         total += 1
         failures += display_result(result)
 

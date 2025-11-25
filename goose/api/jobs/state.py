@@ -8,8 +8,8 @@ import uuid
 from datetime import datetime, timezone
 
 from goose.api.jobs.enums import JobStatus, TestStatus
-from goose.api.jobs.models import Job, TestTarget
-from goose.testing.types import TestResult
+from goose.api.jobs.models import Job
+from goose.testing.types import TestDefinition, TestResult
 
 
 class JobStore:
@@ -19,7 +19,7 @@ class JobStore:
         self._jobs: dict[str, Job] = {}
         self._lock = threading.Lock()
 
-    def create_job(self, *, targets: list[TestTarget]) -> Job:
+    def create_job(self, *, targets: list[TestDefinition]) -> Job:
         """Create and persist a new job in the queued state."""
 
         job_id = str(uuid.uuid4())

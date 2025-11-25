@@ -3,32 +3,32 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from typing import Any
 
 from langchain_core.tools import BaseTool
 
 from goose.testing.case import TestCase
 from goose.testing.error_type import ErrorType
+from goose.testing.hooks import TestLifecycleHooks
 from goose.testing.models import AgentResponse
-from goose.testing.runner import BaseTestRunner
 from goose.testing.types import ExecutionRecord, ValidationResult
 from goose.testing.validator import AgentValidator
 
 
 class Goose:
-    """Testing helper that wraps the agent, validator, and runner logic."""
+    """Testing helper that wraps the agent, validator, and lifecycle hooks."""
 
     def __init__(
         self,
         agent_query_func: Callable[[str], dict[str, Any]],
         *,
-        test_runner: BaseTestRunner = BaseTestRunner(),
+        hooks: TestLifecycleHooks | None = None,
     ) -> None:
         self._agent_query_func = agent_query_func
         self._validation_agent = AgentValidator()
         self._execution: ExecutionRecord | None = None
-        self.runner = test_runner
+        self.hooks = hooks or TestLifecycleHooks()
 
     def case(
         self,
@@ -69,17 +69,13 @@ class Goose:
             exception=exc,
         )
 
-    def consume_execution_history(self) -> ExecutionRecord | None:
-        """Return and clear recorded execution history."""
-
+    def get_execution(self) -> ExecutionRecord:
+        """Return the last recorded execution for the current test."""
         execution = self._execution
         self._execution = None
+        if execution is None:
+            raise AssertionError("No Goose execution recorded for the current test run.")
         return execution
-
-    def get_execution(self) -> ExecutionRecord | None:
-        """Compatibility shim for legacy runner helpers."""
-
-        return self.consume_execution_history()
 
     def _execute_case(self, test_case: TestCase) -> ValidationResult:
         """Run a single test case and return the validation result."""
@@ -120,7 +116,6 @@ class Goose:
             unmet_expectation_numbers=list(tool_call_validation.unmet_expectation_numbers),
             error_type=ErrorType.TOOL_CALL,
         )
-
 
 
 __all__ = ["Goose"]
