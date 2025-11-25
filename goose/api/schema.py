@@ -169,7 +169,9 @@ class TestResultModel(BaseModel):
         present a self-contained result object.
         """
 
-        executions = [ExecutionRecordModel.from_execution(result.execution)]
+        executions: list[ExecutionRecordModel] = []
+        if result.execution is not None:
+            executions.append(ExecutionRecordModel.from_execution(result.execution))
         definition = result.definition
         return cls(
             qualified_name=definition.qualified_name,

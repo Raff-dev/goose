@@ -23,27 +23,43 @@ from goose.testing.types import TestResult
 app = typer.Typer(help="Goose LLM testing CLI")
 
 
-@app.command()
-def run(
-    path: str = typer.Argument(..., help="Directory containing Goose tests to discover"),
-    list_only: bool = typer.Option(False, "--list", help="List discovered tests without executing them"),
-) -> None:
-    """Discover and run Goose tests under PATH.
+def _ensure_test_paths_on_sys_path(target_path: Path) -> None:
+    """Resolve the test root and ensure it (plus parent) are importable.
 
-    This mirrors the legacy ``goose run`` behavior and remains the
-    default when the ``goose`` command is invoked without a subcommand.
+    Goose discovers tests via importlib, so the resolved test directory
+    and its parent need to exist on ``sys.path`` even when the CLI is
+    invoked from another working directory. Prepending both paths
+    guarantees local fixtures and helper modules can be imported without
+    forcing users to ``cd`` into the test folder or install it as a
+    package.
     """
 
-    target_path = Path(path)
     test_root = target_path.resolve()
     if test_root.is_file():
         test_root = test_root.parent
 
     for candidate in (test_root, test_root.parent):
-        if str(candidate) not in sys.path:
-            sys.path.insert(0, str(candidate))
+        candidate_path = str(candidate)
+        if candidate_path not in sys.path:
+            sys.path.insert(0, candidate_path)
 
-    definitions = discover_tests(target_path)
+
+@app.command()
+def run(
+    path: Path = typer.Argument(..., help="Directory containing Goose tests to discover"),
+    list_only: bool = typer.Option(False, "--list", help="List discovered tests without executing them"),
+) -> None:
+    """Discover tests under *path* and optionally execute them.
+
+    When ``--list`` is provided the command only prints the qualified
+    names of discovered tests. Otherwise each test is executed in the
+    order returned by the discovery engine, with pass/fail totals
+    emitted at the end.
+    """
+
+    _ensure_test_paths_on_sys_path(path)
+
+    definitions = discover_tests(path)
 
     if list_only:
         for definition in definitions:
