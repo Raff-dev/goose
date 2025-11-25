@@ -6,6 +6,7 @@ import time
 import traceback
 from typing import Any
 
+from goose.testing.error_type import ErrorType
 from goose.testing.fixtures import apply_autouse, build_call_arguments, extract_goose_fixture
 from goose.testing.types import TestDefinition, TestResult
 
@@ -21,26 +22,31 @@ def execute_test(definition: TestDefinition) -> TestResult:
     """
     start = time.time()
     fixture_cache: dict[str, Any] = {}
-    passed = True
-    error_message: str | None = None
 
-    apply_autouse(fixture_cache)
     kwargs = build_call_arguments(definition.func, fixture_cache)
     goose_instance = extract_goose_fixture(fixture_cache)
     goose_instance.hooks.pre_test(definition)
 
-    try:
-        definition.func(**kwargs)
-    except AssertionError as exc:
-        passed = False
-        error_message = str(exc)
-    except Exception:  # pylint: disable=broad-exception-caught
-        passed = False
-        error_message = traceback.format_exc()
+    apply_autouse(fixture_cache)
+
+    passed, error_message = _execute(definition, kwargs)
+    goose_instance.hooks.post_test(definition)
 
     duration = time.time() - start
     execution = goose_instance.get_execution()
-    result = TestResult(
+
+    if execution is None:
+        # this happens when an exception is raised before Goose.case is called
+        return TestResult(
+            definition=definition,
+            passed=passed,
+            duration=duration,
+            error=error_message,
+            error_type=ErrorType.UNEXPECTED,
+            execution=None,
+        )
+
+    return TestResult(
         definition=definition,
         passed=passed,
         duration=duration,
@@ -49,8 +55,16 @@ def execute_test(definition: TestDefinition) -> TestResult:
         execution=execution,
     )
 
-    goose_instance.hooks.post_test(definition, result)
-    return result
+
+def _execute(definition: TestDefinition, kwargs: dict[str, Any]) -> tuple[bool, str | None]:
+    """Execute the test function and return pass/fail status."""
+    try:
+        definition.func(**kwargs)
+        return True, None
+    except AssertionError as exc:
+        return False, str(exc)
+    except Exception:  # pylint: disable=broad-except
+        return False, traceback.format_exc()
 
 
 __all__ = ["execute_test"]

@@ -224,3 +224,8 @@ def test_failure_tool_runtime_trigger_system_fault(goose: Goose) -> None:
         ],
         expected_tool_calls=[trigger_system_fault],
     )
+
+
+def test_failure_error_before_goose(goose: Goose) -> None:
+    """Intentional failure: raise an exception before any Goose case execution."""
+    raise ValueError("Intentional failure: error before any Goose case execution")

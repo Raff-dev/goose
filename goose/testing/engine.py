@@ -69,12 +69,10 @@ class Goose:
             exception=exc,
         )
 
-    def get_execution(self) -> ExecutionRecord:
+    def get_execution(self) -> ExecutionRecord | None:
         """Return the last recorded execution for the current test."""
         execution = self._execution
         self._execution = None
-        if execution is None:
-            raise AssertionError("No Goose execution recorded for the current test run.")
         return execution
 
     def _execute_case(self, test_case: TestCase) -> ValidationResult:
