@@ -4,35 +4,28 @@ from __future__ import annotations
 
 import importlib
 import inspect
-import sys
 from pathlib import Path
 
+from goose.testing.imports import ensure_test_import_paths
 from goose.testing.types import TestDefinition
 
 
-def discover_tests(start_dir: str | Path) -> list[TestDefinition]:
+def discover_tests(start_dir: Path) -> list[TestDefinition]:
     """Import modules beneath *start_dir* and collect test functions."""
 
-    project_root = Path.cwd().resolve()
-    if str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
-
-    base_path = Path(start_dir)
-    if not base_path.exists():
-        return []
-
-    fixture_modules = sorted(base_path.rglob("conftest.py"))
-    test_modules = sorted(base_path.rglob("test_*.py"))
+    test_root = ensure_test_import_paths(target_path=start_dir)
+    fixture_modules = sorted(test_root.rglob("conftest.py"))
+    test_modules = sorted(test_root.rglob("test_*.py"))
     module_paths = fixture_modules + test_modules
 
     definitions: list[TestDefinition] = []
 
     for module_path in module_paths:
         resolved = module_path.resolve()
-        if project_root not in resolved.parents and resolved != project_root:
+        if test_root not in resolved.parents and resolved != test_root:
             continue
 
-        module_name = ".".join(resolved.with_suffix("").relative_to(project_root).parts)
+        module_name = ".".join(resolved.with_suffix("").relative_to(test_root).parts)
         module = importlib.import_module(module_name)
 
         for name, value in module.__dict__.items():
@@ -50,9 +43,8 @@ def discover_tests(start_dir: str | Path) -> list[TestDefinition]:
 def load_test_definition(module_name: str, function_name: str) -> TestDefinition:
     """Load a single test function by module and function name."""
 
-    project_root = Path.cwd().resolve()
-    if str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
+    test_root = Path.cwd()
+    ensure_test_import_paths(target_path=test_root)
 
     module = importlib.import_module(module_name)
     func = getattr(module, function_name)

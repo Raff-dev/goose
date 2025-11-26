@@ -10,38 +10,17 @@ End-users interact with the installed console script::
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import typer
 from typer import colors
 
 from goose.testing.discovery import discover_tests
+from goose.testing.imports import ensure_test_import_paths
 from goose.testing.runner import execute_test
 from goose.testing.types import TestResult
 
 app = typer.Typer(help="Goose LLM testing CLI")
-
-
-def _ensure_test_paths_on_sys_path(target_path: Path) -> None:
-    """Resolve the test root and ensure it (plus parent) are importable.
-
-    Goose discovers tests via importlib, so the resolved test directory
-    and its parent need to exist on ``sys.path`` even when the CLI is
-    invoked from another working directory. Prepending both paths
-    guarantees local fixtures and helper modules can be imported without
-    forcing users to ``cd`` into the test folder or install it as a
-    package.
-    """
-
-    test_root = target_path.resolve()
-    if test_root.is_file():
-        test_root = test_root.parent
-
-    for candidate in (test_root, test_root.parent):
-        candidate_path = str(candidate)
-        if candidate_path not in sys.path:
-            sys.path.insert(0, candidate_path)
 
 
 @app.command()
@@ -57,7 +36,7 @@ def run(
     emitted at the end.
     """
 
-    _ensure_test_paths_on_sys_path(path)
+    ensure_test_import_paths(path)
 
     definitions = discover_tests(path)
 
