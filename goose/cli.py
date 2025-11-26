@@ -17,8 +17,8 @@ from typer import colors
 
 from goose.testing.discovery import discover_tests
 from goose.testing.imports import ensure_test_import_paths
+from goose.testing.models.tests import TestResult
 from goose.testing.runner import execute_test
-from goose.testing.types import TestResult
 
 app = typer.Typer(help="Goose LLM testing CLI")
 
@@ -47,16 +47,19 @@ def run(
 
     failures = 0
     total = 0
+    total_duration = 0.0
 
     for definition in definitions:
         result = execute_test(definition)
         total += 1
+        total_duration += result.duration
         failures += display_result(result)
 
     passed_count = total - failures
     passed_text = typer.style(str(passed_count), fg=colors.GREEN)
     failed_text = typer.style(str(failures), fg=colors.RED)
-    typer.echo(f"{passed_text} passed, {failed_text} failed")
+    duration_text = typer.style(f"{total_duration:.2f}s", fg=colors.CYAN)
+    typer.echo(f"{passed_text} passed, {failed_text} failed ({duration_text})")
 
     if failures:
         raise typer.Exit(code=1)
@@ -77,10 +80,10 @@ def display_result(result: TestResult) -> int:
     duration_text = typer.style(f"{result.duration:.2f}s", fg=colors.CYAN)
     typer.echo(f"{status_text} {result.name} ({duration_text})")
 
-    if result.error:
+    if not result.passed:
         divider = typer.style("-" * 40, fg=colors.WHITE)
-        marker = typer.style("[ERROR]", fg=colors.RED)
-        body = typer.style(result.error, fg=colors.RED)
+        marker = typer.style(f"[ERROR: {result.error_type.value}]", fg=colors.RED)
+        body = typer.style(result.error_message, fg=colors.RED)
 
         typer.echo(divider)
         typer.echo(f"{marker} {body}")

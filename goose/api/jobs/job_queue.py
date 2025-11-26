@@ -10,8 +10,8 @@ from collections.abc import Callable
 from goose.api.jobs.enums import TestStatus
 from goose.api.jobs.models import Job
 from goose.api.jobs.state import JobStore
+from goose.testing.models.tests import TestDefinition, TestResult
 from goose.testing.runner import execute_test
-from goose.testing.types import TestDefinition, TestResult
 
 
 class JobQueue:

@@ -4,7 +4,7 @@ This module exposes lightweight API-facing models used by the FastAPI
 endpoints. The models provide deterministic, JSON-serializable views of
 internal domain objects such as test definitions, execution records and
 background job state. Helper ``from_*`` classmethods convert internal
-types (from ``goose.testing.types`` and the job store) into the
+types (from ``goose.testing.models.tests`` and the job store) into the
 corresponding Pydantic models used in API responses.
 
 Keep these models small and stable — they form the contract between the
@@ -20,8 +20,8 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from goose.api.jobs import Job, JobStatus, TestStatus
-from goose.testing.error_type import ErrorType
-from goose.testing.types import ExecutionRecord, TestDefinition, TestResult, ValidationResult
+from goose.testing.errors import ErrorType
+from goose.testing.models.tests import TestDefinition, TestResult, ValidationResult
 
 
 def _first_line(text: str | None) -> str | None:
@@ -120,7 +120,7 @@ class ExecutionRecordModel(BaseModel):
     error_type: ErrorType | None = None
 
     @classmethod
-    def from_execution(cls, execution: ExecutionRecord) -> ExecutionRecordModel:
+    def from_execution(cls, execution: CaseExecutionRecord) -> ExecutionRecordModel:
         """Build an ``ExecutionRecordModel`` from an internal record.
 
         Converts nested response and validation objects into plain
@@ -137,7 +137,7 @@ class ExecutionRecordModel(BaseModel):
             expected_tool_calls=list(execution.expected_tool_calls),
             response=response_payload,
             validation=validation_payload,
-            error=execution.error,
+            error=execution.error_message,
             error_type=execution.error_type,
         )
 
@@ -158,7 +158,7 @@ class TestResultModel(BaseModel):
     duration: float
     error: str | None = None
     error_type: ErrorType | None = None
-    executions: list[ExecutionRecordModel] = Field(default_factory=list)
+    traceback: str | None = None
 
     @classmethod
     def from_result(cls, result: TestResult) -> TestResultModel:
@@ -169,9 +169,6 @@ class TestResultModel(BaseModel):
         present a self-contained result object.
         """
 
-        executions: list[ExecutionRecordModel] = []
-        if result.execution is not None:
-            executions.append(ExecutionRecordModel.from_execution(result.execution))
         definition = result.definition
         return cls(
             qualified_name=definition.qualified_name,
@@ -179,9 +176,9 @@ class TestResultModel(BaseModel):
             name=definition.name,
             passed=result.passed,
             duration=result.duration,
-            error=result.error,
+            error=result.error_message,
             error_type=result.error_type,
-            executions=executions,
+            traceback=result.traceback,
         )
 
 

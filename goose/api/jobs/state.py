@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 from goose.api.jobs.enums import JobStatus, TestStatus
 from goose.api.jobs.models import Job
-from goose.testing.types import TestDefinition, TestResult
+from goose.testing.models.tests import TestDefinition, TestResult
 
 
 class JobStore:

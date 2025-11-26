@@ -1,12 +1,11 @@
 """Agent building and query functions for the Goose Outfitters system."""
 
-from typing import Any
-
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain_core.messages import BaseMessage, HumanMessage
 
 from example_system.tools import TOOLS
+from goose.testing.models.messages import AgentResponse
 
 load_dotenv()
 
@@ -40,7 +39,7 @@ When answering questions:
 - If multiple tools are needed, use them in sequence""",
         )
 
-    def query(self, question: str, history: list[BaseMessage] | None = None) -> dict[str, Any]:
+    def query(self, question: str, history: list[BaseMessage] | None = None) -> AgentResponse:
         """Query the agent with a question.
 
         Args:
@@ -52,4 +51,4 @@ When answering questions:
         """
         messages = (history or []) + [HumanMessage(content=question)]
         result = self.agent.invoke({"messages": messages})
-        return result
+        return AgentResponse.from_dict(result)

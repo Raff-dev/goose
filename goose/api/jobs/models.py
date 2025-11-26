@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from goose.api.jobs.enums import JobStatus, TestStatus
-from goose.testing.types import TestDefinition, TestResult
+from goose.testing.models.tests import TestDefinition, TestResult
 
 
 @dataclass(slots=True)

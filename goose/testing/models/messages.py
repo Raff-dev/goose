@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -76,23 +75,6 @@ class AgentResponse(BaseModel):
     def tool_call_names(self) -> list[str]:
         """Return the ordered list of tool call names."""
         return [tool_call.name for tool_call in self.tool_calls]
-
-    @property
-    def final_ai_response(self) -> str | None:
-        """Return the final AI response content, if present."""
-        for message in reversed(self.messages):
-            if message.type == "ai" and message.content.strip():
-                return message.content
-        return None
-
-    @property
-    def all_tool_responses(self) -> dict[str, list[str]]:
-        """Return all tool responses grouped by tool name."""
-        responses: dict[str, list[str]] = defaultdict(list)
-        for message in self.messages:
-            if message.type == "tool" and message.tool_name:
-                responses[message.tool_name].append(message.content)
-        return responses
 
     def format_for_validation(self) -> str:
         """Format the response for human-readable validation output."""

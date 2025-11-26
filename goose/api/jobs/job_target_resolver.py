@@ -5,7 +5,7 @@ from __future__ import annotations
 from goose.api import config
 from goose.api.jobs.exceptions import UnknownTestError
 from goose.testing.discovery import discover_tests, load_test_definition
-from goose.testing.types import TestDefinition
+from goose.testing.models.tests import TestDefinition
 
 
 def resolve_targets(requested: list[str] | None = None) -> list[TestDefinition]:

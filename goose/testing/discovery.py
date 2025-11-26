@@ -7,7 +7,7 @@ import inspect
 from pathlib import Path
 
 from goose.testing.imports import ensure_test_import_paths
-from goose.testing.types import TestDefinition
+from goose.testing.models.tests import TestDefinition
 
 
 def discover_tests(start_dir: Path) -> list[TestDefinition]:

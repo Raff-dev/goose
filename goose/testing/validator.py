@@ -9,12 +9,12 @@ from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
 
-from goose.testing.models import AgentResponse
+from goose.testing.models.messages import AgentResponse
 
 load_dotenv()
 
 
-class ValidationResponse(BaseModel):
+class ExpectationsEvaluationResponse(BaseModel):
     """Structured output for agent behavior validation."""
 
     reasoning: str = Field(description="Detailed reasoning about whether the agent behavior matches expectations")
@@ -22,27 +22,18 @@ class ValidationResponse(BaseModel):
         description="List of expectation numbers that were not met",
         default_factory=list,
     )
-    error: bool = Field(description="True if the agent behavior does NOT match expectations, False if it does")
 
 
 class AgentValidator:
     """Encapsulated agent validator for testing LLM behavior."""
 
     def __init__(self) -> None:
-        self.agent = self._build_agent()
-
-    def _build_agent(self):
-        """Build the LangChain validator agent without tools.
-
-        Returns:
-            The configured LangChain validator agent.
-        """
-
+        """Build the LangChain validator agent without tools."""
         current_date = datetime.now().strftime("%B %d, %Y")
-        agent = create_agent(
+        self._agent = create_agent(
             model="gpt-4o-mini",
             tools=[],  # No tools needed for validation
-            response_format=ValidationResponse,
+            response_format=ExpectationsEvaluationResponse,
             system_prompt=f"""
 You are an expert validator for LLM agent behavior testing.
 
@@ -63,9 +54,8 @@ When validating:
 - If any expectations are not met, include their numbers in unmet_expectation_numbers and
     reference those numbers in your reasoning""",
         )
-        return agent
 
-    def validate(self, agent_output, expectations: list[str]) -> ValidationResponse:
+    def evaluate(self, agent_output: AgentResponse, expectations: list[str]) -> ExpectationsEvaluationResponse:
         """Validate agent output against expectations.
 
         Args:
@@ -74,17 +64,10 @@ When validating:
             expectations: List of expectations the agent should have met.
 
         Returns:
-            The validator's assessment as a ValidationResponse.
+            The validator's assessment as a ExpectationsEvaluationResponse.
         """
-        # Handle different input types
-        if isinstance(agent_output, dict):
-            # Convert raw response dict to AgentResponse and format
-            response_obj = AgentResponse.from_dict(agent_output)
-            agent_output = response_obj.format_for_validation()
-        elif isinstance(agent_output, AgentResponse):
-            # Already structured, format for validation
-            agent_output = agent_output.format_for_validation()
 
+        agent_output = agent_output.format_for_validation()
         prompt = f"""
 AGENT OUTPUT:
 {agent_output}
@@ -96,8 +79,8 @@ Analyze if the agent behavior matches these expectations.
 """
 
         messages = [HumanMessage(content=prompt)]
-        result = self.agent.invoke({"messages": messages})
+        result = self._agent.invoke({"messages": messages})
         return result["structured_response"]
 
 
-__all__ = ["AgentValidator", "ValidationResponse"]
+__all__ = ["AgentValidator", "ExpectationsEvaluationResponse"]

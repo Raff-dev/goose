@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any
 
-from goose.testing.types import TestDefinition
+from goose.testing.models.tests import TestDefinition
 
 
 class TestLifecycleHooks:
