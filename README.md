@@ -23,123 +23,134 @@ Install the core library and CLI from PyPI:
 pip install llm-goose
 ```
 
-## Writing & running tests ✅
 
-At its core, Goose lets you describe **what a good interaction looks like** and then assert that your
-agent and tools actually behave that way.
 
-### 1. Wrap your agent
 
-You provide a callable that takes a query and talks to your model (OpenAI, Bedrock, internal API, …):
+## Quick Start: Minimal Example 🏃‍♂️
+
+Here's a complete, runnable example of testing an LLM agent with Goose. This creates a simple weather assistant agent and tests it.
+
+### 1. Set up your agent
+
+Create `my_agent.py`:
 
 ```python
 from typing import Any
 
-from goose.testing import Goose
+from dotenv import load_dotenv
+from langchain.agents import create_agent
+from langchain_core.messages import HumanMessage
+from langchain_core.tools import tool
+from goose.testing.models.messages import AgentResponse
 
+load_dotenv()
 
-def my_agent(query: str) -> dict[str, Any]:
-    """Call your LLM here and normalize the response for Goose."""
-    ...  # e.g. call OpenAI, Anthropic, or your own router
+@tool
+def get_weather(location: str) -> str:
+    """Get the current weather for a given location."""
+    return f"The weather in {location} is sunny and 75°F."
 
+agent = create_agent(
+    model="gpt-4o-mini",
+    tools=[get_weather],
+    system_prompt="You are a helpful weather assistant",
+)
 
-goose = Goose(my_agent)
+def query_weather_agent(question: str) -> AgentResponse:
+    """Query the agent and return a normalized response."""
+    result = agent.invoke({"messages": [HumanMessage(content=question)]})
+    return AgentResponse.from_langchain(result)
 ```
 
-### 2. Describe expectations & tool usage
+### 2. Set up fixtures
 
-Goose cases combine a natural‑language query, human‑readable expectations, and (optionally) the tools
-you expect the agent to call. This example is adapted from
-`example_tests/agent_behaviour_test.py` and shows an analytical workflow where the agent both
-retrieves data and computes aggregates:
+Create `tests/conftest.py`:
 
 ```python
-from __future__ import annotations
+from goose.testing import Goose, fixture
 
-from example_system.models import Transaction
-from example_system.tools import calculate_revenue, get_sales_history
+from my_agent import query_weather_agent
+
+@fixture(name="weather_goose") # name is optional - defaults to func name
+def weather_goose_fixture() -> Goose:
+    """Provide a Goose instance wired up to the sample LangChain agent."""
+
+    return Goose(
+        agent_query_func=query_weather_agent,
+        validator_model=ChatOpenAI(model="gpt-4o-mini")
+    )
+```
+
+
+### 3. Write a test
+
+Create `tests/test_weather.py`. Fixture will be injected into recognized test functions. Test function and file names need to start with `test_` in order to be discovered.
+
+```python
 from goose.testing import Goose
 
+def test_weather_query(weather_goose: Goose) -> None:
+    """Test that the agent can answer weather questions."""
 
-def test_sales_history_with_revenue_analysis(goose: Goose) -> None:
-    """What were sales in October 2025 and the total revenue?"""
-
-    transactions = Transaction.objects.prefetch_related("items__product").all()
-    total_revenue = sum(
-        item.price_usd * item.quantity
-        for txn in transactions
-        for item in txn.items.all()
-    )
-
-    goose.case(
-        query="What were our sales in October 2025 and how much total revenue?",
+    weather_goose.case(
+        query="What's the weather like in San Francisco?",
         expectations=[
-            "Agent retrieved sales history for October 2025",
-            "Agent calculated total revenue from the retrieved transactions",
-            "Response included the sample transaction from October 15",
-            f"Response showed total revenue of ${total_revenue:.2f}",
-            "Agent used sales history data to compute revenue totals",
+            "Agent provides weather information for San Francisco",
+            "Response mentions sunny weather and 75°F",
         ],
-        expected_tool_calls=[get_sales_history, calculate_revenue],
+        expected_tool_calls=[get_weather],
     )
 ```
 
-In the full example suite, the `goose` fixture is registered automatically through
-`example_tests/goose_config.py`, which wires up the example agent and runner. The remaining fixtures in
-`example_tests/conftest.py` (like the `setup_data` autouse fixture) continue to seed data using
-`@fixture` from `goose.testing`.
-
-### 3. Pytest‑inspired style (including failures)
-
-Goose is **pytest‑inspired**: tests are just functions, and you can mix Goose expectations with regular
-assertions. That makes intentional failure cases straightforward to express and debug:
-
-```python
-from example_system.models import Product
-from example_system.tools import get_product_details
 
 
-def test_failure_assertion_missing_products(goose: Goose) -> None:
-    """Intentional failure to verify assertion handling."""
-
-    goose.case(
-        query="What's the price of Hiking Boots?",
-        expectations=["Agent provided the correct price"],
-        expected_tool_calls=[get_product_details],
-    )
-
-    # This assertion is designed to fail – fixtures populate products
-    assert Product.objects.count() == 0, "Intentional failure: products are populated in fixtures"
-```
-
-When you run this test, Goose will surface both expectation mismatches (if any) and the failing
-assertion in the same run, just like you’d expect from a testing framework.
-
-### 4. Run tests from the CLI
-
-Use the bundled CLI (installed as the `goose` command) to discover and execute your test modules. Point
-it at a Goose application using `module.path:factory` syntax:
+### 4. Run the test
 
 ```bash
-# execute every test module under example_tests/
-goose run example_tests.goose_config:get_goose_config
+# run help to get more information
+goose-run --help
 
-# list discovered tests without running them
-goose run --list example_tests.goose_config:get_goose_config
+goose-run run tests
 ```
 
-### 5. Custom lifecycle hooks (optional)
+That's it! Goose will run your agent, check that it called the expected tools, and validate the response against your expectations.
 
-Goose detects framework integrations via lifecycle hook classes:
+## Goose API & GUI
 
-- `TestLifecycleHooks` – default no-op setup that works everywhere.
-- `DjangoTestHooks` – automatically used when `DJANGO_SETTINGS_MODULE` is set and Django is installed.
+Install with extras:
 
-If you need special setup/teardown logic, subclass `TestLifecycleHooks`, override `setup()` /
-`teardown()` or the new `pre_test()` / `post_test()` hooks, and pass an instance to
-`Goose(..., hooks=MyHooks())` when wiring your test config.
+```bash
+pip install "llm-goose[api]"
+```
 
-## Example system & jobs API (optional) 🌐
+Then launch the service from your project (for example, after wiring Goose into your own system):
+
+```bash
+# run help to get more information
+goose-api --help
+
+# start the API server (FastAPI + Uvicorn)
+goose-api example_tests
+```
+
+### React dashboard setup 🖥️
+
+The React dashboard is a separate **web application** that talks to the Goose jobs API over HTTP.
+It is built with Vite, React, and Tailwind and is designed to be run either locally during
+development or deployed as a static site.
+
+Install the published CLI from npm and let it host the built dashboard for you:
+
+```bash
+npm install -g @llm-goose/dashboard-cli
+
+# run the dashboard
+goose-dashboard
+
+# or point the dashboard at your jobs API
+GOOSE_API_URL="http://localhost:8000" goose-dashboard
+```
+
 
 For richer workflows (and the React dashboard), Goose ships an **example Django system** and a
 **FastAPI jobs API**. These live in this repo only – they are not installed with the PyPI package – but
@@ -163,43 +174,84 @@ went wrong mid‑run, the captured error text is shown at the bottom of the card
 
 ![Detail screenshot](images/detail_view.png)
 
-When you install the `api` extra, you get an additional console script:
 
-- `api` – starts the FastAPI job orchestration server
 
-Install with extras:
+## Writing tests ✅
 
-```bash
-pip install "llm-goose[api]"
+At its core, Goose lets you describe **what a good interaction looks like** and then assert that your
+agent and tools actually behave that way.
+
+### Pytest-inspired syntax
+
+Goose cases combine a natural‑language query, human‑readable expectations, and (optionally) the tools
+you expect the agent to call. This example is adapted from
+`example_tests/agent_behaviour_test.py` and shows an analytical workflow where the agent both
+retrieves data and creates records:
+
+
+```python
+def test_sale_then_inventory_update(goose_fixture: Goose) -> None:
+    """Complex workflow: Sell 2 Hiking Boots and report the remaining stock."""
+
+    count_before = Transaction.objects.count()
+    inventory = ProductInventory.objects.get(product__name="Hiking Boots")
+    assert inventory is not None, "Expected inventory record for Hiking Boots"
+
+    goose_fixture.case(
+        query="Sell 2 pairs of Hiking Boots to John Doe and then tell me how many we have left",
+        expectations=[
+            "Agent created a sale transaction for 2 Hiking Boots to John Doe",
+            "Agent then checked remaining inventory after the sale",
+            "Response confirmed the sale was processed",
+            "Response provided updated stock information",
+        ],
+        expected_tool_calls=[check_inventory, create_sale],
+    )
+
+    count_after = Transaction.objects.count()
+    inventory_after = ProductInventory.objects.get(product__name="Hiking Boots")
+
+    assert count_after == count_before + 1, f"Expected 1 new transaction, got {count_after - count_before}"
+    assert inventory_after is not None, "Expected inventory record after sale"
+    assert inventory_after.stock == inventory.stock - 2, f"Expected stock {inventory.stock - 2}, got {inventory_after.stock}"
 ```
 
-Then launch the service from your project (for example, after wiring Goose into your own system):
+### Custom lifecycle hooks
 
-```bash
-# start the API server (FastAPI + Uvicorn)
-api
+You can use existing lifecycle hooks or implement yours to suit your needs.
+Hooks are invoked before a test starts and after it finishes.
+This lets you setup your environment and teardown it afterwards.
+
+```python
+from goose.testing.hooks import TestLifecycleHook
+
+class MyLifecycleHooks(TestLifecycleHook):
+    """Suite and per-test lifecycle hooks invoked around Goose executions."""
+
+    def pre_test(self, definition: TestDefinition) -> None:
+        """Hook invoked before a single test executes."""
+        setup()
+
+    def post_test(self, definition: TestDefinition) -> None:
+        """Hook invoked after a single test completes."""
+        teardown()
+
+
+# tests/conftest.py
+from goose.testing import Goose, fixture
+from my_agent import query
+
+@fixture()
+def goose_fixture() -> Goose:
+    """Provide a Goose instance wired up to the sample LangChain agent."""
+
+    model = ChatOpenAI(model="gpt-4o-mini")
+    return Goose(
+        agent_query_func=query,
+        validator_model=model,
+        hooks=MyLifecycleHooks()
+    )
 ```
-
-The React dashboard shown in the screenshots lives in this repo under `web/` and is **not** shipped as
-part of the PyPI package.
-
-### React dashboard setup 🖥️
-
-The React dashboard is a separate **web application** that talks to the Goose jobs API over HTTP.
-It is built with Vite, React, and Tailwind and is designed to be run either locally during
-development or deployed as a static site.
-
-Install the published CLI from npm and let it host the built dashboard for you:
-
-```bash
-npm install -g @llm-goose/dashboard-cli
-
-# point the dashboard at your jobs API
-GOOSE_API_URL="http://localhost:8000" goose-dashboard
-```
-
-This starts a small HTTP server (by default on `http://localhost:8001`) that serves the
-prebuilt dashboard against whatever Goose API URL you configure.
 
 ## License
 
