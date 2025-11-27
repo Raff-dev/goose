@@ -57,7 +57,7 @@ class AgentResponse(BaseModel):
     messages: list[Message] = Field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, response_dict: dict[str, Any]) -> AgentResponse:
+    def from_langchain(cls, response_dict: dict[str, Any]) -> AgentResponse:
         """Create an AgentResponse from the raw agent.query response payload."""
         raw_messages = response_dict.get("messages", [])
         messages = [Message.from_langchain_message(msg) for msg in raw_messages]

@@ -58,4 +58,4 @@ def setup_data() -> None:
 def goose_fixture() -> Goose:
     """Provide a Goose testing instance for the agent."""
     agent = Agent()
-    return Goose(agent.query, hooks=DjangoTestHooks())
+    return Goose(agent_query_func=agent.query, hooks=DjangoTestHooks(), validator_model="gpt-4o-mini")

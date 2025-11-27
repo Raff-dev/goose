@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.tools import BaseTool
 
 from goose.testing.hooks import TestLifecycleHooks
@@ -20,9 +21,10 @@ class Goose:
         agent_query_func: Callable[[str], AgentResponse],
         *,
         hooks: TestLifecycleHooks | None = None,
+        validator_model: BaseChatModel | str = "gpt-4o-mini",
     ) -> None:
         self._agent_query_func = agent_query_func
-        self._validation_agent = AgentValidator()
+        self._validation_agent = AgentValidator(chat_model=validator_model)
         self.hooks = hooks or TestLifecycleHooks()
         self._test_case: TestCase | None = None
 

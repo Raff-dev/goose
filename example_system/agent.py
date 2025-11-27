@@ -51,4 +51,4 @@ When answering questions:
         """
         messages = (history or []) + [HumanMessage(content=question)]
         result = self.agent.invoke({"messages": messages})
-        return AgentResponse.from_dict(result)
+        return AgentResponse.from_langchain(result)

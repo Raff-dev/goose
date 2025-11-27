@@ -6,6 +6,7 @@ from datetime import datetime
 
 from dotenv import load_dotenv  # pylint: disable=import-error
 from langchain.agents import create_agent
+from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
 
@@ -27,11 +28,11 @@ class ExpectationsEvaluationResponse(BaseModel):
 class AgentValidator:
     """Encapsulated agent validator for testing LLM behavior."""
 
-    def __init__(self) -> None:
+    def __init__(self, chat_model: BaseChatModel | str) -> None:
         """Build the LangChain validator agent without tools."""
         current_date = datetime.now().strftime("%B %d, %Y")
         self._agent = create_agent(
-            model="gpt-4o-mini",
+            model=chat_model,
             tools=[],  # No tools needed for validation
             response_format=ExpectationsEvaluationResponse,
             system_prompt=f"""

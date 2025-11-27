@@ -1,6 +1,6 @@
 [project]
 name = "llm-goose"
-version = "0.1.7"
+version = "0.1.10"
 description = "LLM testing framework for validating agent behavior and tool usage"
 license = "MIT"
 authors = [{ name = "Rafał Łazicki", email = "rafal.lazicki99@gmail.com" }]
@@ -46,11 +46,8 @@ all = [
 ]
 
 [project.scripts]
-# always use 1 word
-chat = "example_system.entrypoints:chat"
-ask = "example_system.entrypoints:ask"
-goose = "goose.cli:app"
-api = "goose.api.cli:app"
+goose-run = "goose.cli:app"
+goose-api = "goose.api.cli:app"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
