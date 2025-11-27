@@ -1,6 +1,6 @@
 [project]
 name = "llm-goose"
-version = "0.1.6"
+version = "0.1.7"
 description = "LLM testing framework for validating agent behavior and tool usage"
 license = "MIT"
 authors = [{ name = "Rafał Łazicki", email = "rafal.lazicki99@gmail.com" }]
