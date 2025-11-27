@@ -67,10 +67,10 @@ When validating:
             The validator's assessment as a ExpectationsEvaluationResponse.
         """
 
-        agent_output = agent_output.format_for_validation()
+        agent_output_str = agent_output.format_for_validation()
         prompt = f"""
 AGENT OUTPUT:
-{agent_output}
+{agent_output_str}
 
 EXPECTATIONS:
 {chr(10).join(f"{index}. {exp}" for index, exp in enumerate(expectations, start=1))}

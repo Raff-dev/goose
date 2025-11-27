@@ -81,6 +81,7 @@ def display_result(result: TestResult) -> int:
     typer.echo(f"{status_text} {result.name} ({duration_text})")
 
     if not result.passed:
+        assert result.error_type is not None
         divider = typer.style("-" * 40, fg=colors.WHITE)
         marker = typer.style(f"[ERROR: {result.error_type.value}]", fg=colors.RED)
         body = typer.style(result.error_message, fg=colors.RED)

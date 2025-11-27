@@ -12,18 +12,7 @@ interface TestCardProps {
 }
 
 export function TestCard({ name, status, duration, error, result, onViewDetails, onRunTest }: TestCardProps) {
-  // Determine a compact failure type badge using top-level error_type with
-  // a fallback to the latest execution record when needed.
-  const getFailureType = (res?: TestResultModel | undefined) => {
-    if (!res) return null;
-    if (res.error_type) return res.error_type;
-    const execs = res.executions || [];
-    if (execs.length === 0) return null;
-    const latest = execs[execs.length - 1];
-    return latest?.error_type ?? null;
-  };
-
-  const failureType = getFailureType(result);
+  const failureType = result?.error_type ?? null;
   const statusColor =
     status === 'passed' ? 'bg-green-50 text-green-700' :
     status === 'failed' ? 'bg-red-50 text-red-700' :

@@ -21,7 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from goose.api.jobs import Job, JobStatus, TestStatus
 from goose.testing.errors import ErrorType
-from goose.testing.models.tests import TestDefinition, TestResult, ValidationResult
+from goose.testing.models.tests import TestDefinition, TestResult
 
 
 def _first_line(text: str | None) -> str | None:
@@ -72,83 +72,12 @@ class TestSummary(BaseModel):
         )
 
 
-class ValidationPayload(BaseModel):
-    """Serialized representation of a validation outcome.
-
-    This model captures whether a validation succeeded, human-readable
-    reasoning text, and any unmet expectations identified by the
-    validator. It is primarily used as part of execution record payloads
-    returned in test results.
-    """
-
-    success: bool
-    reasoning: str = ""
-    expectations_unmet: list[str] = Field(default_factory=list)
-    unmet_expectation_numbers: list[int] = Field(default_factory=list)
-
-    @classmethod
-    def from_validation(cls, validation: ValidationResult) -> ValidationPayload:
-        """Convert an internal ``ValidationResult`` into the API model.
-
-        The conversion guards against missing optional attributes on the
-        validator result so the API receives stable list types.
-        """
-
-        return cls(
-            success=validation.success,
-            reasoning=validation.reasoning,
-            expectations_unmet=list(getattr(validation, "expectations_unmet", [])),
-            unmet_expectation_numbers=list(getattr(validation, "unmet_expectation_numbers", [])),
-        )
-
-
-class ExecutionRecordModel(BaseModel):
-    """Serialized execution history entry for a test run.
-
-    Each execution record represents a single interaction performed as
-    part of a test, including the query sent, expectations checked, the
-    tool calls that were expected, the raw response payload and any
-    validation data.
-    """
-
-    query: str
-    expectations: list[str]
-    expected_tool_calls: list[str]
-    response: dict[str, Any] | None = None
-    validation: ValidationPayload | None = None
-    error: str | None = None
-    error_type: ErrorType | None = None
-
-    @classmethod
-    def from_execution(cls, execution: CaseExecutionRecord) -> ExecutionRecordModel:
-        """Build an ``ExecutionRecordModel`` from an internal record.
-
-        Converts nested response and validation objects into plain
-        serializable structures suitable for JSON responses.
-        """
-
-        response_payload = execution.response.model_dump() if execution.response is not None else None
-        validation_payload = (
-            ValidationPayload.from_validation(execution.validation) if execution.validation is not None else None
-        )
-        return cls(
-            query=execution.query,
-            expectations=list(execution.expectations),
-            expected_tool_calls=list(execution.expected_tool_calls),
-            response=response_payload,
-            validation=validation_payload,
-            error=execution.error_message,
-            error_type=execution.error_type,
-        )
-
-
 class TestResultModel(BaseModel):
     """Serialized result for a Goose test execution.
 
     Contains a summary of whether the test passed, the execution
-    duration, an optional error message and the sequence of
-    ``ExecutionRecordModel`` entries that were produced while running
-    the test.
+    duration, any captured error metadata, and the recorded test case
+    context (query, expectations, expected tool calls, response).
     """
 
     qualified_name: str
@@ -158,7 +87,11 @@ class TestResultModel(BaseModel):
     duration: float
     error: str | None = None
     error_type: ErrorType | None = None
-    traceback: str | None = None
+    expectations_unmet: list[str] = Field(default_factory=list)
+    query: str | None = None
+    expectations: list[str] = Field(default_factory=list)
+    expected_tool_calls: list[str] = Field(default_factory=list)
+    response: dict[str, Any] | None = None
 
     @classmethod
     def from_result(cls, result: TestResult) -> TestResultModel:
@@ -170,6 +103,19 @@ class TestResultModel(BaseModel):
         """
 
         definition = result.definition
+        test_case = result.test_case
+        query: str | None = None
+        expectations: list[str] = []
+        expected_tool_calls: list[str] = []
+        response_payload: dict[str, Any] | None = None
+
+        if test_case is not None:
+            query = test_case.query_message
+            expectations = list(test_case.expectations)
+            expected_tool_calls = test_case.expected_tool_call_names
+            if test_case.last_response is not None:
+                response_payload = test_case.last_response.model_dump(mode="json")
+
         return cls(
             qualified_name=definition.qualified_name,
             module=definition.module,
@@ -178,7 +124,11 @@ class TestResultModel(BaseModel):
             duration=result.duration,
             error=result.error_message,
             error_type=result.error_type,
-            traceback=result.traceback,
+            expectations_unmet=list(result.expectations_unmet),
+            query=query,
+            expectations=expectations,
+            expected_tool_calls=expected_tool_calls,
+            response=response_payload,
         )
 
 
@@ -239,10 +189,8 @@ class RunRequest(BaseModel):
 
 
 __all__ = [
-    "ExecutionRecordModel",
     "JobResource",
     "RunRequest",
     "TestResultModel",
     "TestSummary",
-    "ValidationPayload",
 ]

@@ -7,24 +7,6 @@ export interface TestSummary {
   docstring?: string | null;
 }
 
-export interface ValidationPayload {
-  success: boolean;
-  reasoning: string;
-  expectations_unmet: string[];
-  unmet_expectation_numbers: number[];
-}
-
-export interface ExecutionRecordModel {
-  query: string;
-  expectations: string[];
-  expected_tool_calls: string[];
-  response: Record<string, unknown> | null;
-  validation: ValidationPayload | null;
-  error: string | null;
-  /** Optional explicit failure classification supplied by the API. */
-  error_type?: ErrorType | null;
-}
-
 export enum ErrorType {
   Expectation = 'expectation',
   Validation = 'validation',
@@ -40,7 +22,11 @@ export interface TestResultModel {
   duration: number;
   error: string | null;
   error_type?: ErrorType | null;
-  executions: ExecutionRecordModel[];
+  expectations_unmet: string[];
+  query?: string | null;
+  expectations: string[];
+  expected_tool_calls: string[];
+  response: Record<string, unknown> | null;
 }
 
 export type TestStatus = "queued" | "running" | "passed" | "failed";

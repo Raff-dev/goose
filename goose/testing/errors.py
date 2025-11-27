@@ -11,10 +11,10 @@ class ToolCallValidationError(Exception):
     def __init__(self, expected_tool_calls: set[str], actual_tool_calls: set[str]) -> None:
         self.expected_tool_calls = expected_tool_calls
         self.actual_tool_calls = actual_tool_calls
-        super().__init__(self.message())
+        super().__init__(expected_tool_calls, actual_tool_calls)
 
-    def message(self) -> str:
-        return f"Expected tool calls: {self.expected_tool_calls}, " f"but got: {self.actual_tool_calls}"
+    def __str__(self) -> str:  # pragma: no cover - simple delegation
+        return f"Expected tool calls: {self.expected_tool_calls}, but got: {self.actual_tool_calls}"
 
 
 class ExpectationValidationError(Exception):
@@ -23,9 +23,9 @@ class ExpectationValidationError(Exception):
     def __init__(self, reasoning: str, expectations_unmet: list[str]) -> None:
         self.reasoning = reasoning
         self.expectations_unmet = expectations_unmet
-        super().__init__(self.message())
+        super().__init__(reasoning, expectations_unmet)
 
-    def message(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover - simple delegation
         return f"Expectations not met: {self.expectations_unmet}\n\n{self.reasoning}"
 
 
