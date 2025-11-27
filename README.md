@@ -1,6 +1,6 @@
 # Goose LLM 🪿
 
-Goose is a batteries‑included **Python library and CLI** for validating LLM agents end‑to‑end.
+Goose is a batteries‑included **Python library and CLI** for validating LLM agents end‑to‑end. Currently designed for LangChain-based agents, with plans for framework-agnostic support in the future.
 
 Design conversational test cases, run them locally or in CI, and (optionally) plug in a React dashboard – all while staying in Python.
 
@@ -110,6 +110,7 @@ def test_weather_query(weather_goose: Goose) -> None:
 # run help to get more information
 goose-run --help
 
+# tests is the name of the folder containing tests
 goose-run run tests
 ```
 
@@ -130,6 +131,7 @@ Then launch the service from your project (for example, after wiring Goose into 
 goose-api --help
 
 # start the API server (FastAPI + Uvicorn)
+# example_tests is the name of the folder containing tests
 goose-api example_tests
 ```
 

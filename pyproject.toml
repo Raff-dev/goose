@@ -1,9 +1,23 @@
 [project]
 name = "llm-goose"
-version = "0.1.10"
+version = "0.1.14"
 description = "LLM testing framework for validating agent behavior and tool usage"
 license = "MIT"
 authors = [{ name = "Rafał Łazicki", email = "rafal.lazicki99@gmail.com" }]
+keywords = ["llm", "testing", "agent", "langchain", "openai", "pytest", "ai", "framework"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+]
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.13"
 dependencies = [
@@ -17,6 +31,12 @@ dependencies = [
 
 [project.optional-dependencies]
 api = ["fastapi>=0.115.0", "uvicorn>=0.32.0", "websockets>=15.0.1"]
+
+[project.urls]
+Homepage = "https://github.com/Raff-dev/goose"
+Repository = "https://github.com/Raff-dev/goose"
+Issues = "https://github.com/Raff-dev/goose/issues"
+Documentation = "https://github.com/Raff-dev/goose#readme"
 
 [dependency-groups]
 core = [
