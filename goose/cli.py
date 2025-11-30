@@ -4,19 +4,16 @@ This module exposes a single ``goose`` command implemented with Typer.
 
 End-users interact with the installed console script::
 
-    goose run path/to/tests
-    goose run --list path/to/tests
+    goose run example_tests.test_agent_behaviour
+    goose run --list example_tests.test_agent_behaviour.test_case
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 from typer import colors
 
-from goose.testing.discovery import discover_tests
-from goose.testing.imports import ensure_test_import_paths
+from goose.testing.discovery import load_from_qualified_name
 from goose.testing.models.tests import TestResult
 from goose.testing.runner import execute_test
 
@@ -25,10 +22,10 @@ app = typer.Typer(help="Goose LLM testing CLI")
 
 @app.command()
 def run(
-    path: Path = typer.Argument(..., help="Directory containing Goose tests to discover"),
+    target: str = typer.Argument(..., help="Dotted module or module.function identifying Goose tests"),
     list_only: bool = typer.Option(False, "--list", help="List discovered tests without executing them"),
 ) -> None:
-    """Discover tests under *path* and optionally execute them.
+    """Resolve *target* to one or more tests and optionally execute them.
 
     When ``--list`` is provided the command only prints the qualified
     names of discovered tests. Otherwise each test is executed in the
@@ -36,9 +33,10 @@ def run(
     emitted at the end.
     """
 
-    ensure_test_import_paths(path)
-
-    definitions = discover_tests(path)
+    try:
+        definitions = load_from_qualified_name(target)
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
 
     if list_only:
         for definition in definitions:

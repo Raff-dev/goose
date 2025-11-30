@@ -80,19 +80,17 @@ Example use in test spec: sequence patterns like `[search_products, ToolCallStar
 
 # multiple steps
 
-i wanna buy a product
-
-expectatipons: llm responded with all that needs to be fileld
-
-then we pass the messages to the next case
-
-"this product that info" etc
-
-another case with expectations
-
 
 # test whether error was a result of the tool or the agent messed up
 
 # run multiple times
 
 # test agents with other agents - we could add additional tools so the testing agent could do its own due dilligence
+
+# move error up top
+# for each expected tool show ticks too
+# divide test cards by file
+# when run all, on test card error_type is not visible untill all runs finish, the same for test detail
+# test name too long in the card
+# expected tool call operators in, set, list, etc.
+# evaluate goose only once, not after every test

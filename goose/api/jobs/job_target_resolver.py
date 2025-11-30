@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from goose.api import config
 from goose.api.jobs.exceptions import UnknownTestError
-from goose.testing.discovery import discover_tests, load_test_definition
+from goose.testing.discovery import discover_tests, load_from_qualified_name
 from goose.testing.models.tests import TestDefinition
 
 
@@ -17,16 +17,11 @@ def resolve_targets(requested: list[str] | None = None) -> list[TestDefinition]:
     targets: list[TestDefinition] = []
     for qualified_name in requested:
         try:
-            module, name = qualified_name.rsplit(".", 1)
-        except ValueError as exc:
-            raise UnknownTestError(f"Test name must be module-qualified: {qualified_name}") from exc
-
-        try:
-            definition = load_test_definition(module, name)
+            definitions = load_from_qualified_name(qualified_name)
         except (AttributeError, ModuleNotFoundError, ValueError) as exc:
             raise UnknownTestError(f"Test not found: {qualified_name}") from exc
 
-        targets.append(definition)
+        targets.extend(definitions)
     return targets
 
 
