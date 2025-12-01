@@ -1,4 +1,5 @@
 import { ChatBubbleIcon, GearIcon, PersonIcon, RocketIcon } from '@radix-ui/react-icons';
+import type { DetailedHTMLProps, HTMLAttributes, ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -113,7 +114,7 @@ export function MessageCards({ messages }: MessageCardsProps) {
                       remarkPlugins={[remarkGfm]}
                       className="prose max-w-none text-slate-900 prose-p:my-2 prose-pre:bg-slate-900 prose-pre:text-white prose-base:text-base"
                       components={{
-                        code({ inline, children, ...props }) {
+                        code({ inline, children, ...props }: { inline?: boolean; children?: ReactNode } & DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLElement>) {
                           if (inline) {
                             return (
                               <code className="bg-slate-100 px-1 rounded" {...props}>
