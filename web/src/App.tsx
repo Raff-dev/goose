@@ -8,7 +8,12 @@ import { TestGrid } from './components/TestGrid';
 import { useCreateRun, useRun, useRuns, useTests } from './hooks';
 
 function App() {
-  const { data: tests = [], isLoading: testsLoading } = useTests();
+  const {
+    data: tests = [],
+    isLoading: testsLoading,
+    isFetching: testsFetching,
+    refetch: refetchTests,
+  } = useTests();
   const { data: runs = [], isLoading: runsLoading } = useRuns();
   const createRunMutation = useCreateRun();
 
@@ -132,6 +137,10 @@ function App() {
     await createRunMutation.mutateAsync({ tests: [testName] });
   };
 
+  const handleReloadTests = () => {
+    void refetchTests();
+  };
+
   if (testsLoading || runsLoading) {
     return <div>Loading...</div>;
   }
@@ -158,6 +167,8 @@ function App() {
             onOnlyFailuresChange={setOnlyFailures}
             onRunAll={handleRunAll}
             isRunning={isRunning}
+            onReloadTests={handleReloadTests}
+            isReloadingTests={testsFetching}
           />
           <TestGrid
             tests={tests}

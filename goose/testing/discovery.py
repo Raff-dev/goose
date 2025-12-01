@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 import inspect
 import pkgutil
+import sys
 from pathlib import Path
 from types import ModuleType
 
@@ -16,6 +17,7 @@ def discover_tests(start_dir: Path) -> list[TestDefinition]:
     """Import test modules beneath *start_dir* and collect Goose tests."""
 
     test_root = ensure_test_import_paths(target_path=start_dir)
+    importlib.invalidate_caches()
     _import_fixture_modules(test_root)
 
     definitions: list[TestDefinition] = []
@@ -24,7 +26,7 @@ def discover_tests(start_dir: Path) -> list[TestDefinition]:
         if module_name is None:
             continue
 
-        module = importlib.import_module(module_name)
+        module = _import_or_reload_module(module_name)
         definitions.extend(_collect_module_definitions(module))
 
     return definitions
@@ -121,7 +123,7 @@ def _import_module_with_fixtures(module_name: str) -> ModuleType:
     """Import *module_name* and ensure its fixtures are loaded."""
 
     ensure_test_import_paths(target_path=Path.cwd())
-    module = importlib.import_module(module_name)
+    module = _import_or_reload_module(module_name)
     module_file = getattr(module, "__file__", None)
 
     if module_file is not None:
@@ -142,6 +144,18 @@ def _import_module_with_fixtures(module_name: str) -> ModuleType:
             _import_fixture_modules(current)
 
     return module
+
+
+def _import_or_reload_module(module_name: str) -> ModuleType:
+    """Import *module_name*, reloading it if already cached."""
+
+    if module_name in sys.modules:
+        cached_names = [name for name in sys.modules if name == module_name or name.startswith(f"{module_name}.")]
+        for name in cached_names:
+            sys.modules.pop(name, None)
+
+    importlib.invalidate_caches()
+    return importlib.import_module(module_name)
 
 
 __all__ = ["discover_tests", "load_from_qualified_name"]
