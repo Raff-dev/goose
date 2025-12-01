@@ -10,6 +10,9 @@ End-users interact with the installed console script::
 
 from __future__ import annotations
 
+import json
+from typing import Any
+
 import typer
 from typer import colors
 
@@ -24,6 +27,12 @@ app = typer.Typer(help="Goose LLM testing CLI")
 def run(
     target: str = typer.Argument(..., help="Dotted module or module.function identifying Goose tests"),
     list_only: bool = typer.Option(False, "--list", help="List discovered tests without executing them"),
+    verbose: bool = typer.Option(
+        False,
+        "-v",
+        "--verbose",
+        help="Display conversational transcripts including human prompts, agent replies, and tool activity",
+    ),
 ) -> None:
     """Resolve *target* to one or more tests and optionally execute them.
 
@@ -51,7 +60,7 @@ def run(
         result = execute_test(definition)
         total += 1
         total_duration += result.duration
-        failures += display_result(result)
+        failures += display_result(result, verbose=verbose)
 
     passed_count = total - failures
     passed_text = typer.style(str(passed_count), fg=colors.GREEN)
@@ -65,7 +74,7 @@ def run(
     raise typer.Exit(code=0)
 
 
-def display_result(result: TestResult) -> int:
+def display_result(result: TestResult, *, verbose: bool) -> int:
     """Render a single test result and report whether it failed."""
     if result.passed:
         status_label = "PASS"
@@ -77,6 +86,9 @@ def display_result(result: TestResult) -> int:
     status_text = typer.style(status_label, fg=status_color)
     duration_text = typer.style(f"{result.duration:.2f}s", fg=colors.CYAN)
     typer.echo(f"{status_text} {result.name} ({duration_text})")
+
+    if verbose:
+        _display_verbose_details(result)
 
     if not result.passed:
         assert result.error_type is not None
@@ -92,3 +104,86 @@ def display_result(result: TestResult) -> int:
         return 0
 
     return 1
+
+
+def _display_verbose_details(result: TestResult) -> None:
+    """Emit conversational details for verbose runs."""
+    # pylint: disable=too-many-branches,too-many-statements
+
+    test_case = result.test_case
+    header = typer.style("Conversation", fg=colors.CYAN, bold=True)
+    typer.echo(header)
+
+    if test_case is None:
+        typer.echo("No test case data recorded.")
+        return
+
+    response = test_case.last_response
+    if response is None:
+        typer.echo("No agent response captured.")
+        typer.echo(test_case.query_message)
+        return
+
+    rendered_human = False
+    for message in response.messages:
+        if message.type == "human":
+            rendered_human = True
+            label = typer.style("Human", fg=colors.BLUE)
+            typer.echo(label)
+            typer.echo(message.content)
+            typer.echo("")
+            continue
+        if message.type == "ai":
+            label = typer.style("Agent", fg=colors.GREEN)
+            typer.echo(label)
+            if message.content:
+                typer.echo("Response:")
+                typer.echo(message.content)
+            if message.tool_calls:
+                typer.echo("Tool Calls:")
+                for tool_call in message.tool_calls:
+                    typer.echo(f"- {tool_call.name}")
+                    if tool_call.args:
+                        typer.echo("Args:")
+                        typer.echo(_format_json_data(tool_call.args))
+                    if tool_call.id:
+                        typer.echo(f"Id: {tool_call.id}")
+                    typer.echo("")
+            else:
+                typer.echo("")
+            continue
+        if message.type == "tool":
+            tool_name = "tool"
+            if message.tool_name is not None:
+                tool_name = message.tool_name
+            label = typer.style(f"Tool Result ({tool_name})", fg=colors.MAGENTA)
+            typer.echo(label)
+            typer.echo(_format_json_text(message.content))
+            typer.echo("")
+            continue
+        label = typer.style(message.type.title(), fg=colors.YELLOW)
+        typer.echo(label)
+        typer.echo(message.content)
+        typer.echo("")
+
+    if not rendered_human and test_case.query_message:
+        label = typer.style("Human", fg=colors.BLUE)
+        typer.echo(label)
+        typer.echo(test_case.query_message)
+
+
+def _format_json_data(data: Any) -> str:
+    """Return pretty JSON for structured data."""
+    try:
+        return json.dumps(data, indent=2, sort_keys=True)
+    except TypeError:
+        return str(data)
+
+
+def _format_json_text(payload: str) -> str:
+    """Render JSON strings with indentation when possible."""
+    try:
+        parsed = json.loads(payload)
+    except (TypeError, json.JSONDecodeError):
+        return payload
+    return _format_json_data(parsed)
