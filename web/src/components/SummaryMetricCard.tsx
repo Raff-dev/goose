@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import SurfaceCard from './SurfaceCard';
+
 interface SummaryMetricCardProps {
   label: string;
   value: React.ReactNode;
@@ -14,11 +16,11 @@ export function SummaryMetricCard({ label, value, icon, status = 'default' }: Su
     'bg-blue-100';
   const iconTextColor =
     status === 'success' ? 'text-green-600' :
-    status === 'danger' ? 'text-red-600' :
+    status === 'danger' ? 'text-red-800' :
     'text-blue-600';
 
   return (
-    <div className="flex flex-col items-start justify-between bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-4 min-w-[160px] min-h-[100px]">
+    <SurfaceCard className="flex flex-col items-start justify-between bg-white px-6 py-4 min-w-[160px] min-h-[100px]">
       <span className="text-xs text-gray-500 font-medium mb-2">{label}</span>
       <div className="flex items-center gap-2">
         <span className="text-3xl font-bold tracking-tight">{value}</span>
@@ -28,6 +30,6 @@ export function SummaryMetricCard({ label, value, icon, status = 'default' }: Su
           </span>
         )}
       </div>
-    </div>
+    </SurfaceCard>
   );
 }

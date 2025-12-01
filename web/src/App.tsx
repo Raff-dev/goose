@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { TestResultModel } from './api/types';
+import type { TestResultModel, TestStatus, TestSummary } from './api/types';
 import { GlobalError } from './components/GlobalError';
 import { RunControls } from './components/RunControls';
 import { Summary } from './components/Summary';
@@ -41,7 +41,7 @@ function App() {
 
   // Compute status for each test
   const statusMap = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, TestStatus | 'not-run'>();
 
     // Get all test names that have been run recently
     const allTestNames = new Set<string>();
@@ -137,6 +137,14 @@ function App() {
     await createRunMutation.mutateAsync({ tests: [testName] });
   };
 
+  const handleRunModule = async (moduleName: string, moduleTests: TestSummary[]) => {
+    const names = moduleTests.map(test => test.qualified_name);
+    if (!names.length) {
+      return;
+    }
+    await createRunMutation.mutateAsync({ tests: names });
+  };
+
   const handleReloadTests = () => {
     void refetchTests();
   };
@@ -146,7 +154,19 @@ function App() {
   }
 
   const selectedTestData = tests.find(t => t.qualified_name === selectedTest);
-  const selectedResult = selectedTest ? resultsMap.get(selectedTest) : undefined;
+  const rawSelectedResult = selectedTest ? resultsMap.get(selectedTest) : undefined;
+  let selectedStatus: TestStatus | 'not-run' = 'not-run';
+
+  if (selectedTest) {
+    const statusValue = statusMap.get(selectedTest);
+    if (statusValue) {
+      selectedStatus = statusValue;
+    } else if (rawSelectedResult) {
+      selectedStatus = rawSelectedResult.passed ? 'passed' : 'failed';
+    }
+  }
+
+  const selectedResult = selectedStatus === 'passed' || selectedStatus === 'failed' ? rawSelectedResult : undefined;
   const latestRun = runs[0];
 
   const isRunning = runs.some(job => job.status === 'running' || job.status === 'queued');
@@ -177,12 +197,14 @@ function App() {
             onlyFailures={onlyFailures}
             onViewDetails={handleViewDetails}
             onRunTest={handleRunTest}
+            onRunModule={handleRunModule}
           />
         </>
       ) : selectedTestData ? (
         <TestDetail
           test={selectedTestData}
           result={selectedResult}
+          status={selectedStatus}
           onBack={handleBack}
           onRunTest={handleRunTest}
         />

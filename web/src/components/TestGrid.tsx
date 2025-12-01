@@ -1,19 +1,20 @@
 
 import { useMemo, useState } from 'react';
 
-import type { TestResultModel, TestSummary } from '../api/types';
+import type { TestResultModel, TestStatus, TestSummary } from '../api/types';
 import { TestCard } from './TestCard';
 
 interface TestGridProps {
   tests: TestSummary[];
   resultsMap: Map<string, TestResultModel>;
-  statusMap: Map<string, string>;
+  statusMap: Map<string, TestStatus | 'not-run'>;
   onlyFailures: boolean;
   onViewDetails: (testName: string) => void;
   onRunTest: (testName: string) => void;
+  onRunModule: (moduleName: string, moduleTests: TestSummary[]) => void;
 }
 
-export function TestGrid({ tests, resultsMap, statusMap, onlyFailures, onViewDetails, onRunTest }: TestGridProps) {
+export function TestGrid({ tests, resultsMap, statusMap, onlyFailures, onViewDetails, onRunTest, onRunModule }: TestGridProps) {
   const [collapsedModules, setCollapsedModules] = useState<Record<string, boolean>>({});
 
   const filtered = useMemo(() => {
@@ -44,25 +45,56 @@ export function TestGrid({ tests, resultsMap, statusMap, onlyFailures, onViewDet
 
   return (
     <section className="mt-8">
-      <h2 className="text-lg font-semibold mb-4">Test Suite ({filtered.length})</h2>
       {filtered.length === 0 ? (
         <p className="text-sm text-slate-500">No tests match the current filters.</p>
       ) : (
         <div className="space-y-8">
           {[...groupedByModule.entries()].map(([moduleName, moduleTests], index) => {
             const isCollapsed = collapsedModules[moduleName] ?? false;
+            const moduleBusy = moduleTests.some(test => {
+              const status = statusMap.get(test.qualified_name);
+              return status === 'running' || status === 'queued';
+            });
             return (
               <div
                 key={moduleName}
                 className={`pt-4 ${index === 0 ? 'border-t border-transparent' : 'border-t border-slate-200'} `}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-semibold">{moduleName}</h3>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => onRunModule(moduleName, moduleTests)}
+                      className={`text-blue-600 hover:text-blue-800 disabled:text-blue-300 disabled:hover:text-blue-300 ${moduleBusy ? 'cursor-not-allowed' : ''}`}
+                      title="Run file tests"
+                      disabled={moduleBusy}
+                    >
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                      <span className="sr-only">Run {moduleName}</span>
+                    </button>
+                    <h3 className="text-base font-semibold">{moduleName}</h3>
+                  </div>
                   <button
                     type="button"
                     onClick={() => toggleModule(moduleName)}
-                    className="text-sm text-slate-500 hover:text-slate-700"
+                    className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
+                    aria-label={`${isCollapsed ? 'Expand' : 'Collapse'} ${moduleName}`}
                   >
+                    <svg
+                      className="w-3.5 h-3.5 text-slate-500"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      {isCollapsed ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                      ) : (
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 9l7 7 7-7" />
+                      )}
+                    </svg>
                     {isCollapsed ? 'Expand' : 'Collapse'}
                   </button>
                 </div>
@@ -81,6 +113,7 @@ export function TestGrid({ tests, resultsMap, statusMap, onlyFailures, onViewDet
                           result={result}
                           onViewDetails={() => onViewDetails(test.qualified_name)}
                           onRunTest={() => onRunTest(test.qualified_name)}
+                          detailsHref={`/tests/${encodeURIComponent(test.qualified_name)}`}
                         />
                       );
                     })}

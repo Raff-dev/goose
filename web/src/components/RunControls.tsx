@@ -1,6 +1,7 @@
 import { ReloadIcon } from '@radix-ui/react-icons';
 
 import type { TestSummary } from '../api/types';
+import SurfaceCard from './SurfaceCard';
 
 interface RunControlsProps {
   tests: TestSummary[];
@@ -22,7 +23,7 @@ export function RunControls({
   isReloadingTests,
 }: RunControlsProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+    <SurfaceCard className="bg-white p-4 mb-6">
       <div className="flex gap-4">
         <button
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -57,6 +58,6 @@ export function RunControls({
           {isReloadingTests ? 'Reloading...' : 'Reload tests'}
         </button>
       </div>
-    </div>
+    </SurfaceCard>
   );
 }

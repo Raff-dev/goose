@@ -14,7 +14,7 @@ export function GlobalError({ error }: GlobalErrorProps) {
       <div className="font-bold">Test Suite Error!</div>
       <div>{error}</div>
       <button
-        className="mt-2 px-3 py-1 text-sm border border-white rounded hover:bg-white hover:text-red-500 transition"
+        className="mt-2 px-3 py-1 text-sm border border-white rounded hover:bg-white hover:text-red-800 transition"
         onClick={() => setIsVisible(false)}
       >
         Dismiss

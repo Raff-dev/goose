@@ -1,5 +1,6 @@
 import type { TestResultModel, TestSummary } from '../api/types';
 import { SummaryMetricCard } from './SummaryMetricCard';
+import SurfaceCard from './SurfaceCard';
 
 interface SummaryProps {
   tests: TestSummary[];
@@ -61,7 +62,7 @@ export function Summary({ tests, resultsMap }: SummaryProps) {
           status="danger"
         />
       </div>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+      <SurfaceCard className="bg-white p-4 mb-6">
         <div className="grid grid-cols-3 gap-4">
           <div>
             <div className="font-bold">Last Run Time</div>
@@ -73,12 +74,12 @@ export function Summary({ tests, resultsMap }: SummaryProps) {
           </div>
           <div>
             <div className="font-bold">Overall Status</div>
-            <div className={`font-bold ${overallStatus === 'Passed' ? 'text-green-500' : 'text-red-500'}`}>
+            <div className={`font-bold ${overallStatus === 'Passed' ? 'text-green-500' : 'text-red-800'}`}>
               {overallStatus}
             </div>
           </div>
         </div>
-      </div>
+      </SurfaceCard>
     </div>
   );
 }

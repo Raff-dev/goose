@@ -1,4 +1,7 @@
 import { ChatBubbleIcon, GearIcon, PersonIcon, RocketIcon } from '@radix-ui/react-icons';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
 import CodeBlock from './CodeBlock';
 
 type MessageType = 'human' | 'ai' | 'tool' | string;
@@ -34,98 +37,6 @@ function prettyJSON(obj: any) {
   } catch {
     return String(obj);
   }
-}
-
-function escapeHtml(unsafe: string) {
-  return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-/**
- * Minimal Markdown -> HTML converter for a safe subset:
- * - fenced code blocks ```code```
- * - inline code `code`
- * - bold **text**
- * - italic *text*
- * - links [text](href)
- * - unordered lists starting with `- `
- * This implementation first escapes HTML to avoid injection, then
- * applies simple regex-based transforms. It's intentionally small to
- * avoid adding a dependency.
- */
-function renderMarkdownToHtml(md: string) {
-  if (!md) return '';
-  // Normalize line endings
-  let text = String(md).replace(/\r\n?/g, '\n');
-  // Escape HTML first
-  text = escapeHtml(text);
-
-  // Preserve fenced code blocks by replacing them with placeholders
-  // so later transforms (like replacing newlines) don't break their
-  // internal formatting.
-  const codeBlocks: string[] = [];
-  text = text.replace(/```([\s\S]*?)```/g, (_m, code) => {
-    const pre = `<pre class="bg-gray-900 text-white p-2 rounded"><code>${escapeHtml(code)}</code></pre>`;
-    const idx = codeBlocks.length;
-    codeBlocks.push(pre);
-    return `@@CODE_BLOCK_${idx}@@`;
-  });
-
-  // Unordered lists: convert lines starting with - to <ul>
-  const lines = text.split('\n');
-  let inList = false;
-  const outLines: string[] = [];
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (/^-\s+/.test(trimmed)) {
-      if (!inList) {
-        inList = true;
-        outLines.push('<ul class="list-disc pl-5">');
-      }
-      const item = trimmed.replace(/^-\s+/, '');
-      outLines.push(`<li>${item}</li>`);
-    } else {
-      if (inList) {
-        inList = false;
-        outLines.push('</ul>');
-      }
-      outLines.push(line);
-    }
-  }
-  if (inList) outLines.push('</ul>');
-  text = outLines.join('\n');
-
-  // Inline code
-  text = text.replace(/`([^`]+)`/g, (_m, code) => `<code class="bg-gray-100 px-1 rounded">${escapeHtml(code)}</code>`);
-
-  // Bold **text**
-  text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-  // Italic *text* (avoid replacing inside strong)
-  text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-  // Links [text](url)
-  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label, href) => `<a class="underline text-blue-600" href="${href}">${label}</a>`);
-
-  // Paragraphize: split on two or more newlines into paragraphs. Single
-  // newlines inside a paragraph become spaces (prevents excessive <br/>).
-  const parts = text.split(/\n{2,}/g).map(p => p.trim()).filter(Boolean);
-  text = parts.map(p => {
-    // If the part is exactly a preserved code block placeholder, restore it
-    const codeMatch = p.match(/^@@CODE_BLOCK_(\d+)@@$/);
-    if (codeMatch) {
-      return codeBlocks[Number(codeMatch[1])] || '';
-    }
-    // Otherwise collapse single newlines into spaces and wrap in <p>
-    const inner = p.replace(/\n/g, ' ');
-    return `<p>${inner}</p>`;
-  }).join('\n');
-
-  return text;
 }
 
 export function MessageCards({ messages }: MessageCardsProps) {
@@ -189,14 +100,30 @@ export function MessageCards({ messages }: MessageCardsProps) {
                   <div />
                 </div>
 
-                        <div className="mt-2 text-sm text-gray-900">
-
-                          {contentIsJSON ? (
-                            <CodeBlock value={parsed} />
-                          ) : (
-                            <div className="prose max-w-none text-gray-900" dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(m.content) }} />
-                          )}
-                        </div>
+                <div className="mt-2 text-base text-gray-900">
+                  {contentIsJSON ? (
+                    <CodeBlock value={parsed} />
+                  ) : (
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      className="prose max-w-none text-gray-900 prose-p:my-2 prose-pre:bg-slate-900 prose-pre:text-white prose-base:text-base"
+                      components={{
+                        code({ inline, children, ...props }) {
+                          if (inline) {
+                            return (
+                              <code className="bg-gray-100 px-1 rounded" {...props}>
+                                {children}
+                              </code>
+                            );
+                          }
+                          return <CodeBlock value={String(children)} />;
+                        },
+                      }}
+                    >
+                      {m.content}
+                    </ReactMarkdown>
+                  )}
+                </div>
 
                 {m.tool_calls && m.tool_calls.length > 0 && (
                   <div className="mt-2">
@@ -206,7 +133,7 @@ export function MessageCards({ messages }: MessageCardsProps) {
                           <div className="font-medium">{tc.name ?? tc.id ?? 'call'}</div>
                           {tc.args != null && (
                             <div className="mt-1">
-                              <CodeBlock value={tc.args} className="text-xs mt-1" />
+                              <CodeBlock value={tc.args} className="mt-1" />
                             </div>
                           )}
                         </div>

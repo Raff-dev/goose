@@ -67,7 +67,10 @@ class TestResult:
             self.expectations_unmet = self.exception.expectations_unmet
 
         elif isinstance(self.exception, AssertionError):
-            self.error_message = str(self.exception)
+            formatted = "".join(
+                traceback.format_exception(type(self.exception), self.exception, self.exception.__traceback__)
+            )
+            self.error_message = formatted
             self.error_type = ErrorType.VALIDATION
             self.expectations_unmet = []
 

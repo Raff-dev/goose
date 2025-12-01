@@ -1,4 +1,6 @@
 
+import { MouseEvent } from 'react';
+
 import type { TestResultModel } from '../api/types';
 
 interface TestCardProps {
@@ -9,13 +11,14 @@ interface TestCardProps {
   result?: TestResultModel | undefined;
   onViewDetails: () => void;
   onRunTest: () => void;
+  detailsHref: string;
 }
 
-export function TestCard({ name, status, duration, error, result, onViewDetails, onRunTest }: TestCardProps) {
+export function TestCard({ name, status, duration, error, result, onViewDetails, onRunTest, detailsHref }: TestCardProps) {
   const failureType = result?.error_type ?? null;
   const statusColor =
     status === 'passed' ? 'bg-green-50 text-green-700' :
-    status === 'failed' ? 'bg-red-50 text-red-700' :
+    status === 'failed' ? 'bg-red-50 text-red-800' :
     status === 'queued' ? 'bg-yellow-50 text-yellow-700' :
     status === 'running' ? 'bg-blue-50 text-blue-700' :
     'bg-gray-100 text-gray-500';
@@ -36,9 +39,9 @@ export function TestCard({ name, status, duration, error, result, onViewDetails,
     : null;
   return (
     <div className="card flex flex-col gap-2 min-h-[170px]">
-      <div className="flex items-center gap-2 mb-1">
+      <div className="flex items-center gap-2 mb-1 min-w-0">
         <span className={`icon-circle ${statusColor}`}>{badgeIcon}</span>
-        <span className="font-semibold text-lg text-gray-900">{name}</span>
+        <span className="font-semibold text-lg text-gray-900 truncate" title={name}>{name}</span>
       </div>
       <div className="flex items-center gap-2 mb-2">
         <span className={`text-xs font-semibold px-2 py-1 rounded ${statusColor}`}>{statusLabel}{duration !== undefined && (status === 'passed' || status === 'failed') ? ` (${duration.toFixed(2)}s)` : ''}</span>
@@ -74,12 +77,19 @@ export function TestCard({ name, status, duration, error, result, onViewDetails,
           </svg>
           Run
         </button>
-        <button
+        <a
+          href={detailsHref}
+          onClick={(event: MouseEvent<HTMLAnchorElement>) => {
+            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+              return;
+            }
+            event.preventDefault();
+            onViewDetails();
+          }}
           className="border border-gray-300 rounded-md px-4 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-          onClick={onViewDetails}
         >
           View Details
-        </button>
+        </a>
       </div>
     </div>
   );
