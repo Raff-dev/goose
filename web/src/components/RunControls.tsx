@@ -1,6 +1,8 @@
 import { ReloadIcon } from '@radix-ui/react-icons';
+import { useEffect, useState } from 'react';
 
 import type { TestSummary } from '../api/types';
+import LoadingDots from './LoadingDots';
 import SurfaceCard from './SurfaceCard';
 
 interface RunControlsProps {
@@ -22,24 +24,46 @@ export function RunControls({
   onReloadTests,
   isReloadingTests,
 }: RunControlsProps) {
+  const runDisabled = !tests.length || isRunning;
+  const exitDelayMs = 600;
+  const [isReloadIconSpinning, setIsReloadIconSpinning] = useState(false);
+
+  const handleReloadClick = () => {
+    setIsReloadIconSpinning(true);
+    onReloadTests();
+  };
+
+  useEffect(() => {
+    if (isReloadingTests) {
+      setIsReloadIconSpinning(true);
+      return;
+    }
+
+    if (!isReloadingTests && isReloadIconSpinning) {
+      const timeoutId = window.setTimeout(() => setIsReloadIconSpinning(false), exitDelayMs);
+      return () => window.clearTimeout(timeoutId);
+    }
+    return undefined;
+  }, [isReloadingTests, isReloadIconSpinning]);
+
   return (
     <SurfaceCard className="bg-white p-4 mb-6">
       <div className="flex gap-4">
         <button
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white shadow-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${runDisabled ? 'cursor-not-allowed bg-gradient-to-r from-slate-400 to-slate-500 opacity-70' : 'bg-blue-500 hover:bg-blue-600 hover:shadow-xl'}`}
           onClick={onRunAll}
-          disabled={!tests.length || isRunning}
+          disabled={runDisabled}
         >
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z"/>
-          </svg>
-          {isRunning ? 'Running...' : 'Run All Tests'}
+          {isRunning ? (
+            <LoadingDots />
+          ) : null}
+          {isRunning ? 'Running' : 'Run All Tests'}
         </button>
         <button
-          className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium border transition ${
+          className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold border transition ${
             onlyFailures
-              ? 'bg-blue-50 text-blue-700 border-blue-200'
-              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              ? 'bg-blue-50 text-blue-700 border-blue-200 shadow'
+              : 'bg-white text-slate-700 border-slate-300 hover:bg-gray-50 shadow'
           }`}
           onClick={() => onOnlyFailuresChange(!onlyFailures)}
         >
@@ -50,11 +74,13 @@ export function RunControls({
         </button>
         <button
           type="button"
-          onClick={onReloadTests}
+          onClick={handleReloadClick}
           disabled={isReloadingTests}
-          className="flex items-center gap-2 px-4 py-2 rounded-md font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 shadow transition hover:bg-gray-50 disabled:opacity-50"
         >
-          <ReloadIcon className={`w-4 h-4 ${isReloadingTests ? 'animate-spin' : ''}`} />
+          <span className={`inline-flex items-center justify-center ${isReloadIconSpinning ? 'animate-reload-spin' : ''}`}>
+            <ReloadIcon className="w-4 h-4" />
+          </span>
           {isReloadingTests ? 'Reloading...' : 'Reload tests'}
         </button>
       </div>

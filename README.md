@@ -112,6 +112,9 @@ goose-run --help
 
 # tests is the name of the folder containing tests
 goose-run run tests
+
+# add -v / --verbose to stream detailed steps
+goose-run -v run tests
 ```
 
 That's it! Goose will run your agent, check that it called the expected tools, and validate the response against your expectations.

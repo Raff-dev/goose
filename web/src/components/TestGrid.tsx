@@ -65,7 +65,7 @@ export function TestGrid({ tests, resultsMap, statusMap, onlyFailures, onViewDet
                     <button
                       type="button"
                       onClick={() => onRunModule(moduleName, moduleTests)}
-                      className={`text-blue-600 hover:text-blue-800 disabled:text-blue-300 disabled:hover:text-blue-300 ${moduleBusy ? 'cursor-not-allowed' : ''}`}
+                      className={`text-blue-500 hover:text-blue-600 disabled:text-blue-300 disabled:hover:text-blue-300 ${moduleBusy ? 'cursor-not-allowed' : ''}`}
                       title="Run file tests"
                       disabled={moduleBusy}
                     >
@@ -98,8 +98,13 @@ export function TestGrid({ tests, resultsMap, statusMap, onlyFailures, onViewDet
                     {isCollapsed ? 'Expand' : 'Collapse'}
                   </button>
                 </div>
-                {!isCollapsed && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div
+                  className={`overflow-hidden transition-[max-height,opacity] duration-200 ease-out ${
+                    isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[2000px] opacity-100'
+                  }`}
+                  aria-hidden={isCollapsed}
+                >
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {moduleTests.map(test => {
                       const status = (statusMap.get(test.qualified_name) || 'not-run') as 'passed'|'failed'|'queued'|'running'|'not-run';
                       const result = resultsMap.get(test.qualified_name);
@@ -118,7 +123,7 @@ export function TestGrid({ tests, resultsMap, statusMap, onlyFailures, onViewDet
                       );
                     })}
                   </div>
-                )}
+                </div>
               </div>
             );
           })}

@@ -17,6 +17,7 @@ interface Message {
   content: string;
   tool_calls?: ToolCall[];
   tool_name?: string;
+  timestamp?: string | number | Date;
 }
 
 interface MessageCardsProps {
@@ -39,79 +40,83 @@ function prettyJSON(obj: any) {
   }
 }
 
+function formatTimestamp(value?: string | number | Date) {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  const candidate = value instanceof Date ? value : new Date(value);
+  if (candidate instanceof Date && !Number.isNaN(candidate.getTime())) {
+    return candidate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value;
+  }
+  return null;
+}
+
 export function MessageCards({ messages }: MessageCardsProps) {
+  if (!messages || messages.length === 0) {
+    return <p className="text-sm text-slate-500">No agent conversation captured for this run.</p>;
+  }
+
   return (
-    <div className="flex flex-col gap-3">
-      {messages.map((m, i) => {
-        const isHuman = m.type === 'human';
-        const isAI = m.type === 'ai';
-        const isTool = m.type === 'tool';
+    <div className="relative pl-12">
+      <div className="absolute left-5 top-0 bottom-0 w-px bg-slate-300" aria-hidden="true" />
+      <div className="flex flex-col gap-6">
+        {messages.map((m, i) => {
+          const isHuman = m.type === 'human';
+          const isAI = m.type === 'ai';
+          const isTool = m.type === 'tool';
+          const bubbleTint = isHuman
+            ? 'bg-blue-50 border border-blue-100'
+            : isAI
+            ? 'bg-white border border-slate-200'
+            : isTool
+            ? 'bg-emerald-50 border border-emerald-100'
+            : 'bg-white border border-slate-200';
+          const avatarClass = 'bg-blue-500/85';
+          const roleLabel = isHuman ? 'User Prompt' : isAI ? 'Agent Reply' : isTool ? 'Tool Output' : 'Message';
+          const icon = isHuman ? (
+            <PersonIcon className="w-5 h-5 text-white" aria-hidden />
+          ) : isAI ? (
+            <RocketIcon className="w-5 h-5 text-white" aria-hidden />
+          ) : isTool ? (
+            <GearIcon className="w-5 h-5 text-white" aria-hidden />
+          ) : (
+            <ChatBubbleIcon className="w-5 h-5 text-white" aria-hidden />
+          );
+          const parsed = tryParseJSON(m.content);
+          const contentIsJSON = parsed !== null;
+          const timestampLabel = formatTimestamp(m.timestamp);
+          const hoverLabel = timestampLabel ?? `Message ${i + 1}`;
 
-        // Render all messages in card wrappers for consistent alignment.
-        // Backgrounds are fully transparent per request so the visual
-        // appearance stays minimal while layout remains consistent.
-        const containerClass = 'rounded-lg shadow-sm border border-gray-200 p-3 bg-transparent';
-
-        // Icon background colors (rounded colored rectangles). Use
-        // darker shades for higher opacity/contrast.
-        const iconBgClass = isHuman
-          ? 'bg-blue-800/60'
-          : isAI
-          ? 'bg-violet-800/60'
-          : isTool
-          ? 'bg-orange-800/60'
-          : 'bg-gray-600/60';
-
-        const icon = isHuman ? (
-          <PersonIcon className="w-5 h-5 text-white opacity-100" aria-hidden />
-        ) : isAI ? (
-          <RocketIcon className="w-5 h-5 text-white opacity-100" aria-hidden />
-        ) : isTool ? (
-          <GearIcon className="w-5 h-5 text-white opacity-100" aria-hidden />
-        ) : (
-          <ChatBubbleIcon className="w-5 h-5 text-white opacity-100" aria-hidden />
-        );
-
-        // If content parses as JSON, show it as a formatted code block.
-        const parsed = tryParseJSON(m.content);
-        const contentIsJSON = parsed !== null;
-
-        return (
-          <div key={i} className={containerClass}>
-            <div className={`flex items-start gap-3 ${isHuman ? '' : 'py-3'}`}>
-              <div className="flex-shrink-0">
-                <div className={`w-10 h-10 flex items-center justify-center rounded-md ${iconBgClass}`}>
-                  {icon}
-                </div>
+          return (
+            <div key={`${m.type}-${i}`} className="relative pl-8 group">
+              <div className={`absolute left-0 top-2 flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg ${avatarClass}`} aria-hidden="true">
+                {icon}
               </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                      {m.tool_calls && m.tool_calls.length > 0 && (
-                        <div className="text-xs font-semibold mb-1">Tool calls</div>
-                      )}
-                      {m.tool_name && (
-                        <>
-                          <div className="text-xs font-semibold mb-1">Tool response</div>
-                          <div className="text-xs">{m.tool_name}</div>
-                        </>
-                      )}
-                    </div>
-                  <div />
+              <div
+                className={`rounded-2xl p-5 shadow-sm transition-colors ${bubbleTint}`}
+                title={hoverLabel}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="text-sm font-semibold text-slate-700">{roleLabel}</div>
+                  <span className="text-xs text-slate-500 opacity-0 transition-opacity duration-150 ease-in-out group-hover:opacity-100">
+                    {hoverLabel}
+                  </span>
                 </div>
-
-                <div className="mt-2 text-base text-gray-900">
+                <div className="mt-2 text-base text-slate-900">
                   {contentIsJSON ? (
-                    <CodeBlock value={parsed} />
+                    <CodeBlock value={prettyJSON(parsed)} />
                   ) : (
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
-                      className="prose max-w-none text-gray-900 prose-p:my-2 prose-pre:bg-slate-900 prose-pre:text-white prose-base:text-base"
+                      className="prose max-w-none text-slate-900 prose-p:my-2 prose-pre:bg-slate-900 prose-pre:text-white prose-base:text-base"
                       components={{
                         code({ inline, children, ...props }) {
                           if (inline) {
                             return (
-                              <code className="bg-gray-100 px-1 rounded" {...props}>
+                              <code className="bg-slate-100 px-1 rounded" {...props}>
                                 {children}
                               </code>
                             );
@@ -126,26 +131,24 @@ export function MessageCards({ messages }: MessageCardsProps) {
                 </div>
 
                 {m.tool_calls && m.tool_calls.length > 0 && (
-                  <div className="mt-2">
-                    <div className="flex flex-col gap-1">
-                      {m.tool_calls.map((tc, idx) => (
-                        <div key={idx} className="text-xs">
-                          <div className="font-medium">{tc.name ?? tc.id ?? 'call'}</div>
-                          {tc.args != null && (
-                            <div className="mt-1">
-                              <CodeBlock value={tc.args} className="mt-1" />
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                  <div className="mt-3 space-y-2">
+                    {m.tool_calls.map((tc, idx) => (
+                      <div key={idx} className="text-xs">
+                        <div className="font-semibold text-slate-700">{tc.name ?? tc.id ?? 'Tool call'}</div>
+                        {tc.args != null && (
+                          <div className="mt-1">
+                            <CodeBlock value={tc.args} className="mt-1" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

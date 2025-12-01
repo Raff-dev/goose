@@ -14,6 +14,17 @@ module.exports = {
                 md: "12px",
                 lg: "16px",
             },
+            keyframes: {
+                "reload-spin": {
+                    "0%": { transform: "rotate(0deg)" },
+                    "70%": { transform: "rotate(355deg)" },
+                    "100%": { transform: "rotate(360deg)" },
+                },
+            },
+            animation: {
+                "reload-spin":
+                    "reload-spin 0.6s cubic-bezier(0.4, 0, 0.2, 1) infinite",
+            },
         },
     },
     plugins: [],

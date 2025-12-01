@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import type { TestResultModel, TestStatus, TestSummary } from '../api/types';
 import CodeBlock from './CodeBlock';
+import LoadingDots from './LoadingDots';
 import MessageCards from './MessageCards';
 import SurfaceCard from './SurfaceCard';
 
@@ -28,6 +29,15 @@ const STATUS_META: Record<TestStatus | 'not-run', { label: string; chip: string 
   },
 };
 
+const ERROR_TYPE_LABELS: Record<string, string> = {
+  tool_call: 'Tool Call Mismatch',
+  expectation: 'Expectations Unmet',
+  validation: 'Validation Failure',
+  unexpected: 'Unexpected Error',
+};
+
+const TROUBLESHOOTING_URL = 'https://github.com/Raff-dev/goose/blob/main/README.md';
+
 interface TestDetailProps {
   test: TestSummary;
   result?: TestResultModel;
@@ -42,18 +52,37 @@ export function TestDetail({ test, result, status: statusProp, onBack, onRunTest
   const isPending = status === 'queued' || status === 'running';
   const durationSeconds = result?.duration;
   const [showErrorDetails, setShowErrorDetails] = useState(false);
+  const [copiedStack, setCopiedStack] = useState(false);
+
+  const stackTrace = useMemo(() => {
+    if (!result?.error) {
+      return '';
+    }
+    if (typeof result.error === 'string') {
+      return result.error;
+    }
+    try {
+      return JSON.stringify(result.error, null, 2);
+    } catch {
+      return String(result.error);
+    }
+  }, [result?.error]);
 
   useEffect(() => {
-    if (
-      result?.error_type === 'tool_call' ||
-      result?.error_type === 'expectation' ||
-      result?.error_type === 'validation'
-    ) {
-      setShowErrorDetails(true);
+    if (!result) {
+      setShowErrorDetails(false);
       return;
     }
-    setShowErrorDetails(false);
-  }, [result?.qualified_name, result?.error_type]);
+    setShowErrorDetails(result.passed === false);
+  }, [result?.qualified_name, result?.passed]);
+
+  useEffect(() => {
+    if (!copiedStack || typeof window === 'undefined') {
+      return;
+    }
+    const timeout = window.setTimeout(() => setCopiedStack(false), 1500);
+    return () => window.clearTimeout(timeout);
+  }, [copiedStack]);
 
   const actualToolCalls = useMemo(() => {
     if (!result) {
@@ -75,6 +104,73 @@ export function TestDetail({ test, result, status: statusProp, onBack, onRunTest
     }
     return names;
   }, [result]);
+
+  const errorMeta = useMemo(() => {
+    const type = result?.error_type ?? 'unexpected';
+    const title = ERROR_TYPE_LABELS[type] ?? ERROR_TYPE_LABELS.unexpected;
+    if (type === 'expectation') {
+      return {
+        title,
+        tone: 'text-amber-800',
+        description: 'One or more expectations did not match the agent response.',
+        hint: 'Compare the failing expectation to the agent output and update the assertion or agent prompt.',
+        linkLabel: 'Refine expectations',
+        linkHref: TROUBLESHOOTING_URL,
+      };
+    }
+    if (type === 'tool_call') {
+      return {
+        title,
+        tone: 'text-red-800',
+        description: 'A required tool invocation failed or returned an invalid payload.',
+        hint: 'Validate the tool signature and confirm the agent can access the tool from this environment.',
+        linkLabel: 'Tooling checklist',
+        linkHref: TROUBLESHOOTING_URL,
+      };
+    }
+    if (type === 'validation') {
+      return {
+        title,
+        tone: 'text-red-800',
+        description: 'The validation pipeline rejected the run because of schema or policy constraints.',
+        hint: 'Review validation rules in your fixtures and ensure the response payload matches the schema.',
+        linkLabel: 'Review validation tips',
+        linkHref: TROUBLESHOOTING_URL,
+      };
+    }
+    return {
+      title,
+      tone: 'text-red-800',
+      description: 'The runner reported an unhandled exception while executing this test.',
+      hint: 'Inspect the stack trace and rerun with debug logging enabled to capture more context.',
+      linkLabel: 'Troubleshooting guide',
+      linkHref: TROUBLESHOOTING_URL,
+    };
+  }, [result?.error_type]);
+
+  const handleCopyStack = () => {
+    if (!stackTrace) {
+      return;
+    }
+    const text = stackTrace;
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => setCopiedStack(true)).catch(() => setCopiedStack(false));
+      return;
+    }
+    try {
+      const fallback = document.createElement('textarea');
+      fallback.value = text;
+      document.body.appendChild(fallback);
+      fallback.select();
+      document.execCommand('copy');
+      document.body.removeChild(fallback);
+      setCopiedStack(true);
+    } catch {
+      setCopiedStack(false);
+    }
+  };
+
+  const hasStackTrace = result?.error_type === 'validation' || result?.error_type === 'unexpected' || !result?.error_type;
 
   return (
     <div className="space-y-6">
@@ -102,29 +198,13 @@ export function TestDetail({ test, result, status: statusProp, onBack, onRunTest
                   ? ` (${durationSeconds.toFixed(2)}s)`
                   : ''}
               </span>
-              {result?.error_type && (
-                <span className="inline-flex items-center rounded-full border border-red-100 bg-red-50 px-4 py-1.5 text-sm font-semibold text-red-800">
-                  {result.error_type === 'tool_call'
-                    ? 'Tool Call Error'
-                    : result.error_type === 'expectation'
-                    ? 'Expectation Error'
-                    : result.error_type === 'validation'
-                    ? 'Validation Error'
-                    : 'Unexpected Error'}
-                </span>
-              )}
             </div>
             <button
-              className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white shadow-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${isPending ? 'cursor-not-allowed bg-gradient-to-r from-slate-400 to-slate-500 opacity-70' : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:shadow-xl'}`}
+              className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white shadow-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${isPending ? 'cursor-not-allowed bg-gradient-to-r from-slate-400 to-slate-500 opacity-70' : 'bg-blue-500 hover:bg-blue-600 hover:shadow-xl'}`}
               disabled={isPending}
               onClick={() => onRunTest(test.qualified_name)}
             >
-              {isPending && (
-                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 018 8" />
-                </svg>
-              )}
+              {isPending && <LoadingDots />}
               {isPending ? (status === 'queued' ? 'Queued' : 'Running') : 'Run Test'}
             </button>
           </div>
@@ -141,10 +221,7 @@ export function TestDetail({ test, result, status: statusProp, onBack, onRunTest
       {!result && isPending && (
         <SurfaceCard as="section" className="bg-sky-50/80 p-6" aria-live="polite">
           <div className="flex items-center gap-3 text-sky-900">
-            <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 018 8" />
-            </svg>
+            <LoadingDots dotClassName="bg-sky-600" />
             {status === 'queued'
               ? 'Test run queued. Waiting for the runner to start...'
               : 'Test is running. Results will appear here once it finishes.'}
@@ -157,28 +234,42 @@ export function TestDetail({ test, result, status: statusProp, onBack, onRunTest
           <div className="grid gap-6 lg:grid-cols-2">
             <SurfaceCard as="section" className="bg-white p-6">
               <div className="space-y-6">
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
-                    Test Overview
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Test Overview</p>
+                    <div className="flex flex-wrap gap-2 text-xs font-medium text-slate-500">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-slate-700">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {durationSeconds !== undefined ? `${durationSeconds.toFixed(2)}s` : 'Not run'}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-slate-700">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18M3 12h18M3 17h18" />
+                        </svg>
+                        {test.module}
+                      </span>
+                    </div>
                   </div>
-                  <div className="mt-3 space-y-2">
-                    <p className="text-lg font-semibold text-slate-900">{test.name}</p>
-                    <p className="text-sm font-medium uppercase tracking-wide text-slate-500">{test.module}</p>
-                    {test.docstring && <p className="text-base text-slate-600">{test.docstring}</p>}
+                  <div className="space-y-2">
+                    {test.docstring ? (
+                      <p className="text-base text-slate-600">{test.docstring}</p>
+                    ) : (
+                      <p className="text-base text-slate-600">No description available for this test.</p>
+                    )}
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
-                    Prompt
-                  </div>
-                  <div className="mt-3">
-                    {result.query ? (
-                      <CodeBlock value={result.query} className="text-sm" />
-                    ) : (
-                      <p className="text-base text-slate-500">Prompt was not captured for this execution.</p>
-                    )}
-                  </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Prompt</p>
+                  {result.query ? (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-sm text-slate-800 shadow-inner">
+                      <div className="whitespace-pre-wrap">{result.query}</div>
+                    </div>
+                  ) : (
+                    <p className="text-base text-slate-500">Prompt was not captured for this execution.</p>
+                  )}
                 </div>
               </div>
             </SurfaceCard>
@@ -243,45 +334,94 @@ export function TestDetail({ test, result, status: statusProp, onBack, onRunTest
           </div>
 
           {result.error && (
-            <SurfaceCard as="section" className="bg-rose-50/80 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="text-sm font-semibold text-red-800">
-                  Error Details
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowErrorDetails(prev => !prev)}
-                  className="inline-flex items-center gap-2 text-xs font-medium text-red-800 hover:text-red-800"
-                >
-                  {showErrorDetails ? 'Collapse' : 'Expand'}
-                  <svg
-                    className={`h-3 w-3 transition-transform ${showErrorDetails ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 9l7 7 7-7" />
-                  </svg>
-                </button>
-              </div>
-              {showErrorDetails && (
-                <div className="mt-4 rounded-lg bg-white px-4 py-3 text-sm text-red-800 shadow-sm">
-                  {result.error_type === 'unexpected' ? (
-                    <CodeBlock value={result.error} className="text-sm" />
-                  ) : (
-                    <div className="whitespace-pre-wrap text-sm">
-                      {result.error}
+            <SurfaceCard as="section" className="bg-white p-0 rounded-r-xl rounded-l-none">
+              <div className="border border-red-100 rounded-r-xl rounded-l-none">
+                <div className="flex flex-col gap-4 border-l-4 border-red-500 p-6">
+                  <div className="flex flex-wrap items-start gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-700" aria-hidden="true">
+                      <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a1 1 0 00.86 1.5h18.64a1 1 0 00.86-1.5L13.71 3.86a1 1 0 00-1.72 0z" />
+                      </svg>
+                    </div>
+                    <div className="min-w-[200px] flex-1">
+                      <p className={`text-lg font-semibold ${errorMeta.tone}`}>{errorMeta.title ?? 'Error'}</p>
+                      <p className="mt-1 text-sm text-slate-600">{errorMeta.description}</p>
+                    </div>
+                    {result.error_type !== 'tool_call' && (
+                      <button
+                        type="button"
+                        onClick={() => setShowErrorDetails(prev => !prev)}
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900"
+                        aria-expanded={showErrorDetails}
+                      >
+                        {showErrorDetails ? 'Hide details' : 'Show details'}
+                        <svg
+                          className={`h-4 w-4 transition-transform duration-200 ${showErrorDetails ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 9l7 7 7-7" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                  <div className="rounded-lg bg-slate-50 p-4 text-sm text-slate-700">
+                    <div className="font-semibold text-slate-900">Why this failed</div>
+                    <p className="mt-1">{errorMeta.hint}</p>
+                    <a
+                      href={errorMeta.linkHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                    >
+                      {errorMeta.linkLabel}
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 17l10-10M7 7h10v10" />
+                      </svg>
+                    </a>
+                  </div>
+                  {result.error_type !== 'tool_call' && (
+                    <div
+                      className={`overflow-hidden transition-all duration-200 ease-in-out ${showErrorDetails ? 'max-h-[640px] opacity-100' : 'max-h-0 opacity-0'}`}
+                      aria-hidden={!showErrorDetails}
+                    >
+                      <div className="mt-4 rounded-lg bg-white px-4 py-3 text-sm text-slate-900 shadow-sm">
+                        {hasStackTrace ? (
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={handleCopyStack}
+                              className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:text-slate-900"
+                              aria-label="Copy stack trace"
+                              aria-live="polite"
+                            >
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 4h9a2 2 0 012 2v11M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h9a2 2 0 002-2m-9-16v3a2 2 0 002 2h3" />
+                              </svg>
+                            </button>
+                            <CodeBlock value={stackTrace} className="max-h-64 overflow-auto pr-12 text-sm" />
+                            {copiedStack && (
+                              <span className="absolute right-3 top-12 rounded bg-slate-900 px-2 py-0.5 text-xs text-white">Copied</span>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="whitespace-pre-wrap text-sm text-slate-900">
+                            {stackTrace}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
-              )}
+              </div>
             </SurfaceCard>
           )}
 
-          <SurfaceCard as="section" className="bg-white p-6">
+          <section aria-labelledby="agent-response-heading" className="pt-2">
             <div className="flex items-center justify-between">
-              <div className="text-lg font-semibold text-slate-900">
+              <div id="agent-response-heading" className="text-lg font-semibold text-slate-900">
                 Agent Response
               </div>
             </div>
@@ -292,7 +432,7 @@ export function TestDetail({ test, result, status: statusProp, onBack, onRunTest
                 <CodeBlock value={result.response ?? 'No response captured.'} className="text-sm whitespace-pre-wrap" />
               )}
             </div>
-          </SurfaceCard>
+          </section>
         </div>
       )}
     </div>
