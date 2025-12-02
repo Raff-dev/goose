@@ -9,7 +9,7 @@
 
 Goose is a batteries‑included **Python library and CLI** for validating LLM agents end‑to‑end. Currently designed for LangChain-based agents, with plans for framework-agnostic support in the future.
 
-Design conversational test cases, run them locally or in CI, and (optionally) plug in a React dashboard – all while staying in Python.
+Design conversational test cases, run them through a local web dashboard or CLI.
 
 Turn your “vibes‑based” LLM evaluations into **repeatable, versioned tests** instead of “it felt smart on that one prompt” QA.
 
@@ -29,9 +29,6 @@ Install the core library and CLI from PyPI:
 ```bash
 pip install llm-goose
 ```
-
-
-
 
 ## Quick Start: Minimal Example 🏃‍♂️
 
@@ -128,7 +125,7 @@ That's it! Goose will run your agent, check that it called the expected tools, a
 
 ## Goose API & GUI
 
-Install with extras:
+Install the API with extras:
 
 ```bash
 pip install "llm-goose[api]"
@@ -145,13 +142,8 @@ goose-api --help
 goose-api example_tests
 ```
 
-### React dashboard setup 🖥️
+Goose dashboard is a separate **web application** designed to be run locally that talks to the Goose API.
 
-The React dashboard is a separate **web application** that talks to the Goose jobs API over HTTP.
-It is built with Vite, React, and Tailwind and is designed to be run either locally during
-development or deployed as a static site.
-
-Install the published CLI from npm and let it host the built dashboard for you:
 
 ```bash
 npm install -g @llm-goose/dashboard-cli
@@ -163,12 +155,6 @@ goose-dashboard
 GOOSE_API_URL="http://localhost:8000" goose-dashboard
 ```
 
-
-For richer workflows (and the React dashboard), Goose ships an **example Django system** and a
-**FastAPI jobs API**. These live in this repo only – they are not installed with the PyPI package – but
-you can run them locally for inspiration or internal tooling.
-
-#### Dashboard Overview
 Compact grid summarizing every test’s latest status, duration, and quick filters for failures.
 
 ![Dashboard screenshot](https://raw.githubusercontent.com/Raff-dev/goose/main/images/dashboard_view.png)
