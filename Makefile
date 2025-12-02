@@ -1,5 +1,5 @@
 
-.PHONY: up down migrations migrate web pub-front pub-back pub
+.PHONY: up down migrations migrate web pub-front pub-back pub test
 
 export TWINE_CONFIG_FILE := $(abspath .pypirc)
 
@@ -63,3 +63,8 @@ pub-front:
 	cd web && npm run build
 	cd web && npm run build:cli
 	cd web && npm publish --access public
+
+# Run backend unit tests with coverage
+test:
+	uv run coverage run -m pytest
+	uv run coverage report

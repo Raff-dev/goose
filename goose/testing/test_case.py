@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 class TestCase:
     """Represents a single test case for agent behavior validation."""
 
+    __test__ = False
+
     def __init__(
         self,
         query_message: str,

@@ -17,6 +17,8 @@ class JobStatus(str, Enum):
 class TestStatus(str, Enum):
     """Per-test lifecycle states reported to clients."""
 
+    __test__ = False
+
     QUEUED = "queued"
     RUNNING = "running"
     PASSED = "passed"

@@ -1,5 +1,12 @@
 # Goose LLM 🪿
 
+[![PyPI](https://img.shields.io/pypi/v/llm-goose.svg?logo=pypi&label=PyPI)](https://pypi.org/project/llm-goose/)
+[![npm](https://img.shields.io/npm/v/@llm-goose/dashboard-cli.svg?logo=npm&label=npm)](https://www.npmjs.com/package/@llm-goose/dashboard-cli)
+[![Python](https://img.shields.io/badge/python-3.13%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![CI](https://github.com/Raff-dev/goose/actions/workflows/ci.yml/badge.svg)](https://github.com/Raff-dev/goose/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-74%25-brightgreen?logo=codecov&logoColor=white)](https://github.com/Raff-dev/goose/actions/workflows/ci.yml)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+
 Goose is a batteries‑included **Python library and CLI** for validating LLM agents end‑to‑end. Currently designed for LangChain-based agents, with plans for framework-agnostic support in the future.
 
 Design conversational test cases, run them locally or in CI, and (optionally) plug in a React dashboard – all while staying in Python.
@@ -161,23 +168,15 @@ For richer workflows (and the React dashboard), Goose ships an **example Django 
 **FastAPI jobs API**. These live in this repo only – they are not installed with the PyPI package – but
 you can run them locally for inspiration or internal tooling.
 
-On the dashboard, the **main grid view** shows one card per test in your suite, with a status pill
-(`Passed`, `Failed`, `Queued`, `Running`, or `Not Run`), the most recent duration if it has been
-executed, and any top‑level error from the last run. Toggling the "only failures" filter collapses the
-grid down to just the failing tests so you can quickly see which checks are red, which have never
-been executed, and which ones are currently running.
+#### Dashboard Overview
+Compact grid summarizing every test’s latest status, duration, and quick filters for failures.
 
-![Dashboard screenshot](images/dashboard_view.png)
+![Dashboard screenshot](https://raw.githubusercontent.com/Raff-dev/goose/main/images/dashboard_view.png)
 
-When you click into a test, the **detail view** shows a header with the test name, module path,
-latest status and duration, plus the original docstring so you remember what the scenario is
-meant to cover. Below that, an **execution history** lists each run as a card: you see every
-expectation with a green check or red cross, along with the validator's reasoning explaining
-why the run was considered a success or failure. For each step, the underlying messages are
-rendered as human / AI / tool bubbles, including tool calls and JSON payloads; if something
-went wrong mid‑run, the captured error text is shown at the bottom of the card.
+#### Detailed Run View
+Expectation checklist, reasoning, and message timeline for a single test execution.
 
-![Detail screenshot](images/detail_view.png)
+![Detail screenshot](https://raw.githubusercontent.com/Raff-dev/goose/main/images/detail_view.png)
 
 
 

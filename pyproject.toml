@@ -4,7 +4,16 @@ version = "0.1.17"
 description = "LLM testing framework for validating agent behavior and tool usage"
 license = "MIT"
 authors = [{ name = "Rafał Łazicki", email = "rafal.lazicki99@gmail.com" }]
-keywords = ["llm", "testing", "agent", "langchain", "openai", "pytest", "ai", "framework"]
+keywords = [
+    "llm",
+    "testing",
+    "agent",
+    "langchain",
+    "openai",
+    "pytest",
+    "ai",
+    "framework",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -58,6 +67,8 @@ dev = [
     "mypy>=1.18.2",
     "twine>=6.2.0",
     "django-stubs[compatible-mypy]>=5.2.7",
+    "pytest>=9.0.1",
+    "coverage>=7.12.0",
 ]
 all = [
     { include-group = "core" },
@@ -88,16 +99,6 @@ target-version = ["py313"]
 line-length = 120
 target-version = "py313"
 
-[tool.pylint.main]
-max-line-length = 120
-disable = ["too-few-public-methods", "missing-module-docstring"]
-# Exclude Django migration packages from linting; they contain generated
-# boilerplate that frequently violates stylistic rules and is not useful
-# to check in pre-commit runs.
-ignore = ["migrations"]
-# Use a regular expression for ignore-patterns; match any path segment
-# containing a `migrations` directory.
-ignore-patterns = [".*/migrations/.*"]
 
 [tool.pylint.format]
 max-line-length = 120
@@ -123,3 +124,24 @@ in-place = true
 remove-all-unused-imports = true
 remove-unused-variables = true
 ignore-init-module-imports = true
+
+[tool.pylint.main]
+max-line-length = 120
+disable = ["too-few-public-methods", "missing-module-docstring"]
+ignore = ["migrations", "tests"]
+ignore-patterns = [".*/migrations/.*", "tests/.*"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore:AgentStatePydantic has been moved to `langchain.agents`:Warning",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["goose"]
+omit = ["example_system/*", "goose/cli.py", "goose/api/cli.py"]
+
+[tool.coverage.report]
+show_missing = true

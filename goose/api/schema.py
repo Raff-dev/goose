@@ -44,6 +44,8 @@ class TestSummary(BaseModel):
     from a discovered ``TestDefinition``.
     """
 
+    __test__ = False
+
     qualified_name: str
     module: str
     name: str
@@ -79,6 +81,8 @@ class TestResultModel(BaseModel):
     duration, any captured error metadata, and the recorded test case
     context (query, expectations, expected tool calls, response).
     """
+
+    __test__ = False
 
     qualified_name: str
     module: str

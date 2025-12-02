@@ -15,6 +15,8 @@ from goose.testing.test_case import TestCase
 class TestDefinition:
     """Metadata about an individual test function."""
 
+    __test__ = False
+
     module: str
     name: str
     func: Callable[..., Any]
@@ -30,6 +32,8 @@ class TestDefinition:
 class ValidationResult:
     """Validator outcome for a single agent execution."""
 
+    __test__ = False
+
     success: bool
     reasoning: str = ""
     expectations_unmet: list[str] = field(default_factory=list)
@@ -40,6 +44,8 @@ class ValidationResult:
 @dataclass(slots=True)
 class TestResult:
     """Outcome from executing a Goose test."""
+
+    __test__ = False
 
     definition: TestDefinition
     duration: float
