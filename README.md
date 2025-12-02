@@ -1,4 +1,4 @@
-# Goose LLM 🪿
+# LLM Goose 🪿
 
 [![PyPI](https://img.shields.io/pypi/v/llm-goose.svg?logo=pypi&label=PyPI)](https://pypi.org/project/llm-goose/)
 [![npm](https://img.shields.io/npm/v/@llm-goose/dashboard-cli.svg?logo=npm&label=npm)](https://www.npmjs.com/package/@llm-goose/dashboard-cli)
