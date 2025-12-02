@@ -67,6 +67,19 @@ def test_failure_runtime_after_sales_report(goose: Goose) -> None:
     raise RuntimeError("Intentional failure: simulate unexpected error after case execution")
 
 
+def test_failure_tool_audit_extra_calls(goose: Goose) -> None:
+    """Intentional failure: actual execution calls more tools than expected."""
+
+    goose.case(
+        query="Generate a detailed October 2025 sales summary with revenue totals.",
+        expectations=[
+            "Agent retrieved October 2025 sales history",
+            "Agent provided revenue totals",
+        ],
+        expected_tool_calls=[get_sales_history],
+    )
+
+
 def test_failure_tool_runtime_trigger_system_fault(goose: Goose) -> None:
     """Intentional failure: tool raises an exception that propagates to the agent."""
 

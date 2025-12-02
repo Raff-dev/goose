@@ -1,3 +1,4 @@
+import { ReloadIcon } from '@radix-ui/react-icons';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { TestResultModel, TestStatus, TestSummary } from '../api/types';
@@ -44,15 +45,27 @@ interface TestDetailProps {
   status?: TestStatus | 'not-run';
   onBack: () => void;
   onRunTest: (testName: string) => void;
+  onReloadTests: () => void;
+  isReloadingTests: boolean;
 }
 
-export function TestDetail({ test, result, status: statusProp, onBack, onRunTest }: TestDetailProps) {
+export function TestDetail({
+  test,
+  result,
+  status: statusProp,
+  onBack,
+  onRunTest,
+  onReloadTests,
+  isReloadingTests,
+}: TestDetailProps) {
   const status = statusProp ?? (result ? (result.passed ? 'passed' : 'failed') : 'not-run');
   const statusMeta = STATUS_META[status];
   const isPending = status === 'queued' || status === 'running';
   const durationSeconds = result?.duration;
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const [copiedStack, setCopiedStack] = useState(false);
+  const [isReloadIconSpinning, setIsReloadIconSpinning] = useState(false);
+  const reloadExitDelayMs = 600;
 
   const stackTrace = useMemo(() => {
     if (!result?.error) {
@@ -84,6 +97,19 @@ export function TestDetail({ test, result, status: statusProp, onBack, onRunTest
     return () => window.clearTimeout(timeout);
   }, [copiedStack]);
 
+  useEffect(() => {
+    if (isReloadingTests) {
+      setIsReloadIconSpinning(true);
+      return;
+    }
+
+    if (!isReloadingTests && isReloadIconSpinning) {
+      const timeoutId = window.setTimeout(() => setIsReloadIconSpinning(false), reloadExitDelayMs);
+      return () => window.clearTimeout(timeoutId);
+    }
+    return undefined;
+  }, [isReloadingTests, isReloadIconSpinning, reloadExitDelayMs]);
+
   const actualToolCalls = useMemo(() => {
     if (!result) {
       return [] as string[];
@@ -104,6 +130,24 @@ export function TestDetail({ test, result, status: statusProp, onBack, onRunTest
     }
     return names;
   }, [result]);
+
+  const expectedToolCalls = result?.expected_tool_calls ?? [];
+
+  const extraToolCalls = useMemo(() => {
+    if (!actualToolCalls.length) {
+      return [] as string[];
+    }
+    const expectedSet = new Set(expectedToolCalls);
+    const extras: string[] = [];
+    for (const call of actualToolCalls) {
+      if (!expectedSet.has(call)) {
+        extras.push(call);
+      }
+    }
+    return Array.from(new Set(extras));
+  }, [actualToolCalls, expectedToolCalls]);
+
+  const hasToolExpectationRows = expectedToolCalls.length > 0 || extraToolCalls.length > 0;
 
   const errorMeta = useMemo(() => {
     const type = result?.error_type ?? 'unexpected';
@@ -148,6 +192,11 @@ export function TestDetail({ test, result, status: statusProp, onBack, onRunTest
     };
   }, [result?.error_type]);
 
+  const handleReloadTests = () => {
+    setIsReloadIconSpinning(true);
+    onReloadTests();
+  };
+
   const handleCopyStack = () => {
     if (!stackTrace) {
       return;
@@ -171,6 +220,7 @@ export function TestDetail({ test, result, status: statusProp, onBack, onRunTest
   };
 
   const hasStackTrace = result?.error_type === 'validation' || result?.error_type === 'unexpected' || !result?.error_type;
+  const isToolCallError = result?.error_type === 'tool_call';
 
   return (
     <div className="space-y-6">
@@ -206,6 +256,17 @@ export function TestDetail({ test, result, status: statusProp, onBack, onRunTest
             >
               {isPending && <LoadingDots />}
               {isPending ? (status === 'queued' ? 'Queued' : 'Running') : 'Run Test'}
+            </button>
+            <button
+              type="button"
+              onClick={handleReloadTests}
+              disabled={isReloadingTests}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 shadow transition hover:bg-gray-50 disabled:opacity-50"
+            >
+              <span className={`inline-flex items-center justify-center ${isReloadIconSpinning ? 'animate-reload-spin' : ''}`}>
+                <ReloadIcon className="h-4 w-4" />
+              </span>
+              {isReloadingTests ? 'Reloading' : 'Reload tests'}
             </button>
           </div>
         </div>
@@ -289,12 +350,13 @@ export function TestDetail({ test, result, status: statusProp, onBack, onRunTest
                           const unmet = new Set(result.expectations_unmet ?? []);
                           return result.expectations.map((exp, index) => {
                           const passed = !unmet.has(exp);
+                          const dotColor = passed ? (isToolCallError ? 'bg-slate-300' : 'bg-emerald-400/80') : 'bg-rose-400/80';
                           return (
                             <li
                               key={`${exp}-${index}`}
                               className="flex items-start gap-3 rounded-lg bg-white px-3 py-2 shadow-sm"
                             >
-                              <span className={`h-2.5 w-2.5 rounded-full self-center ${passed ? 'bg-emerald-400/80' : 'bg-rose-400/80'}`} />
+                              <span className={`h-2.5 w-2.5 rounded-full self-center ${dotColor}`} />
                               <span className={`text-base ${passed ? 'text-slate-800' : 'text-red-800'}`}>
                                 {exp}
                               </span>
@@ -312,19 +374,29 @@ export function TestDetail({ test, result, status: statusProp, onBack, onRunTest
                     Expected Tool Calls
                   </div>
                   <div className="mt-3">
-                    {result.expected_tool_calls.length === 0 ? (
+                    {!hasToolExpectationRows ? (
                       <p className="text-base text-slate-500">No specific tool expectations.</p>
                     ) : (
                       <ul className="space-y-2">
-                        {result.expected_tool_calls.map((tool) => {
+                        {expectedToolCalls.map((tool) => {
                           const satisfied = actualToolCalls.includes(tool);
+                          const dotColor = satisfied ? 'bg-emerald-400/80' : 'bg-rose-400/80';
                           return (
                             <li key={tool} className="flex items-center gap-3 rounded-lg bg-white px-3 py-2 shadow-sm">
-                              <span className={`h-2.5 w-2.5 rounded-full ${satisfied ? 'bg-emerald-400/80' : 'bg-rose-400/80'}`} />
+                              <span className={`h-2.5 w-2.5 rounded-full ${dotColor}`} />
                               <span className={satisfied ? 'text-base text-slate-800' : 'text-base text-red-800'}>{tool}</span>
                             </li>
                           );
                         })}
+                        {extraToolCalls.map((tool, index) => (
+                          <li key={`extra-${tool}-${index}`} className="flex items-center gap-3 rounded-lg bg-white px-3 py-2 shadow-sm">
+                            <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
+                            <div className="flex flex-col">
+                              <span className="text-base text-amber-800">{tool}</span>
+                              <span className="text-xs font-semibold uppercase tracking-wide text-amber-600">Unexpected tool</span>
+                            </div>
+                          </li>
+                        ))}
                       </ul>
                     )}
                   </div>

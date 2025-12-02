@@ -207,6 +207,8 @@ function App() {
           status={selectedStatus}
           onBack={handleBack}
           onRunTest={handleRunTest}
+          onReloadTests={handleReloadTests}
+          isReloadingTests={testsFetching}
         />
       ) : null}
     </div>
