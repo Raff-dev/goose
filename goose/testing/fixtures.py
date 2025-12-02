@@ -35,6 +35,15 @@ def register(name: str, func: Callable[..., Any], *, autouse: bool = False) -> N
     fixtures[name] = FixtureDefinition(func=func, autouse=autouse)
 
 
+def reset_registry() -> None:
+    """Clear all registered fixtures.
+
+    Useful when test modules are reloaded to avoid duplicate registration errors.
+    """
+
+    fixtures.clear()
+
+
 def _resolve(name: str, cache: dict[str, Any]) -> Any:
     """Resolve a fixture by name: run its factory function with resolved dependencies, cache the result.
 
@@ -144,4 +153,5 @@ __all__ = [
     "fixture",
     "build_call_arguments",
     "extract_goose_fixture",
+    "reset_registry",
 ]
