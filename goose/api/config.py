@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-_STATE: dict[str, Path] = {"tests_root": Path.cwd()}
+_STATE: dict = {
+    "tests_root": Path.cwd(),
+    "reload_targets": [],
+}
 
 
 def get_tests_root() -> Path:
@@ -27,4 +30,20 @@ def set_tests_root(path: Path) -> None:
     _STATE["tests_root"] = path.resolve()
 
 
-__all__ = ["get_tests_root", "set_tests_root"]
+def get_reload_targets() -> list[str]:
+    """Return the list of module targets to reload before test discovery."""
+    print(_STATE["reload_targets"])
+    return _STATE["reload_targets"]
+
+
+def set_reload_targets(targets: list[str]) -> None:
+    """Set module targets to reload before test discovery.
+
+    Args:
+        targets: List of dotted module names to reload, e.g.
+            ["example_system.agent", "example_system.tools"].
+    """
+    _STATE["reload_targets"] = list(targets)
+
+
+__all__ = ["get_tests_root", "set_tests_root", "get_reload_targets", "set_reload_targets"]

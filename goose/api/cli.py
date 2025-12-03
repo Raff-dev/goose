@@ -8,7 +8,7 @@ import typer
 from uvicorn import Config, Server
 
 from goose.api.app import app as fastapi_app
-from goose.api.config import set_tests_root
+from goose.api.config import set_reload_targets, set_tests_root
 
 app = typer.Typer(help="Run the Goose FastAPI server.")
 
@@ -32,6 +32,11 @@ def serve(
         help="Enable autoreload for development",
         show_default=True,
     ),
+    reload_targets: list[str] = typer.Option(
+        [],
+        "--reload-target",
+        help="Package or module to reload before each test run. Submodules are reloaded in dependency order.",
+    ),
 ) -> None:
     """Launch the Goose FastAPI server via uvicorn.
 
@@ -40,12 +45,14 @@ def serve(
         host: Host interface to bind the uvicorn server to.
         port: Network port for the server to listen on.
         reload: Whether to enable code autoreload, usually in development.
+        reload_targets: List of module names to reload before each test discovery.
 
     Returns:
         None: This function raises ``SystemExit`` after the server stops.
     """
 
     set_tests_root(tests_path)
+    set_reload_targets(reload_targets)
     config = Config(app=fastapi_app, host=host, port=port, reload=reload)
     server = Server(config)
     raise SystemExit(server.run())

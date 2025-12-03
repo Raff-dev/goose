@@ -5,9 +5,15 @@ from pathlib import Path
 
 import pytest
 
-from goose.api.config import set_tests_root
+from goose.api.config import set_reload_targets, set_tests_root
 from goose.api.schema import TestSummary
-from goose.testing.discovery import load_from_qualified_name
+from goose.testing.discovery import (
+    _build_dependency_graph,
+    _collect_submodules,
+    _is_test_module,
+    _topological_sort,
+    load_from_qualified_name,
+)
 from goose.testing.exceptions import UnknownTestError
 from goose.testing.models.tests import TestDefinition
 
@@ -43,6 +49,160 @@ def _clear_suite_paths(monkeypatch, suite_root: Path) -> None:
     removal = {str(suite_root), str(suite_root.parent)}
     new_path = [entry for entry in sys.path if entry not in removal]
     monkeypatch.setattr(sys, "path", new_path, raising=False)
+
+
+# -----------------------------------------------------------------------------
+# _is_test_module
+# -----------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "name,expected",
+    [
+        ("test_foo", True),
+        ("tests_bar", True),
+        ("test_", True),
+        ("tests_", True),
+        ("pkg.test_foo", True),
+        ("pkg.subpkg.tests_bar", True),
+        ("foo_test", False),
+        ("conftest", False),
+        ("helper", False),
+        ("pkg.conftest", False),
+    ],
+)
+def test_is_test_module(name: str, expected: bool):
+    assert _is_test_module(name) == expected
+
+
+# -----------------------------------------------------------------------------
+# _collect_submodules
+# -----------------------------------------------------------------------------
+
+
+def test_collect_submodules_finds_loaded_modules(monkeypatch):
+    """Verify _collect_submodules returns modules matching the package prefix."""
+    fake_modules = {
+        "mypackage": object(),
+        "mypackage.sub": object(),
+        "mypackage.sub.deep": object(),
+        "mypackage.conftest": object(),
+        "other": object(),
+        "other.sub": object(),
+    }
+    monkeypatch.setattr(sys, "modules", fake_modules)
+
+    result = _collect_submodules("mypackage")
+    assert set(result) == {"mypackage", "mypackage.sub", "mypackage.sub.deep", "mypackage.conftest"}
+
+
+def test_collect_submodules_excludes_suffix(monkeypatch):
+    """Verify exclude_suffix filters out matching modules."""
+    fake_modules = {
+        "pkg": object(),
+        "pkg.test_foo": object(),
+        "pkg.conftest": object(),
+    }
+    monkeypatch.setattr(sys, "modules", fake_modules)
+
+    result = _collect_submodules("pkg", exclude_suffix=".conftest")
+    assert set(result) == {"pkg", "pkg.test_foo"}
+
+
+# -----------------------------------------------------------------------------
+# _build_dependency_graph
+# -----------------------------------------------------------------------------
+
+
+def test_build_dependency_graph_detects_imports(monkeypatch):
+    """Verify dependency graph correctly identifies cross-module imports."""
+
+    class FakeToolsModule:
+        __name__ = "myapp.tools"
+
+    class FakeAgentModule:
+        __name__ = "myapp.agent"
+
+    # Agent imports a function from tools
+    def tool_func():
+        pass
+
+    tool_func.__module__ = "myapp.tools"
+    FakeAgentModule.tool_func = tool_func
+
+    fake_modules = {
+        "myapp.tools": FakeToolsModule(),
+        "myapp.agent": FakeAgentModule(),
+    }
+    monkeypatch.setattr(sys, "modules", fake_modules)
+
+    modules = {"myapp.tools", "myapp.agent"}
+    deps = _build_dependency_graph(modules)
+
+    assert deps["myapp.tools"] == set()
+    assert deps["myapp.agent"] == {"myapp.tools"}
+
+
+def test_build_dependency_graph_handles_missing_modules(monkeypatch):
+    """Verify missing modules get empty dependency sets."""
+    monkeypatch.setattr(sys, "modules", {})
+
+    modules = {"missing.module"}
+    deps = _build_dependency_graph(modules)
+
+    assert deps["missing.module"] == set()
+
+
+# -----------------------------------------------------------------------------
+# _topological_sort
+# -----------------------------------------------------------------------------
+
+
+def test_topological_sort_orders_dependencies_first():
+    """Verify dependencies are sorted before dependents."""
+    modules = {"a", "b", "c"}
+    deps = {
+        "a": set(),  # no dependencies
+        "b": {"a"},  # b depends on a
+        "c": {"b"},  # c depends on b
+    }
+
+    result = _topological_sort(modules, deps)
+
+    assert result.index("a") < result.index("b")
+    assert result.index("b") < result.index("c")
+
+
+def test_topological_sort_handles_circular_dependencies():
+    """Verify circular dependencies don't cause infinite loop."""
+    modules = {"a", "b"}
+    deps = {
+        "a": {"b"},
+        "b": {"a"},
+    }
+
+    result = _topological_sort(modules, deps)
+
+    assert set(result) == modules
+
+
+def test_topological_sort_handles_independent_modules():
+    """Verify modules with no dependencies are all included."""
+    modules = {"x", "y", "z"}
+    deps = {
+        "x": set(),
+        "y": set(),
+        "z": set(),
+    }
+
+    result = _topological_sort(modules, deps)
+
+    assert set(result) == modules
+
+
+# -----------------------------------------------------------------------------
+# load_from_qualified_name
+# -----------------------------------------------------------------------------
 
 
 def test_load_from_root_collects_all_modules(tmp_path, monkeypatch):
@@ -118,6 +278,49 @@ def test_two():
     assert refreshed_func() == "modified"
 
 
+def test_load_from_qualified_name_reloads_source_targets(tmp_path, monkeypatch):
+    """Verify that reload targets are reloaded before discovering tests."""
+    sample_root = _write_sample_tests(tmp_path)
+    _clear_suite_paths(monkeypatch, sample_root)
+    set_tests_root(sample_root)
+
+    # Create a source package that will be reloaded
+    source_pkg = tmp_path / "my_source"
+    source_pkg.mkdir()
+    (source_pkg / "__init__.py").write_text("", encoding="utf-8")
+    (source_pkg / "tools.py").write_text("VALUE = 1\n", encoding="utf-8")
+
+    # Make the source package importable
+    sys.path.insert(0, str(tmp_path))
+    try:
+        import my_source.tools  # noqa: F401
+
+        set_reload_targets(["my_source"])
+
+        # Modify the source file
+        (source_pkg / "tools.py").write_text("VALUE = 42\n", encoding="utf-8")
+
+        # Load tests (which triggers source reload)
+        load_from_qualified_name("sample_suite")
+
+        # Verify the source module was reloaded
+        import my_source.tools as tools_module
+
+        assert tools_module.VALUE == 42
+    finally:
+        set_reload_targets([])
+        sys.path.remove(str(tmp_path))
+        # Clean up imported modules
+        for name in list(sys.modules):
+            if name.startswith("my_source"):
+                del sys.modules[name]
+
+
+# -----------------------------------------------------------------------------
+# TestSummary
+# -----------------------------------------------------------------------------
+
+
 def test_test_summary_serializes_definition_docstring():
     def sample_case():
         """Only the first line is kept.
@@ -133,3 +336,14 @@ def test_test_summary_serializes_definition_docstring():
     assert summary.module == "pkg.tests"
     assert summary.name == "test_example"
     assert summary.docstring == "Only the first line is kept."
+
+
+def test_test_summary_handles_no_docstring():
+    def sample_case():
+        pass
+
+    definition = TestDefinition(module="pkg.tests", name="test_no_doc", func=sample_case)
+
+    summary = TestSummary.from_definition(definition)
+
+    assert summary.docstring is None

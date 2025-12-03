@@ -44,36 +44,77 @@ def _ensure_test_import_paths() -> Path:
     return tests_path
 
 
-def _refresh_test_modules(root_package: str) -> None:
-    """Reload all test modules under root_package so file changes are picked up.
+def _reload_module(module_name: str) -> None:
+    """Reload a single module by name, ignoring errors."""
+    module = sys.modules.get(module_name)
+    if module is not None:
+        try:
+            importlib.reload(module)
+        except (ImportError, AttributeError, TypeError):  # pragma: no cover - best effort
+            pass
 
-    Excludes conftest modules as they are handled separately to ensure
-    proper fixture registration order.
-    """
-    prefix = f"{root_package}."
-    test_modules = [
-        name
-        for name in sys.modules
-        if (name == root_package or name.startswith(prefix)) and not name.endswith(".conftest")
-    ]
-    for module_name in test_modules:
+
+def _collect_submodules(package_name: str, *, exclude_suffix: str | None = None) -> list[str]:
+    """Find all loaded modules under a package prefix."""
+    prefix = f"{package_name}."
+    matches = []
+    for name in sys.modules:
+        if name != package_name and not name.startswith(prefix):
+            continue
+        if exclude_suffix and name.endswith(exclude_suffix):
+            continue
+        matches.append(name)
+    return matches
+
+
+def _build_dependency_graph(modules: set[str]) -> dict[str, set[str]]:
+    """Build a mapping of module -> modules it imports from (within the set)."""
+    deps: dict[str, set[str]] = {}
+    for module_name in modules:
         module = sys.modules.get(module_name)
-        if module is not None:
-            try:
-                importlib.reload(module)
-            except (ImportError, AttributeError, TypeError):  # pragma: no cover - best effort reload
-                pass
+        if module is None:
+            deps[module_name] = set()
+            continue
+        imported_from = set()
+        for name in dir(module):
+            attr = getattr(module, name, None)
+            attr_module = getattr(attr, "__module__", None)
+            if attr_module and attr_module != module_name and attr_module in modules:
+                imported_from.add(attr_module)
+        deps[module_name] = imported_from
+    return deps
 
 
-def _import_conftest(qualified_name: str) -> None:
-    """Import conftest.py from the target package to register fixtures.
+def _topological_sort(modules: set[str], deps: dict[str, set[str]]) -> list[str]:
+    """Sort modules so dependencies come before dependents."""
+    reloaded: set[str] = set()
+    reload_order: list[str] = []
 
-    Clears the fixture registry, refreshes all test modules, and reloads the
-    conftest module to ensure fixtures are always freshly registered.
-    """
-    root_package = qualified_name.split(".")[0]
-    fixture_registry.reset_registry()
-    _refresh_test_modules(root_package)
+    while len(reloaded) < len(modules):
+        progress = False
+        for module_name in modules:
+            if module_name in reloaded:
+                continue
+            if deps[module_name] <= reloaded:
+                reload_order.append(module_name)
+                reloaded.add(module_name)
+                progress = True
+        if not progress:
+            # Circular dependency - add remaining in any order
+            reload_order.extend(m for m in modules if m not in reloaded)
+            break
+
+    return reload_order
+
+
+def _reload_test_modules(root_package: str) -> None:
+    """Reload all test modules under root_package so file changes are picked up."""
+    for module_name in _collect_submodules(root_package, exclude_suffix=".conftest"):
+        _reload_module(module_name)
+
+
+def _reload_conftest(root_package: str) -> None:
+    """Import or reload conftest.py from the target package to register fixtures."""
     conftest_name = f"{root_package}.conftest"
     try:
         if conftest_name in sys.modules:
@@ -139,9 +180,10 @@ def load_from_qualified_name(qualified_name: str) -> list[TestDefinition]:
         - Test functions are top-level, named ``test_*`` or ``tests_*``.
 
     Side effects (every call):
+        - Reloads configured source targets (agent, tools, etc.)
         - Resets the fixture registry, discarding previously registered fixtures.
         - Re-imports ``<root_package>.conftest`` to re-register fixtures.
-        - Re-imports target modules; changes on disk are picked up.
+        - Refreshes test modules so file changes are picked up.
 
     Note:
         Calling this function multiple times with the same input is safe but
@@ -156,10 +198,23 @@ def load_from_qualified_name(qualified_name: str) -> list[TestDefinition]:
         A list of ``TestDefinition`` objects for the discovered tests.
 
     Raises:
-        ValueError: If *qualified_name* cannot be resolved to any tests.
+        UnknownTestError: If *qualified_name* cannot be resolved to any tests.
     """
+    root_package = qualified_name.split(".")[0]
+
     _ensure_test_import_paths()
-    _import_conftest(qualified_name)
+
+    # Reload configured source targets in dependency order
+    modules = {mod for target in api_config.get_reload_targets() for mod in _collect_submodules(target)}
+
+    if modules:
+        deps = _build_dependency_graph(modules)
+        for module_name in _topological_sort(modules, deps):
+            _reload_module(module_name)
+
+    fixture_registry.reset_registry()
+    _reload_conftest(root_package)
+    _reload_test_modules(root_package)
 
     for resolver in (_try_as_package, _try_as_module, _try_as_function):
         result = resolver(qualified_name)
