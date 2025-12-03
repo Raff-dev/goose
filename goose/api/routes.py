@@ -8,7 +8,7 @@ from goose.api import config
 from goose.api.jobs import JobNotifier, JobQueue, UnknownTestError
 from goose.api.jobs.job_target_resolver import resolve_targets
 from goose.api.schema import JobResource, RunRequest, TestSummary
-from goose.testing.discovery import discover_tests
+from goose.testing.discovery import load_from_qualified_name
 
 router = APIRouter()
 
@@ -26,7 +26,8 @@ def health() -> dict[str, str]:
 @router.get("/tests", response_model=list[TestSummary])
 def get_tests() -> list[TestSummary]:
     """Return metadata for all discovered Goose tests."""
-    definitions = discover_tests(config.get_tests_root())
+    module_name = config.get_tests_root().name
+    definitions = load_from_qualified_name(module_name)
     return [TestSummary.from_definition(definition) for definition in definitions]
 
 

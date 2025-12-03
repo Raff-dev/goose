@@ -1,4 +1,8 @@
-"""Shared ErrorType enum used across testing and API modules."""
+"""Validation errors and error classification for Goose test results.
+
+This module contains exceptions raised during test validation (tool call checks,
+expectation validation) and the ErrorType enum used to classify test failures.
+"""
 
 from __future__ import annotations
 

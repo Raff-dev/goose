@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
+from goose.testing.discovery import load_from_qualified_name
 from goose.testing.fixtures import apply_autouse, build_call_arguments, extract_goose_fixture
 from goose.testing.models.tests import TestDefinition, TestResult
 
@@ -18,6 +19,10 @@ def execute_test(definition: TestDefinition) -> TestResult:
     Returns:
         The result of the test execution, including pass/fail status and metadata.
     """
+    refreshed_definitions = load_from_qualified_name(definition.qualified_name)
+    if refreshed_definitions:
+        definition = refreshed_definitions[0]
+
     start = time.time()
     fixture_cache: dict[str, Any] = {}
 

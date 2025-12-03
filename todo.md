@@ -9,6 +9,7 @@
 - [ ] Enforce consistent response styles ready for downstream parsing.
 - [ ] Introduce declarative tool-call pattern operators (star, plus, optional, exact, range).
 - [ ] Support pattern lists like `[search_products, ToolCallStar, ToolCallPlus(get_sales_data)]` in specs.
+- [ ] Add abort-execution controls so long-running cases can stop early.
 - [ ] Build enhanced error reporting with clearer diffs and debugging context.
 - [ ] Add data state assertions decoupled from case definitions.
 - [ ] Integrate external systems or fixtures to drive richer scenarios.

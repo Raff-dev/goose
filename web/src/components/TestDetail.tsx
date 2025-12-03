@@ -1,4 +1,3 @@
-import { ReloadIcon } from '@radix-ui/react-icons';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { TestResultModel, TestStatus, TestSummary } from '../api/types';
@@ -45,8 +44,6 @@ interface TestDetailProps {
   status?: TestStatus | 'not-run';
   onBack: () => void;
   onRunTest: (testName: string) => void;
-  onReloadTests: () => void;
-  isReloadingTests: boolean;
 }
 
 export function TestDetail({
@@ -55,8 +52,6 @@ export function TestDetail({
   status: statusProp,
   onBack,
   onRunTest,
-  onReloadTests,
-  isReloadingTests,
 }: TestDetailProps) {
   const status = statusProp ?? (result ? (result.passed ? 'passed' : 'failed') : 'not-run');
   const statusMeta = STATUS_META[status];
@@ -64,8 +59,6 @@ export function TestDetail({
   const durationSeconds = result?.duration;
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const [copiedStack, setCopiedStack] = useState(false);
-  const [isReloadIconSpinning, setIsReloadIconSpinning] = useState(false);
-  const reloadExitDelayMs = 600;
 
   const stackTrace = useMemo(() => {
     if (!result?.error) {
@@ -97,18 +90,6 @@ export function TestDetail({
     return () => window.clearTimeout(timeout);
   }, [copiedStack]);
 
-  useEffect(() => {
-    if (isReloadingTests) {
-      setIsReloadIconSpinning(true);
-      return;
-    }
-
-    if (!isReloadingTests && isReloadIconSpinning) {
-      const timeoutId = window.setTimeout(() => setIsReloadIconSpinning(false), reloadExitDelayMs);
-      return () => window.clearTimeout(timeoutId);
-    }
-    return undefined;
-  }, [isReloadingTests, isReloadIconSpinning, reloadExitDelayMs]);
 
   const actualToolCalls = useMemo(() => {
     if (!result) {
@@ -192,11 +173,6 @@ export function TestDetail({
     };
   }, [result?.error_type]);
 
-  const handleReloadTests = () => {
-    setIsReloadIconSpinning(true);
-    onReloadTests();
-  };
-
   const handleCopyStack = () => {
     if (!stackTrace) {
       return;
@@ -256,17 +232,6 @@ export function TestDetail({
             >
               {isPending && <LoadingDots />}
               {isPending ? (status === 'queued' ? 'Queued' : 'Running') : 'Run Test'}
-            </button>
-            <button
-              type="button"
-              onClick={handleReloadTests}
-              disabled={isReloadingTests}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 shadow transition hover:bg-gray-50 disabled:opacity-50"
-            >
-              <span className={`inline-flex items-center justify-center ${isReloadIconSpinning ? 'animate-reload-spin' : ''}`}>
-                <ReloadIcon className="h-4 w-4" />
-              </span>
-              {isReloadingTests ? 'Reloading' : 'Reload tests'}
             </button>
           </div>
         </div>

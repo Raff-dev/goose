@@ -11,16 +11,42 @@ End-users interact with the installed console script::
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 import typer
 from typer import colors
 
+from goose.api.config import set_tests_root
 from goose.testing.discovery import load_from_qualified_name
 from goose.testing.models.tests import TestResult
 from goose.testing.runner import execute_test
 
 app = typer.Typer(help="Goose LLM testing CLI")
+
+
+def _resolve_tests_root(target: str) -> Path:
+    """Resolve and validate the tests root path from *target*."""
+    root_token = target.split(".", 1)[0]
+    root_path = Path(root_token)
+    if not root_path.is_absolute():
+        root_path = Path.cwd() / root_path
+    if not root_path.exists():
+        raise typer.BadParameter(f"Tests root '{root_path}' does not exist")
+    return root_path
+
+
+def _run_tests(definitions: list, verbose: bool) -> tuple[int, int, float]:
+    """Execute tests and return (passed, failures, total_duration)."""
+    failures = 0
+    total = 0
+    total_duration = 0.0
+    for definition in definitions:
+        result = execute_test(definition)
+        total += 1
+        total_duration += result.duration
+        failures += _display_result(result, verbose=verbose)
+    return total - failures, failures, total_duration
 
 
 @app.command()
@@ -41,6 +67,7 @@ def run(
     order returned by the discovery engine, with pass/fail totals
     emitted at the end.
     """
+    set_tests_root(_resolve_tests_root(target))
 
     try:
         definitions = load_from_qualified_name(target)
@@ -52,29 +79,17 @@ def run(
             typer.echo(definition.qualified_name)
         raise typer.Exit(code=0)
 
-    failures = 0
-    total = 0
-    total_duration = 0.0
+    passed_count, failures, total_duration = _run_tests(definitions, verbose)
 
-    for definition in definitions:
-        result = execute_test(definition)
-        total += 1
-        total_duration += result.duration
-        failures += display_result(result, verbose=verbose)
-
-    passed_count = total - failures
     passed_text = typer.style(str(passed_count), fg=colors.GREEN)
     failed_text = typer.style(str(failures), fg=colors.RED)
     duration_text = typer.style(f"{total_duration:.2f}s", fg=colors.CYAN)
     typer.echo(f"{passed_text} passed, {failed_text} failed ({duration_text})")
 
-    if failures:
-        raise typer.Exit(code=1)
-
-    raise typer.Exit(code=0)
+    raise typer.Exit(code=1 if failures else 0)
 
 
-def display_result(result: TestResult, *, verbose: bool) -> int:
+def _display_result(result: TestResult, *, verbose: bool) -> int:
     """Render a single test result and report whether it failed."""
     if result.passed:
         status_label = "PASS"

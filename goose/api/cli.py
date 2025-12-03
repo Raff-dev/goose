@@ -45,8 +45,7 @@ def serve(
         None: This function raises ``SystemExit`` after the server stops.
     """
 
-    resolved_tests = tests_path.resolve()
-    set_tests_root(resolved_tests)
+    set_tests_root(tests_path)
     config = Config(app=fastapi_app, host=host, port=port, reload=reload)
     server = Server(config)
     raise SystemExit(server.run())

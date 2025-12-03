@@ -43,7 +43,7 @@ def test_health_endpoint_returns_ok() -> None:
 
 def test_get_tests_returns_serialized_summaries(monkeypatch) -> None:
     definitions = [_make_definition("test_alpha"), _make_definition("test_beta")]
-    monkeypatch.setattr(routes, "discover_tests", lambda *args, **kwargs: definitions)
+    monkeypatch.setattr(routes, "load_from_qualified_name", lambda *args, **kwargs: definitions)
 
     response = client.get("/tests")
 

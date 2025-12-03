@@ -31,7 +31,6 @@ def test_price_lookup_hiking_boots(goose: Goose) -> None:
 # pylint: disable=duplicate-code
 def test_inventory_check_hiking_boots(goose: Goose) -> None:
     """Simple scenario: What is the stock for Hiking Boots?"""
-
     goose.case(
         query="What is the stock for Hiking Boots?",
         expectations=[
@@ -45,7 +44,6 @@ def test_inventory_check_hiking_boots(goose: Goose) -> None:
 
 def test_category_listing_footwear(goose: Goose) -> None:
     """Category listing: Which products are in the Footwear category?"""
-
     hiking_boots = Product.objects.get(name="Hiking Boots")
     running_shoes = Product.objects.get(name="Running Shoes")
     goose.case(

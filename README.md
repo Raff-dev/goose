@@ -92,6 +92,7 @@ Create `tests/test_weather.py`. Fixture will be injected into recognized test fu
 
 ```python
 from goose.testing import Goose
+from my_agent import query_weather_agent
 
 def test_weather_query(weather_goose: Goose) -> None:
     """Test that the agent can answer weather questions."""

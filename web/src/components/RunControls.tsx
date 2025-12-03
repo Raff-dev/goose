@@ -76,6 +76,7 @@ export function RunControls({
           type="button"
           onClick={handleReloadClick}
           disabled={isReloadingTests}
+          title="Reloading picks up new or removed tests and refreshes their code, but it will not reload helper modules imported by those tests."
           className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 shadow transition hover:bg-gray-50 disabled:opacity-50"
         >
           <span className={`inline-flex items-center justify-center ${isReloadIconSpinning ? 'animate-reload-spin' : ''}`}>

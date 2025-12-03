@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
+from goose.testing.exceptions import UnknownTestError
 
-class UnknownTestError(ValueError):
-    """Raised when a requested test cannot be located."""
+__all__ = ["UnknownTestError"]

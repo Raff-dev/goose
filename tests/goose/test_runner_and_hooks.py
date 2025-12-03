@@ -51,6 +51,7 @@ def test_execute_test_runs_hooks_and_returns_result(monkeypatch):
     monkeypatch.setattr("goose.testing.runner.apply_autouse", lambda cache: None)
 
     definition = _definition()
+    monkeypatch.setattr("goose.testing.runner.load_from_qualified_name", lambda name: [definition])
     result = execute_test(definition)
 
     assert isinstance(result, TestResult)
@@ -61,7 +62,7 @@ def test_execute_test_captures_exceptions(monkeypatch):
     def failing_test():
         raise RuntimeError("boom")
 
-    definition = TestDefinition(module="pkg.tests", name="test_fail", func=lambda: failing_test())
+    definition = TestDefinition(module="pkg.tests", name="test_fail", func=failing_test)
 
     monkeypatch.setattr("goose.testing.runner.build_call_arguments", lambda func, cache: {})
     monkeypatch.setattr(
@@ -69,6 +70,7 @@ def test_execute_test_captures_exceptions(monkeypatch):
         lambda cache: mock.Mock(hooks=TestLifecycleHooks(), consume_test_case=lambda: None),
     )
     monkeypatch.setattr("goose.testing.runner.apply_autouse", lambda cache: None)
+    monkeypatch.setattr("goose.testing.runner.load_from_qualified_name", lambda name: [definition])
 
     result = execute_test(definition)
 
