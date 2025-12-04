@@ -1,23 +1,20 @@
 # Testing Improvements TODOs
 
-- [ ] Run identical cases across a model matrix (mini, standard, etc.) and diff summaries/metrics.
-- [ ] Emit red/green visual artifacts per case with expectation checklist and timeline highlights.
-- [ ] Keep lightweight success reports for quick confirmation when everything passes.
-- [ ] Add response time and tool-usage assertions directly to each test case.
-- [ ] Record cost/latency metrics for regression tracking.
-- [ ] Validate structured response formats (JSON, tables, lists) before marking passes.
-- [ ] Enforce consistent response styles ready for downstream parsing.
-- [ ] Introduce declarative tool-call pattern operators (star, plus, optional, exact, range).
-- [ ] Support pattern lists like `[search_products, ToolCallStar, ToolCallPlus(get_sales_data)]` in specs.
-- [ ] Add abort-execution controls so long-running cases can stop early.
-- [ ] Build enhanced error reporting with clearer diffs and debugging context.
-- [ ] Add data state assertions decoupled from case definitions.
-- [ ] Integrate external systems or fixtures to drive richer scenarios.
-- [ ] Benchmark performance across runs and fail on regressions.
-- [ ] Create visual dashboards summarizing run health.
+| Priority | Size | Task |
+|----------|------|------|
+| P1 | S | Record cost/latency metrics for regression tracking |
+| P1 | M | Add abort-execution controls so long-running cases can stop early |
+| P2 | L | Run identical cases across a model matrix (mini, standard, etc.) and diff summaries/metrics |
+| P2 | M | Run the full suite multiple times to surface flaky behavior |
+| P2 | M | Introduce declarative tool-call operators (patterns, `in`, `set`, exact, range, optional) |
+| P3 | L | Let testing agents call helper agents/tools for due diligence |
+| P3 | M | Evaluate Goose core once per session, not after every test |
+| P2 | M | Detect whether failures stem from tool errors or agent reasoning mistakes |
+| P1 | L | Async support |
 
-- [ ] Run the full suite multiple times to surface flaky behavior.
-- [ ] Support expected tool-call operators for `in`, `set`, `list`, etc.
-- [ ] Let testing agents call helper agents/tools for due diligence.
-- [ ] Evaluate Goose core once per session, not after every test.
-- [ ] Detect whether failures stem from tool errors or agent reasoning mistakes.
+# Bugs
+
+| Priority | Description |
+|----------|-------------|
+| P1 | Import errors in test code silently fail instead of propagating to user |
+| P2 | UnknownTestError not displayed in dashboard UI (e.g., when test file is deleted/renamed) |

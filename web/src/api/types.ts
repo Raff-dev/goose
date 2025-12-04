@@ -20,6 +20,7 @@ export interface TestResultModel {
   name: string;
   passed: boolean;
   duration: number;
+  total_tokens: number;
   error: string | null;
   error_type?: ErrorType | null;
   expectations_unmet: string[];

@@ -112,5 +112,18 @@ class JobStore:
             job.updated_at = datetime.now(timezone.utc)
             return copy.deepcopy(job)
 
+    def add_test_result(self, job_id: str, result: TestResult) -> Job | None:
+        """Add a completed test result to a job and update its status."""
+
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if job is None:
+                return None
+            job.results.append(result)
+            status = TestStatus.PASSED if result.passed else TestStatus.FAILED
+            job.test_statuses[result.definition.qualified_name] = status
+            job.updated_at = datetime.now(timezone.utc)
+            return copy.deepcopy(job)
+
 
 __all__ = ["JobStore"]

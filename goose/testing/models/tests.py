@@ -55,6 +55,13 @@ class TestResult:
     error_type: ErrorType | None = None
     expectations_unmet: list[str] = field(default_factory=list)
 
+    @property
+    def total_tokens(self) -> int:
+        """Return total tokens used in this test's agent response."""
+        if self.test_case is None or self.test_case.last_response is None:
+            return 0
+        return self.test_case.last_response.token_usage.total_tokens
+
     def __post_init__(self) -> None:
         """Compute derived fields based on the exception."""
         if self.exception is None:

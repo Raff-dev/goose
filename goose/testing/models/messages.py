@@ -7,6 +7,14 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
+class TokenUsage(BaseModel):
+    """Token usage statistics for an LLM interaction."""
+
+    input_tokens: int = 0
+    output_tokens: int = 0
+    total_tokens: int = 0
+
+
 class ToolCall(BaseModel):
     """Represents a single tool invocation initiated by the agent."""
 
@@ -22,6 +30,7 @@ class Message(BaseModel):
     content: str = ""
     tool_calls: list[ToolCall] = Field(default_factory=list)
     tool_name: str | None = None
+    token_usage: TokenUsage | None = None
 
     @classmethod
     def from_langchain_message(cls, message: Any) -> Message:
@@ -42,13 +51,32 @@ class Message(BaseModel):
                     )
                     for tool_call in tool_calls_raw
                 ]
-                return cls(type="ai", content=content, tool_calls=tool_calls)
+                token_usage = _extract_token_usage(message)
+                return cls(type="ai", content=content, tool_calls=tool_calls, token_usage=token_usage)
             case "tool":
                 content = str(getattr(message, "content", ""))
                 tool_name = getattr(message, "name", "unknown")
                 return cls(type="tool", content=content, tool_name=tool_name)
             case _:
                 return cls(type=msg_type, content=str(message))
+
+
+def _extract_token_usage(message: Any) -> TokenUsage | None:
+    """Extract token usage from a LangChain AI message's response metadata."""
+    response_metadata = getattr(message, "response_metadata", None)
+    if not response_metadata:
+        return None
+
+    # OpenAI format
+    usage = response_metadata.get("token_usage") or response_metadata.get("usage")
+    if not usage:
+        return None
+
+    return TokenUsage(
+        input_tokens=usage.get("prompt_tokens", 0) or usage.get("input_tokens", 0),
+        output_tokens=usage.get("completion_tokens", 0) or usage.get("output_tokens", 0),
+        total_tokens=usage.get("total_tokens", 0),
+    )
 
 
 class AgentResponse(BaseModel):
@@ -62,6 +90,17 @@ class AgentResponse(BaseModel):
         raw_messages = response_dict.get("messages", [])
         messages = [Message.from_langchain_message(msg) for msg in raw_messages]
         return cls(messages=messages)
+
+    @property
+    def token_usage(self) -> TokenUsage:
+        """Return aggregated token usage across all messages."""
+        total = TokenUsage()
+        for message in self.messages:
+            if message.token_usage:
+                total.input_tokens += message.token_usage.input_tokens
+                total.output_tokens += message.token_usage.output_tokens
+                total.total_tokens += message.token_usage.total_tokens
+        return total
 
     @property
     def tool_calls(self) -> list[ToolCall]:
@@ -95,4 +134,4 @@ class AgentResponse(BaseModel):
         return "\n\n".join(parts)
 
 
-__all__ = ["ToolCall", "Message", "AgentResponse"]
+__all__ = ["ToolCall", "Message", "AgentResponse", "TokenUsage"]

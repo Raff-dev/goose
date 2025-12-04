@@ -6,17 +6,19 @@ interface SummaryMetricCardProps {
   label: string;
   value: React.ReactNode;
   icon?: React.ReactNode;
-  status?: 'default' | 'success' | 'danger';
+  status?: 'default' | 'success' | 'danger' | 'warning';
 }
 
 export function SummaryMetricCard({ label, value, icon, status = 'default' }: SummaryMetricCardProps) {
   const iconBgColor =
     status === 'success' ? 'bg-green-100' :
     status === 'danger' ? 'bg-red-100' :
+    status === 'warning' ? 'bg-amber-100' :
     'bg-blue-100';
   const iconTextColor =
     status === 'success' ? 'text-green-600' :
     status === 'danger' ? 'text-red-800' :
+    status === 'warning' ? 'text-amber-600' :
     'text-blue-600';
 
   return (

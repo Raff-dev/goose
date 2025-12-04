@@ -47,8 +47,8 @@ class JobQueue:
 
             result = execute_test(definition)
             results.append(result)
-            status = TestStatus.PASSED if result.passed else TestStatus.FAILED
-            snapshot = self.job_store.update_test_status(job_id, qualified_name, status)
+            # Add result to job immediately so frontend can show details
+            snapshot = self.job_store.add_test_result(job_id, result)
             self._notify(snapshot)
 
         return results

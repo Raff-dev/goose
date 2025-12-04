@@ -1,26 +1,30 @@
-import type { TestResultModel, TestSummary } from '../api/types';
+import type { TestResultModel, TestStatus, TestSummary } from '../api/types';
 import { SummaryMetricCard } from './SummaryMetricCard';
 import SurfaceCard from './SurfaceCard';
 
 interface SummaryProps {
   tests: TestSummary[];
   resultsMap: Map<string, TestResultModel>;
+  statusMap: Map<string, TestStatus | 'not-run'>;
 }
 
-export function Summary({ tests, resultsMap }: SummaryProps) {
+export function Summary({ tests, resultsMap, statusMap }: SummaryProps) {
   const totalTests = tests.length;
   const executed = resultsMap.size;
   const passed = Array.from(resultsMap.values()).filter(r => r.passed).length;
   const failed = executed - passed;
+  const queued = Array.from(statusMap.values()).filter(s => s === 'queued' || s === 'running').length;
   const executionRate = totalTests > 0 ? `${Math.round((executed / totalTests) * 100)}%` : '0%';
   const totalDuration = Array.from(resultsMap.values()).reduce((sum, r) => sum + r.duration, 0);
+  const totalTokens = Array.from(resultsMap.values()).reduce((sum, r) => sum + (r.total_tokens ?? 0), 0);
   const formattedDuration = totalDuration > 0 ? `${Math.floor(totalDuration / 60)}m ${Math.floor(totalDuration % 60)}s` : '—';
+  const formattedTokens = totalTokens > 0 ? totalTokens.toLocaleString() : '—';
   const overallStatus = failed === 0 ? 'Passed' : 'Failed';
 
   return (
     <div>
       <div className="text-xl font-bold mb-4">Test Suite Overview</div>
-      <div className="grid grid-cols-4 gap-4 mb-4">
+      <div className="grid grid-cols-5 gap-4 mb-4">
         <SummaryMetricCard
           label="Total Tests"
           value={totalTests}
@@ -40,6 +44,17 @@ export function Summary({ tests, resultsMap }: SummaryProps) {
             </svg>
           }
           status="default"
+        />
+        <SummaryMetricCard
+          label="Queued"
+          value={queued}
+          icon={
+            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
+            </svg>
+          }
+          status="warning"
         />
         <SummaryMetricCard
           label="Passed"
@@ -63,7 +78,7 @@ export function Summary({ tests, resultsMap }: SummaryProps) {
         />
       </div>
       <SurfaceCard className="bg-white p-4 mb-6">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           <div>
             <div className="font-bold">Last Run Time</div>
             <div>—</div> {/* TODO: compute from runs */}
@@ -71,6 +86,10 @@ export function Summary({ tests, resultsMap }: SummaryProps) {
           <div>
             <div className="font-bold">Duration</div>
             <div>{formattedDuration}</div>
+          </div>
+          <div>
+            <div className="font-bold">Tokens</div>
+            <div>{formattedTokens}</div>
           </div>
           <div>
             <div className="font-bold">Overall Status</div>

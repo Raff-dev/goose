@@ -89,6 +89,7 @@ class TestResultModel(BaseModel):
     name: str
     passed: bool
     duration: float
+    total_tokens: int = 0
     error: str | None = None
     error_type: ErrorType | None = None
     expectations_unmet: list[str] = Field(default_factory=list)
@@ -126,6 +127,7 @@ class TestResultModel(BaseModel):
             name=definition.name,
             passed=result.passed,
             duration=result.duration,
+            total_tokens=result.total_tokens,
             error=result.error_message,
             error_type=result.error_type,
             expectations_unmet=list(result.expectations_unmet),

@@ -7,6 +7,12 @@ import CodeBlock from './CodeBlock';
 
 type MessageType = 'human' | 'ai' | 'tool' | string;
 
+interface TokenUsage {
+  input_tokens?: number;
+  output_tokens?: number;
+  total_tokens?: number;
+}
+
 interface ToolCall {
   name?: string;
   args?: any;
@@ -19,6 +25,7 @@ interface Message {
   tool_calls?: ToolCall[];
   tool_name?: string;
   timestamp?: string | number | Date;
+  token_usage?: TokenUsage | null;
 }
 
 interface MessageCardsProps {
@@ -90,6 +97,7 @@ export function MessageCards({ messages }: MessageCardsProps) {
           const contentIsJSON = parsed !== null;
           const timestampLabel = formatTimestamp(m.timestamp);
           const hoverLabel = timestampLabel ?? `Message ${i + 1}`;
+          const tokenCount = m.token_usage?.total_tokens;
 
           return (
             <div key={`${m.type}-${i}`} className="relative pl-8 group">
@@ -102,9 +110,16 @@ export function MessageCards({ messages }: MessageCardsProps) {
               >
                 <div className="flex items-start justify-between">
                   <div className="text-sm font-semibold text-slate-700">{roleLabel}</div>
-                  <span className="text-xs text-slate-500 opacity-0 transition-opacity duration-150 ease-in-out group-hover:opacity-100">
-                    {hoverLabel}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {tokenCount !== undefined && tokenCount > 0 && (
+                      <span className="text-xs text-slate-400 font-medium">
+                        {tokenCount.toLocaleString()} tokens
+                      </span>
+                    )}
+                    <span className="text-xs text-slate-500 opacity-0 transition-opacity duration-150 ease-in-out group-hover:opacity-100">
+                      {hoverLabel}
+                    </span>
+                  </div>
                 </div>
                 <div className="mt-2 text-base text-slate-900">
                   {contentIsJSON ? (

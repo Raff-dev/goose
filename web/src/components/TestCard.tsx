@@ -16,6 +16,7 @@ interface TestCardProps {
 
 export function TestCard({ name, status, duration, error, result, onViewDetails, onRunTest, detailsHref }: TestCardProps) {
   const failureType = result?.error_type ?? null;
+  const totalTokens = result?.total_tokens ?? 0;
   const statusColor =
     status === 'passed' ? 'bg-green-50 text-green-700' :
     status === 'failed' ? 'bg-red-50 text-red-800' :
@@ -37,6 +38,9 @@ export function TestCard({ name, status, duration, error, result, onViewDetails,
     : status === 'running'
     ? (<svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeOpacity="0.25" /><path d="M12 2a10 10 0 0 1 10 10" /></svg>)
     : null;
+  const durationLabel = duration !== undefined && (status === 'passed' || status === 'failed')
+    ? `${duration.toFixed(2)}s`
+    : null;
   return (
     <div className="card flex flex-col gap-2 min-h-[170px]">
       <div className="flex items-center gap-2 mb-1 min-w-0">
@@ -44,7 +48,7 @@ export function TestCard({ name, status, duration, error, result, onViewDetails,
         <span className="font-semibold text-lg text-gray-900 truncate" title={name}>{name}</span>
       </div>
       <div className="flex items-center gap-2 mb-2">
-        <span className={`text-xs font-semibold px-2 py-1 rounded ${statusColor}`}>{statusLabel}{duration !== undefined && (status === 'passed' || status === 'failed') ? ` (${duration.toFixed(2)}s)` : ''}</span>
+        <span className={`text-xs font-semibold px-2 py-1 rounded ${statusColor}`}>{statusLabel}{durationLabel ? ` (${durationLabel})` : ''}</span>
       </div>
       {failureType && status !== 'queued' && status !== 'running' && (
         <div className="mb-2">

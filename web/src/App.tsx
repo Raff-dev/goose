@@ -24,20 +24,44 @@ function App() {
 
   const { data: currentJob } = useRun(currentJobId || '', !!currentJobId);
 
-  // Aggregate latest results for each test from all runs
+  // Find the most recent active job
+  const activeJob = useMemo(() => {
+    return runs.find(job => job.status === 'running' || job.status === 'queued');
+  }, [runs]);
+
+  // Set of test names currently being run in the active job
+  const activeJobTests = useMemo(() => {
+    return new Set(activeJob?.tests ?? []);
+  }, [activeJob]);
+
+  // Aggregate results for display
+  // For tests in the active job: show result from active job (if completed) or nothing
+  // For tests NOT in the active job: show latest historical result
   const resultsMap = useMemo(() => {
     const map = new Map<string, TestResultModel>();
-    // Sort runs by created_at desc
+
+    // First, add results from the active job (these take priority for tests being run)
+    if (activeJob) {
+      for (const result of activeJob.results) {
+        map.set(result.qualified_name, result);
+      }
+    }
+
+    // Then, aggregate historical results for tests NOT in the active job
     const sortedRuns = [...runs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     for (const run of sortedRuns) {
       for (const result of run.results) {
+        // Skip if this test is in the active job (we already handled it above)
+        if (activeJobTests.has(result.qualified_name)) {
+          continue;
+        }
         if (!map.has(result.qualified_name)) {
           map.set(result.qualified_name, result);
         }
       }
     }
     return map;
-  }, [runs]);
+  }, [runs, activeJob, activeJobTests]);
 
   // Compute status for each test
   const statusMap = useMemo(() => {
@@ -180,7 +204,7 @@ function App() {
       <GlobalError error={latestRun?.error || null} />
       {view === 'dashboard' ? (
         <>
-          <Summary tests={tests} resultsMap={resultsMap} />
+          <Summary tests={tests} resultsMap={resultsMap} statusMap={statusMap} />
           <RunControls
             tests={tests}
             onlyFailures={onlyFailures}
