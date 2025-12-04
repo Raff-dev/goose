@@ -38,9 +38,11 @@ class ValidationResult:
     reasoning: str = ""
     expectations_unmet: list[str] = field(default_factory=list)
     unmet_expectation_numbers: list[int] = field(default_factory=list)
+    failure_reasons: dict[str, str] = field(default_factory=dict)
     error_type: ErrorType | None = None
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass(slots=True)
 class TestResult:
     """Outcome from executing a Goose test."""
@@ -54,6 +56,7 @@ class TestResult:
     error_message: str | None = None
     error_type: ErrorType | None = None
     expectations_unmet: list[str] = field(default_factory=list)
+    failure_reasons: dict[str, str] = field(default_factory=dict)
 
     @property
     def total_tokens(self) -> int:
@@ -68,16 +71,19 @@ class TestResult:
             self.error_message = None
             self.error_type = None
             self.expectations_unmet = []
+            self.failure_reasons = {}
 
         elif isinstance(self.exception, ToolCallValidationError):
             self.error_message = str(self.exception)
             self.error_type = ErrorType.TOOL_CALL
             self.expectations_unmet = []
+            self.failure_reasons = {}
 
         elif isinstance(self.exception, ExpectationValidationError):
             self.error_message = self.exception.reasoning
             self.error_type = ErrorType.EXPECTATION
             self.expectations_unmet = self.exception.expectations_unmet
+            self.failure_reasons = self.exception.failure_reasons
 
         elif isinstance(self.exception, AssertionError):
             formatted = "".join(
@@ -86,6 +92,7 @@ class TestResult:
             self.error_message = formatted
             self.error_type = ErrorType.VALIDATION
             self.expectations_unmet = []
+            self.failure_reasons = {}
 
         else:
             self.error_message = "".join(
@@ -93,6 +100,7 @@ class TestResult:
             )
             self.error_type = ErrorType.UNEXPECTED
             self.expectations_unmet = []
+            self.failure_reasons = {}
 
     @property
     def name(self) -> str:

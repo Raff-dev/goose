@@ -46,6 +46,7 @@ def test_validate_expectations_records_unmet():
             "reasoning": "Missing greeting",
             "expectations_unmet": ["say hi"],
             "unmet_expectation_numbers": [1],
+            "failure_reasons": {1: "Agent did not say hi"},
         },
     )
 
@@ -54,5 +55,6 @@ def test_validate_expectations_records_unmet():
     except ExpectationValidationError as error:
         assert "Missing greeting" in error.reasoning
         assert error.expectations_unmet == ["say hi"]
+        assert error.failure_reasons == {"say hi": "Agent did not say hi"}
     else:  # pragma: no cover
         raise AssertionError("Expected ExpectationValidationError")

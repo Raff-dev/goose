@@ -23,6 +23,10 @@ class ExpectationsEvaluationResponse(BaseModel):
         description="List of expectation numbers that were not met",
         default_factory=list,
     )
+    failure_reasons: dict[int, str] = Field(
+        description="For each unmet expectation number, a concise explanation of what went wrong",
+        default_factory=dict,
+    )
 
 
 class AgentValidator:
@@ -52,8 +56,9 @@ When validating:
 - Provide specific reasoning for your assessment
 - Focus on the agent's actual behavior vs expected behavior
 - Each expectation will be numbered. Use these numbers when referring to expectations.
-- If any expectations are not met, include their numbers in unmet_expectation_numbers and
-    reference those numbers in your reasoning""",
+- If any expectations are not met, include their numbers in unmet_expectation_numbers
+- For each unmet expectation, provide a concise failure reason in failure_reasons (keyed by expectation number)
+  explaining specifically what went wrong (e.g., "Expected product creation but agent only listed products")""",
         )
 
     def evaluate(self, agent_output: AgentResponse, expectations: list[str]) -> ExpectationsEvaluationResponse:

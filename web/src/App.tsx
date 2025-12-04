@@ -183,28 +183,6 @@ function App() {
     void refetchTests();
   };
 
-  if (testsLoading || runsLoading) {
-    return <div>Loading...</div>;
-  }
-
-  const selectedTestData = tests.find(t => t.qualified_name === selectedTest);
-  const rawSelectedResult = selectedTest ? resultsMap.get(selectedTest) : undefined;
-  let selectedStatus: TestStatus | 'not-run' = 'not-run';
-
-  if (selectedTest) {
-    const statusValue = statusMap.get(selectedTest);
-    if (statusValue) {
-      selectedStatus = statusValue;
-    } else if (rawSelectedResult) {
-      selectedStatus = rawSelectedResult.passed ? 'passed' : 'failed';
-    }
-  }
-
-  const selectedResult = selectedStatus === 'passed' || selectedStatus === 'failed' ? rawSelectedResult : undefined;
-  const latestRun = runs[0];
-
-  const isRunning = runs.some(job => job.status === 'running' || job.status === 'queued');
-
   // Extract error message from any error (handles Axios errors with various response formats)
   const getErrorMessage = (err: unknown): string | null => {
     if (!err) return null;
@@ -253,6 +231,8 @@ function App() {
     return 'An unknown error occurred';
   };
 
+  const latestRun = runs[0];
+
   // Combine job errors, mutation errors, and query errors for display
   const currentError = getErrorMessage(testsError) || getErrorMessage(createRunMutation.error) || latestRun?.error || null;
 
@@ -270,6 +250,27 @@ function App() {
       // Error is captured in createRunMutation.error and displayed via GlobalError
     }
   };
+
+  if (testsLoading || runsLoading) {
+    return <div>Loading...</div>;
+  }
+
+  const selectedTestData = tests.find(t => t.qualified_name === selectedTest);
+  const rawSelectedResult = selectedTest ? resultsMap.get(selectedTest) : undefined;
+  let selectedStatus: TestStatus | 'not-run' = 'not-run';
+
+  if (selectedTest) {
+    const statusValue = statusMap.get(selectedTest);
+    if (statusValue) {
+      selectedStatus = statusValue;
+    } else if (rawSelectedResult) {
+      selectedStatus = rawSelectedResult.passed ? 'passed' : 'failed';
+    }
+  }
+
+  const selectedResult = selectedStatus === 'passed' || selectedStatus === 'failed' ? rawSelectedResult : undefined;
+
+  const isRunning = runs.some(job => job.status === 'running' || job.status === 'queued');
 
   return (
     <div className="max-w-7xl mx-auto py-8">

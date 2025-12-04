@@ -24,6 +24,7 @@ export interface TestResultModel {
   error: string | null;
   error_type?: ErrorType | null;
   expectations_unmet: string[];
+  failure_reasons: Record<string, string>;
   query?: string | null;
   expectations: string[];
   expected_tool_calls: string[];

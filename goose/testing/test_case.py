@@ -64,7 +64,14 @@ class TestCase:
         ]
 
         if unmet_expectations:
+            # Map expectation numbers to expectation text for failure_reasons
+            failure_reasons = {
+                self.expectations[index - 1]: reason
+                for index, reason in evaluation.failure_reasons.items()
+                if 1 <= index <= len(self.expectations)
+            }
             raise ExpectationValidationError(
                 reasoning=evaluation.reasoning,
                 expectations_unmet=unmet_expectations,
+                failure_reasons=failure_reasons,
             )

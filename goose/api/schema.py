@@ -93,6 +93,7 @@ class TestResultModel(BaseModel):
     error: str | None = None
     error_type: ErrorType | None = None
     expectations_unmet: list[str] = Field(default_factory=list)
+    failure_reasons: dict[str, str] = Field(default_factory=dict)
     query: str | None = None
     expectations: list[str] = Field(default_factory=list)
     expected_tool_calls: list[str] = Field(default_factory=list)
@@ -131,6 +132,7 @@ class TestResultModel(BaseModel):
             error=result.error_message,
             error_type=result.error_type,
             expectations_unmet=list(result.expectations_unmet),
+            failure_reasons=dict(result.failure_reasons),
             query=query,
             expectations=expectations,
             expected_tool_calls=expected_tool_calls,

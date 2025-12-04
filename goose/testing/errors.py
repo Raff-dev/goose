@@ -24,9 +24,12 @@ class ToolCallValidationError(Exception):
 class ExpectationValidationError(Exception):
     """Custom exception for expectation validation errors."""
 
-    def __init__(self, reasoning: str, expectations_unmet: list[str]) -> None:
+    def __init__(
+        self, reasoning: str, expectations_unmet: list[str], failure_reasons: dict[str, str] | None = None
+    ) -> None:
         self.reasoning = reasoning
         self.expectations_unmet = expectations_unmet
+        self.failure_reasons = failure_reasons or {}
         super().__init__(reasoning, expectations_unmet)
 
     def __str__(self) -> str:  # pragma: no cover - simple delegation

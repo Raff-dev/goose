@@ -321,18 +321,27 @@ export function TestDetail({
                       <ul className="space-y-2">
                         {(() => {
                           const unmet = new Set(result.expectations_unmet ?? []);
+                          const failureReasons = result.failure_reasons ?? {};
                           return result.expectations.map((exp, index) => {
                           const passed = !unmet.has(exp);
+                          const failureReason = failureReasons[exp];
                           const dotColor = passed ? (isToolCallError ? 'bg-slate-300' : 'bg-emerald-400/80') : 'bg-rose-400/80';
                           return (
                             <li
                               key={`${exp}-${index}`}
                               className="flex items-start gap-3 rounded-lg bg-white px-3 py-2 shadow-sm"
                             >
-                              <span className={`h-2.5 w-2.5 rounded-full self-center ${dotColor}`} />
-                              <span className={`text-base ${passed ? 'text-slate-800' : 'text-red-800'}`}>
-                                {exp}
-                              </span>
+                              <span className={`h-2.5 w-2.5 rounded-full self-center shrink-0 ${dotColor}`} />
+                              <div className="flex flex-col gap-1">
+                                <span className={`text-base ${passed ? 'text-slate-800' : 'text-red-800'}`}>
+                                  {exp}
+                                </span>
+                                {failureReason && (
+                                  <span className="text-sm text-slate-500">
+                                    {failureReason}
+                                  </span>
+                                )}
+                              </div>
                             </li>
                             );
                           });
@@ -464,10 +473,10 @@ export function TestDetail({
             </SurfaceCard>
           )}
 
-          <section aria-labelledby="agent-response-heading" className="pt-2">
+          <section aria-labelledby="thread-heading" className="pt-2">
             <div className="flex items-center justify-between">
-              <div id="agent-response-heading" className="text-lg font-semibold text-slate-900">
-                Agent Response
+              <div id="thread-heading" className="text-lg font-semibold text-slate-900">
+                Thread
               </div>
             </div>
             <div className="mt-4">
