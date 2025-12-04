@@ -15,6 +15,15 @@ def test_validate_tool_calls_detects_missing():
     case.validate_tool_calls(actual_tool_call_names=["search"])
 
 
+def test_validate_tool_calls_allows_extra_tools():
+    """Extra tool calls beyond expected should not raise an error."""
+    case = make_case()
+    case.expected_tool_calls = [type("Tool", (), {"name": "search"})()]
+
+    # Agent called search (expected) plus lookup (extra) - should pass
+    case.validate_tool_calls(actual_tool_call_names=["search", "lookup"])
+
+
 def test_validate_tool_calls_raises_when_mismatch():
     case = make_case()
     case.expected_tool_calls = [type("Tool", (), {"name": "search"})()]

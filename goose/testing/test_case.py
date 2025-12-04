@@ -38,15 +38,18 @@ class TestCase:
         return [tool.name for tool in self.expected_tool_calls]
 
     def validate_tool_calls(self, actual_tool_call_names: list[str]) -> None:
-        """Ensure that expected tool calls were made."""
+        """Ensure that expected tool calls were made.
 
+        Only fails if expected tools are missing. Extra tool calls are allowed.
+        """
         if self.expected_tool_calls is None:
             return
 
         expected_tool_call_names_set = set(self.expected_tool_call_names)
         actual_tool_call_names_set = set(actual_tool_call_names)
 
-        if actual_tool_call_names_set != expected_tool_call_names_set:
+        missing_tools = expected_tool_call_names_set - actual_tool_call_names_set
+        if missing_tools:
             raise ToolCallValidationError(
                 expected_tool_calls=expected_tool_call_names_set,
                 actual_tool_calls=actual_tool_call_names_set,

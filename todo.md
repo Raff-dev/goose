@@ -2,8 +2,8 @@
 
 | Priority | Size | Task |
 |----------|------|------|
-| P1 | S | Record cost/latency metrics for regression tracking |
 | P1 | M | Add abort-execution controls so long-running cases can stop early |
+| P1 | M | Stream test results to file for LLM-assisted debugging (live updates as tests run) |
 | P2 | L | Run identical cases across a model matrix (mini, standard, etc.) and diff summaries/metrics |
 | P2 | M | Run the full suite multiple times to surface flaky behavior |
 | P2 | M | Introduce declarative tool-call operators (patterns, `in`, `set`, exact, range, optional) |

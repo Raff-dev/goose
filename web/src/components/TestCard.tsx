@@ -3,6 +3,19 @@ import { MouseEvent } from 'react';
 
 import type { TestResultModel } from '../api/types';
 
+function getActualToolCalls(result: TestResultModel | undefined): string[] {
+  if (!result?.response?.messages) return [];
+  const messages = result.response.messages as Array<{ tool_calls?: Array<{ name: string }> }>;
+  return messages.flatMap(m => m.tool_calls?.map(tc => tc.name) ?? []);
+}
+
+function getExtraToolCalls(result: TestResultModel | undefined): string[] {
+  if (!result) return [];
+  const actual = new Set(getActualToolCalls(result));
+  const expected = new Set(result.expected_tool_calls);
+  return [...actual].filter(name => !expected.has(name));
+}
+
 interface TestCardProps {
   name: string;
   status: 'passed' | 'failed' | 'queued' | 'running' | 'not-run';
@@ -17,6 +30,8 @@ interface TestCardProps {
 export function TestCard({ name, status, duration, error, result, onViewDetails, onRunTest, detailsHref }: TestCardProps) {
   const failureType = result?.error_type ?? null;
   const totalTokens = result?.total_tokens ?? 0;
+  const extraToolCalls = getExtraToolCalls(result);
+  const hasExtraToolCalls = status === 'passed' && extraToolCalls.length > 0;
   const statusColor =
     status === 'passed' ? 'bg-green-50 text-green-700' :
     status === 'failed' ? 'bg-red-50 text-red-800' :
@@ -60,6 +75,16 @@ export function TestCard({ name, status, duration, error, result, onViewDetails,
               : failureType === 'validation'
               ? 'Validation Failure'
               : 'Unexpected Error'}
+          </span>
+        </div>
+      )}
+      {hasExtraToolCalls && (
+        <div className="mb-2">
+          <span
+            className="text-xs font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-100"
+            title={`Extra tools: ${extraToolCalls.join(', ')}`}
+          >
+            Extra Tool Calls
           </span>
         </div>
       )}
