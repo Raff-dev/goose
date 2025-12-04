@@ -11,7 +11,7 @@ from types import ModuleType
 
 from goose.api import config as api_config
 from goose.testing import fixtures as fixture_registry
-from goose.testing.exceptions import UnknownTestError
+from goose.testing.exceptions import TestLoadError, UnknownTestError
 from goose.testing.models.tests import TestDefinition
 
 MODULE_PREFIXES = ["test_", "tests_"]
@@ -45,12 +45,24 @@ def _ensure_test_import_paths() -> Path:
 
 
 def _reload_module(module_name: str) -> None:
-    """Reload a single module by name, ignoring errors."""
+    """Reload a single module by name.
+
+    If the module file was deleted, removes it from sys.modules.
+    Raises import-time errors (syntax errors, missing deps) so they propagate.
+    Only AttributeError/TypeError during reload are suppressed.
+    """
     module = sys.modules.get(module_name)
     if module is not None:
         try:
             importlib.reload(module)
-        except (ImportError, AttributeError, TypeError):  # pragma: no cover - best effort
+        except ModuleNotFoundError as exc:
+            # Only catch if the module itself is missing (file deleted).
+            # If a dependency is missing, propagate the error.
+            if exc.name == module_name:
+                sys.modules.pop(module_name, None)
+            else:
+                raise
+        except (AttributeError, TypeError):  # pragma: no cover - best effort
             pass
 
 
@@ -107,62 +119,56 @@ def _topological_sort(modules: set[str], deps: dict[str, set[str]]) -> list[str]
     return reload_order
 
 
-def _reload_test_modules(root_package: str) -> None:
-    """Reload all test modules under root_package so file changes are picked up."""
-    for module_name in _collect_submodules(root_package, exclude_suffix=".conftest"):
-        _reload_module(module_name)
-
-
-def _reload_conftest(root_package: str) -> None:
-    """Import or reload conftest.py from the target package to register fixtures."""
-    conftest_name = f"{root_package}.conftest"
-    try:
-        if conftest_name in sys.modules:
-            importlib.reload(sys.modules[conftest_name])
-        else:
-            importlib.import_module(conftest_name)
-    except ModuleNotFoundError:
-        pass
-
-
 def _try_as_package(qualified_name: str) -> list[TestDefinition] | None:
-    """Try to resolve *qualified_name* as a package containing test modules."""
-    try:
-        package = importlib.import_module(qualified_name)
-        return [
-            defn
-            for _, module_name, _ in pkgutil.walk_packages(package.__path__, package.__name__ + ".")
-            if _is_test_module(module_name)
-            for defn in _collect_functions(importlib.import_module(module_name))
-        ]
-    except (ImportError, AttributeError):
+    """Try to resolve *qualified_name* as a package containing test modules.
+
+    Returns None if qualified_name is not a package.
+    Raises ModuleNotFoundError if the package doesn't exist.
+    Raises other import errors (syntax errors, missing deps) from test modules.
+    """
+    package = importlib.import_module(qualified_name)
+
+    if not hasattr(package, "__path__"):
         return None
+
+    return [
+        defn
+        for _, module_name, _ in pkgutil.walk_packages(package.__path__, package.__name__ + ".")
+        if _is_test_module(module_name)
+        for defn in _collect_functions(importlib.import_module(module_name))
+    ]
 
 
 def _try_as_module(qualified_name: str) -> list[TestDefinition] | None:
-    """Try to resolve *qualified_name* as a module containing test functions."""
-    try:
-        module = importlib.import_module(qualified_name)
-        definitions = list(_collect_functions(module))
-        return definitions or None
-    except ImportError:
-        return None
+    """Try to resolve *qualified_name* as a module containing test functions.
+
+    Returns None if no test functions found.
+    Raises ModuleNotFoundError if the module doesn't exist.
+    Raises other import errors (syntax errors, missing deps).
+    """
+    module = importlib.import_module(qualified_name)
+    definitions = list(_collect_functions(module))
+    return definitions or None
 
 
 def _try_as_function(qualified_name: str) -> list[TestDefinition] | None:
-    """Try to resolve *qualified_name* as a module.function reference."""
+    """Try to resolve *qualified_name* as a module.function reference.
+
+    Returns None if function not found or not a test function.
+    Raises ModuleNotFoundError if the module doesn't exist.
+    Raises other import errors (syntax errors, missing deps).
+    """
     parts = qualified_name.split(".")
     if len(parts) < 2:
         return None
     module_name = ".".join(parts[:-1])
     func_name = parts[-1]
-    try:
-        module = importlib.import_module(module_name)
-        attr = getattr(module, func_name)
-        if inspect.isfunction(attr) and attr.__module__ == module.__name__:
-            return [TestDefinition(module=module.__name__, name=func_name, func=attr)]
-    except (ImportError, AttributeError):
-        pass
+
+    module = importlib.import_module(module_name)
+
+    attr = getattr(module, func_name, None)
+    if attr is not None and inspect.isfunction(attr) and attr.__module__ == module.__name__:
+        return [TestDefinition(module=module.__name__, name=func_name, func=attr)]
     return None
 
 
@@ -199,7 +205,18 @@ def load_from_qualified_name(qualified_name: str) -> list[TestDefinition]:
 
     Raises:
         UnknownTestError: If *qualified_name* cannot be resolved to any tests.
+        TestLoadError: If test code fails to load (syntax errors, missing imports, etc.).
     """
+    try:
+        return _load_from_qualified_name(qualified_name)
+    except UnknownTestError:
+        raise
+    except Exception as exc:
+        raise TestLoadError("Failed to load tests") from exc
+
+
+def _load_from_qualified_name(qualified_name: str) -> list[TestDefinition]:
+    """Internal implementation of load_from_qualified_name."""
     root_package = qualified_name.split(".")[0]
 
     _ensure_test_import_paths()
@@ -213,13 +230,30 @@ def load_from_qualified_name(qualified_name: str) -> list[TestDefinition]:
             _reload_module(module_name)
 
     fixture_registry.reset_registry()
-    _reload_conftest(root_package)
-    _reload_test_modules(root_package)
 
+    # Import or reload conftest.py to register fixtures (required)
+    conftest_name = f"{root_package}.conftest"
+    if conftest_name in sys.modules:
+        importlib.reload(sys.modules[conftest_name])
+    else:
+        importlib.import_module(conftest_name)
+
+    # Reload test modules so file changes are picked up
+    for module_name in _collect_submodules(root_package, exclude_suffix=".conftest"):
+        _reload_module(module_name)
+
+    # Attempt resolution strategies in order
     for resolver in (_try_as_package, _try_as_module, _try_as_function):
-        result = resolver(qualified_name)
-        if result is not None:
-            return result
+        try:
+            result = resolver(qualified_name)
+            if result is not None:
+                return result
+        except ModuleNotFoundError as exc:
+            # Only continue if the target module itself is not found.
+            # If a dependency is missing, propagate the error.
+            if exc.name and qualified_name.startswith(exc.name):
+                continue
+            raise
 
     raise UnknownTestError(f"Could not resolve qualified name: {qualified_name!r}")
 

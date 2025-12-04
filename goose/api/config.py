@@ -32,7 +32,6 @@ def set_tests_root(path: Path) -> None:
 
 def get_reload_targets() -> list[str]:
     """Return the list of module targets to reload before test discovery."""
-    print(_STATE["reload_targets"])
     return _STATE["reload_targets"]
 
 

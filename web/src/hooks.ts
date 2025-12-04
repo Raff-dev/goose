@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { API_BASE_URL, apiClient } from './api/client';
 import type { JobResource, RunRequestPayload, TestStatus } from './api/types';
 
@@ -29,6 +29,7 @@ export const useTests = () => {
   return useQuery({
     queryKey: ['tests'],
     queryFn: apiClient.listTests,
+    retry: false, // Don't retry on 4xx errors - show immediately
   });
 };
 

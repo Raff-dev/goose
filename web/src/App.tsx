@@ -13,6 +13,7 @@ function App() {
     isLoading: testsLoading,
     isFetching: testsFetching,
     refetch: refetchTests,
+    error: testsError,
   } = useTests();
   const { data: runs = [], isLoading: runsLoading } = useRuns();
   const createRunMutation = useCreateRun();
@@ -21,6 +22,7 @@ function App() {
   const [selectedTest, setSelectedTest] = useState<string | null>(null);
   const [onlyFailures, setOnlyFailures] = useState(false);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState(0);
 
   const { data: currentJob } = useRun(currentJobId || '', !!currentJobId);
 
@@ -158,7 +160,11 @@ function App() {
   }, []);
 
   const handleRunTest = async (testName: string) => {
-    await createRunMutation.mutateAsync({ tests: [testName] });
+    try {
+      await createRunMutation.mutateAsync({ tests: [testName] });
+    } catch {
+      // Error is captured in createRunMutation.error and displayed via GlobalError
+    }
   };
 
   const handleRunModule = async (moduleName: string, moduleTests: TestSummary[]) => {
@@ -166,7 +172,11 @@ function App() {
     if (!names.length) {
       return;
     }
-    await createRunMutation.mutateAsync({ tests: names });
+    try {
+      await createRunMutation.mutateAsync({ tests: names });
+    } catch {
+      // Error is captured in createRunMutation.error and displayed via GlobalError
+    }
   };
 
   const handleReloadTests = () => {
@@ -195,13 +205,75 @@ function App() {
 
   const isRunning = runs.some(job => job.status === 'running' || job.status === 'queued');
 
+  // Extract error message from any error (handles Axios errors with various response formats)
+  const getErrorMessage = (err: unknown): string | null => {
+    if (!err) return null;
+
+    // Axios error with response data
+    const axiosError = err as {
+      response?: {
+        status?: number;
+        statusText?: string;
+        data?: { detail?: string; message?: string } | string;
+      };
+      message?: string;
+    };
+
+    // Try to get detail from response data
+    if (axiosError.response?.data) {
+      const data = axiosError.response.data;
+      if (typeof data === 'string') {
+        return data;
+      }
+      if (data.detail) {
+        return data.detail;
+      }
+      if (data.message) {
+        return data.message;
+      }
+    }
+
+    // Fall back to status text for HTTP errors
+    if (axiosError.response?.status) {
+      const status = axiosError.response.status;
+      const statusText = axiosError.response.statusText || 'Error';
+      return `HTTP ${status}: ${statusText}`;
+    }
+
+    // Axios network error or other axios error
+    if (axiosError.message) {
+      return axiosError.message;
+    }
+
+    // Standard Error
+    if (err instanceof Error) {
+      return err.message;
+    }
+
+    return 'An unknown error occurred';
+  };
+
+  // Combine job errors, mutation errors, and query errors for display
+  const currentError = getErrorMessage(testsError) || getErrorMessage(createRunMutation.error) || latestRun?.error || null;
+
+  // Increment errorKey when a new error occurs (even if same message)
+  useEffect(() => {
+    if (currentError) {
+      setErrorKey(k => k + 1);
+    }
+  }, [testsError, createRunMutation.error, latestRun?.error]);
+
   const handleRunAll = async () => {
-    await createRunMutation.mutateAsync(undefined);
+    try {
+      await createRunMutation.mutateAsync(undefined);
+    } catch {
+      // Error is captured in createRunMutation.error and displayed via GlobalError
+    }
   };
 
   return (
     <div className="max-w-7xl mx-auto py-8">
-      <GlobalError error={latestRun?.error || null} />
+      <GlobalError error={currentError} errorKey={errorKey} />
       {view === 'dashboard' ? (
         <>
           <Summary tests={tests} resultsMap={resultsMap} statusMap={statusMap} />

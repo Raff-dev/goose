@@ -14,7 +14,7 @@ from goose.testing.discovery import (
     _topological_sort,
     load_from_qualified_name,
 )
-from goose.testing.exceptions import UnknownTestError
+from goose.testing.exceptions import TestLoadError, UnknownTestError
 from goose.testing.models.tests import TestDefinition
 
 
@@ -22,6 +22,10 @@ def _write_sample_tests(tmp_path: Path) -> Path:
     root = tmp_path / "sample_suite"
     root.mkdir()
     (root / "__init__.py").write_text("", encoding="utf-8")
+    (root / "conftest.py").write_text(
+        "from goose.testing import Goose, fixture\n\n@fixture(name='goose')\ndef goose_fixture():\n    return Goose(agent_query_func=lambda q: None)\n",
+        encoding="utf-8",
+    )
     (root / "test_alpha.py").write_text(
         """
 def test_one():
@@ -347,3 +351,99 @@ def test_test_summary_handles_no_docstring():
     summary = TestSummary.from_definition(definition)
 
     assert summary.docstring is None
+
+
+# -----------------------------------------------------------------------------
+# Import error propagation
+# -----------------------------------------------------------------------------
+
+
+def test_load_from_qualified_name_propagates_syntax_errors(tmp_path, monkeypatch):
+    """Syntax errors in test files should propagate, not be silently swallowed."""
+    root = tmp_path / "broken_suite"
+    root.mkdir()
+    (root / "__init__.py").write_text("", encoding="utf-8")
+    (root / "conftest.py").write_text(
+        "from goose.testing import Goose, fixture\n\n@fixture(name='goose')\ndef goose_fixture():\n    return Goose(agent_query_func=lambda q: None)\n",
+        encoding="utf-8",
+    )
+    (root / "test_broken.py").write_text(
+        """
+def test_one():
+    return True
+
+this is not valid python syntax!!!
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    _clear_suite_paths(monkeypatch, root)
+    set_tests_root(root)
+
+    with pytest.raises(TestLoadError) as exc_info:
+        load_from_qualified_name("broken_suite")
+    assert isinstance(exc_info.value.__cause__, SyntaxError)
+
+
+def test_load_from_qualified_name_propagates_import_errors(tmp_path, monkeypatch):
+    """Import errors (e.g., missing dependencies) should propagate."""
+    root = tmp_path / "import_error_suite"
+    root.mkdir()
+    (root / "__init__.py").write_text("", encoding="utf-8")
+    (root / "conftest.py").write_text(
+        "from goose.testing import Goose, fixture\n\n@fixture(name='goose')\ndef goose_fixture():\n    return Goose(agent_query_func=lambda q: None)\n",
+        encoding="utf-8",
+    )
+    (root / "test_missing_dep.py").write_text(
+        """
+from nonexistent_package_xyz import something
+
+def test_one():
+    return True
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    _clear_suite_paths(monkeypatch, root)
+    set_tests_root(root)
+
+    with pytest.raises(TestLoadError) as exc_info:
+        load_from_qualified_name("import_error_suite")
+    assert isinstance(exc_info.value.__cause__, ModuleNotFoundError)
+    assert "nonexistent_package_xyz" in str(exc_info.value.__cause__)
+
+
+def test_load_from_qualified_name_handles_deleted_file(tmp_path, monkeypatch):
+    """Deleting a test file and reloading should not cause persistent errors."""
+    root = tmp_path / "delete_suite"
+    root.mkdir()
+    (root / "__init__.py").write_text("", encoding="utf-8")
+    (root / "conftest.py").write_text(
+        "from goose.testing import Goose, fixture\n\n"
+        "@fixture(name='goose')\n"
+        "def goose_fixture():\n"
+        "    return Goose(agent_query_func=lambda q: None)\n",
+        encoding="utf-8",
+    )
+    test_file = root / "test_deletable.py"
+    test_file.write_text(
+        "def test_will_be_deleted():\n    return True\n",
+        encoding="utf-8",
+    )
+
+    _clear_suite_paths(monkeypatch, root)
+    set_tests_root(root)
+
+    # First load succeeds
+    definitions = load_from_qualified_name("delete_suite")
+    assert len(definitions) == 1
+    assert definitions[0].name == "test_will_be_deleted"
+
+    # Delete the test file
+    test_file.unlink()
+
+    # Second load should succeed with empty list (no tests found)
+    definitions = load_from_qualified_name("delete_suite")
+    assert definitions == []

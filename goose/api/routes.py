@@ -5,7 +5,7 @@ import json
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, status  # type: ignore[import-not-found]
 
 from goose.api import config
-from goose.api.jobs import JobNotifier, JobQueue, UnknownTestError
+from goose.api.jobs import JobNotifier, JobQueue
 from goose.api.jobs.job_target_resolver import resolve_targets
 from goose.api.schema import JobResource, RunRequest, TestSummary
 from goose.testing.discovery import load_from_qualified_name
@@ -14,13 +14,6 @@ router = APIRouter()
 
 notifier = JobNotifier()
 job_queue = JobQueue(on_job_update=notifier.publish)
-
-
-@router.get("/health")
-def health() -> dict[str, str]:
-    """Return a basic readiness probe response."""
-
-    return {"status": "ok"}
 
 
 @router.get("/tests", response_model=list[TestSummary])
@@ -34,13 +27,9 @@ def get_tests() -> list[TestSummary]:
 @router.post("/runs", response_model=JobResource, status_code=status.HTTP_202_ACCEPTED)
 def create_run(payload: RunRequest | None = None) -> JobResource:
     """Schedule execution for all tests or a targeted subset."""
-
     request = payload or RunRequest()
-    try:
-        targets = resolve_targets(request.tests)
-        job = job_queue.enqueue(targets)
-    except UnknownTestError as exc:  # pragma: no cover - validation depends on environment
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    targets = resolve_targets(request.tests)
+    job = job_queue.enqueue(targets)
     return JobResource.from_job(job)
 
 
