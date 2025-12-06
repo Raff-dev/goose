@@ -47,3 +47,31 @@ export interface JobResource {
 export interface RunRequestPayload {
   tests?: string[] | null;
 }
+
+// Tooling types
+
+export interface ToolParameter {
+  name: string;
+  type: string;
+  description: string;
+  required: boolean;
+  default?: unknown;
+}
+
+export interface ToolSchema {
+  name: string;
+  description: string;
+  parameters: ToolParameter[];
+}
+
+export interface ToolSummary {
+  name: string;
+  description: string;
+  parameter_count: number;
+}
+
+export interface ToolInvokeResponse {
+  success: boolean;
+  result?: unknown;
+  error?: string;
+}

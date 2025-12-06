@@ -55,26 +55,47 @@ npm install -g @llm-goose/dashboard-cli
 
 ```bash
 # run tests from the terminal
-goose-run tests
+goose test run example_tests
+
+# list tests without running them
+goose test list example_tests
 
 # add -v / --verbose to stream detailed steps
-goose-run -v tests
+goose test run -v example_tests
 ```
 
 ### API & Dashboard
 
 ```bash
-# start the API server (FastAPI + Uvicorn)
-goose-api example_tests
+# Start the dashboard with GooseApp configuration
+goose api --app gooseapp.app:app
 
-# enable hot-reloading of your agent/tools code during development
-goose-api example_tests --reload-target example_system
+# Enable hot-reloading of your agent/tools code during development
+goose api --app gooseapp.app:app --reload
+
+# With custom reload targets
+goose api --app gooseapp.app:app --reload --reload-target my_agent
 
 # run the dashboard (connects to localhost:8000 by default)
 goose-dashboard
 
 # or point the dashboard at a custom API URL
 GOOSE_API_URL="http://localhost:8000" goose-dashboard
+```
+
+### GooseApp Configuration
+
+For larger projects, create a `gooseapp/` folder with centralized configuration:
+
+```python
+# gooseapp/app.py
+from goose import GooseApp
+from my_agent.tools import get_weather, get_forecast
+
+app = GooseApp(
+    tools=[get_weather, get_forecast],  # Tools visible in the Tooling dashboard
+    reload_targets=["my_agent"],          # Modules to hot-reload during development
+)
 ```
 
 ## Quick Start: Minimal Example 🏃‍♂️
@@ -159,7 +180,7 @@ def test_weather_query(weather_goose: Goose) -> None:
 ### 4. Run the test
 
 ```bash
-goose-run tests
+goose test run tests
 ```
 
 That's it! Goose will run your agent, check that it called the expected tools, and validate the response against your expectations.

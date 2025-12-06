@@ -35,11 +35,19 @@ def _make_job(status: JobStatus = JobStatus.QUEUED) -> Job:
     )
 
 
+def test_health_check_returns_ok() -> None:
+    """Health check endpoint returns status ok."""
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
 def test_get_tests_returns_serialized_summaries(monkeypatch) -> None:
     definitions = [_make_definition("test_alpha"), _make_definition("test_beta")]
     monkeypatch.setattr(routes, "load_from_qualified_name", lambda *args, **kwargs: definitions)
 
-    response = client.get("/tests")
+    response = client.get("/testing/tests")
 
     assert response.status_code == 200
     payload = response.json()
@@ -66,7 +74,7 @@ def test_create_run_enqueues_targets(monkeypatch) -> None:
     dummy_queue = DummyQueue()
     monkeypatch.setattr(routes, "job_queue", dummy_queue, raising=False)
 
-    response = client.post("/runs", json={"tests": ["pkg.tests.test_example"]})
+    response = client.post("/testing/runs", json={"tests": ["pkg.tests.test_example"]})
 
     assert response.status_code == 202
     assert dummy_queue.targets == definitions
@@ -84,7 +92,7 @@ def test_list_runs_returns_job_resources(monkeypatch) -> None:
 
     monkeypatch.setattr(routes, "job_queue", DummyQueue(), raising=False)
 
-    response = client.get("/runs")
+    response = client.get("/testing/runs")
 
     assert response.status_code == 200
     payload = response.json()
@@ -101,7 +109,7 @@ def test_get_run_returns_job(monkeypatch) -> None:
 
     monkeypatch.setattr(routes, "job_queue", DummyQueue(), raising=False)
 
-    response = client.get(f"/runs/{job.id}")
+    response = client.get(f"/testing/runs/{job.id}")
 
     assert response.status_code == 200
     payload = response.json()

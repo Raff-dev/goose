@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from goose.api import config
+from goose.api.config import GooseConfig
 from goose.testing.discovery import load_from_qualified_name
 from goose.testing.models.tests import TestDefinition
 
@@ -11,7 +11,7 @@ def resolve_targets(requested: list[str] | None = None) -> list[TestDefinition]:
     """Return test definitions for all tests or the requested dotted names."""
 
     if not requested:
-        return load_from_qualified_name(config.get_tests_root().name)
+        return load_from_qualified_name(GooseConfig.TESTS_MODULE)
 
     targets: list[TestDefinition] = []
     for qualified_name in requested:

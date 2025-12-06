@@ -8,10 +8,17 @@ from fastapi import FastAPI, Request, status  # type: ignore[import-not-found]
 from fastapi.middleware.cors import CORSMiddleware  # type: ignore[import-not-found]
 from fastapi.responses import JSONResponse  # type: ignore[import-not-found]
 
-from goose.api.routes import router
+from goose.api.routes import router as testing_router
 from goose.testing.exceptions import TestLoadError, UnknownTestError
+from goose.tooling.api.router import router as tooling_router
 
 app = FastAPI(title="Goose API", version="0.1.0")
+
+
+@app.get("/health")
+def health_check() -> dict:
+    """Health check endpoint."""
+    return {"status": "ok"}
 
 
 @app.exception_handler(TestLoadError)
@@ -41,7 +48,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router)
+# Mount testing routes under /testing prefix
+app.include_router(testing_router, prefix="/testing", tags=["testing"])
+
+# Mount tooling routes under /tooling prefix
+app.include_router(tooling_router, prefix="/tooling", tags=["tooling"])
 
 
 __all__ = ["app"]

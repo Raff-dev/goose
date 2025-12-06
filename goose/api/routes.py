@@ -4,7 +4,7 @@ import json
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, status  # type: ignore[import-not-found]
 
-from goose.api import config
+from goose.api.config import GooseConfig
 from goose.api.jobs import JobNotifier, JobQueue
 from goose.api.jobs.job_target_resolver import resolve_targets
 from goose.api.schema import JobResource, RunRequest, TestSummary
@@ -19,8 +19,7 @@ job_queue = JobQueue(on_job_update=notifier.publish)
 @router.get("/tests", response_model=list[TestSummary])
 def get_tests() -> list[TestSummary]:
     """Return metadata for all discovered Goose tests."""
-    module_name = config.get_tests_root().name
-    definitions = load_from_qualified_name(module_name)
+    definitions = load_from_qualified_name(GooseConfig.TESTS_MODULE)
     return [TestSummary.from_definition(definition) for definition in definitions]
 
 

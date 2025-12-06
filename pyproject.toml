@@ -77,8 +77,7 @@ all = [
 ]
 
 [project.scripts]
-goose-run = "goose.cli:app"
-goose-api = "goose.api.cli:app"
+goose = "goose.cli:app"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

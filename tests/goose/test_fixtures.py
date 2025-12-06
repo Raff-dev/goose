@@ -3,7 +3,14 @@ from __future__ import annotations
 import pytest
 
 from goose.testing.engine import Goose
-from goose.testing.fixtures import build_call_arguments, extract_goose_fixture, fixture, fixtures, register
+from goose.testing.fixtures import (
+    build_call_arguments,
+    extract_goose_fixture,
+    fixture,
+    fixtures,
+    register,
+    reset_registry,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -20,6 +27,23 @@ def test_register_rejects_duplicates():
     register("sample", sample)
     with pytest.raises(ValueError, match="already registered"):
         register("sample", sample)
+
+
+def test_reset_registry_allows_reregistration():
+    """Verify fixtures can be re-registered after reset (simulates module reload)."""
+
+    def sample():
+        return "value"
+
+    register("sample", sample)
+    assert "sample" in fixtures
+
+    reset_registry()
+    assert "sample" not in fixtures
+
+    # Should not raise - registry was cleared
+    register("sample", sample)
+    assert "sample" in fixtures
 
 
 def test_fixture_decorator_registers_name():

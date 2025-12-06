@@ -56,6 +56,14 @@ def setup_data() -> None:
 
 @fixture(name="goose")
 def goose_fixture() -> Goose:
-    """Provide a Goose testing instance for the agent."""
+    """Provide a Goose testing instance for the agent.
+
+    The GooseApp tools are available via gooseapp.app for reference,
+    but the Goose instance uses the agent's built-in tools.
+    """
     agent = Agent()
-    return Goose(agent_query_func=agent.query, hooks=DjangoTestHooks(), validator_model="gpt-4o-mini")
+    return Goose(
+        agent_query_func=agent.query,
+        hooks=DjangoTestHooks(),
+        validator_model="gpt-4o-mini",
+    )

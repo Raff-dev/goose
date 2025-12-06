@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
-from goose.api import config as api_config
+from goose.api.config import GooseConfig
 from goose.testing import fixtures as fixture_registry
 from goose.testing.exceptions import TestLoadError, UnknownTestError
 from goose.testing.models.tests import TestDefinition
@@ -35,12 +35,27 @@ def _collect_functions(module: ModuleType):
 
 
 def _ensure_test_import_paths() -> Path:
-    """Ensure the configured tests root and its parent are importable."""
-    tests_path = api_config.get_tests_root()
-    for candidate in (tests_path, tests_path.parent):
-        candidate_path = str(candidate)
-        if candidate_path not in sys.path:
-            sys.path.insert(0, candidate_path)
+    """Ensure necessary paths are importable for test discovery.
+
+    Adds the current working directory and the parent of tests_dir to sys.path.
+    This allows importing project modules (e.g., gooseapp) and test modules.
+    """
+    import os
+
+    config = GooseConfig()
+    tests_path = config.tests_dir
+
+    # Ensure cwd is in path (for importing project modules like gooseapp)
+    cwd = os.getcwd()
+    if cwd not in sys.path:
+        sys.path.insert(0, cwd)
+
+    # Also add parent of tests_dir for test discovery
+    # (needed when tests_dir is a nested directory like tmp_path/sample_suite)
+    parent_path = str(tests_path.parent)
+    if parent_path not in sys.path:
+        sys.path.insert(0, parent_path)
+
     return tests_path
 
 
@@ -181,8 +196,7 @@ def load_from_qualified_name(qualified_name: str) -> list[TestDefinition]:
         3. Function - return single ``module.function`` reference
 
     Assumptions:
-        - ``goose.api.config.get_tests_root()`` points to a valid test directory.
-        - The target package/module is importable after ``sys.path`` is adjusted.
+        - The target package/module is importable (cwd is in sys.path).
         - Test functions are top-level, named ``test_*`` or ``tests_*``.
 
     Side effects (every call):
@@ -221,18 +235,32 @@ def _load_from_qualified_name(qualified_name: str) -> list[TestDefinition]:
 
     _ensure_test_import_paths()
 
-    # Reload configured source targets in dependency order
-    modules = {mod for target in api_config.get_reload_targets() for mod in _collect_submodules(target)}
+    config = GooseConfig()
+
+    # Clear fixture registry before reloading any modules
+    # (conftest modules will re-register fixtures when reloaded)
+    fixture_registry.reset_registry()
+
+    # Reload configured source targets in dependency order (excluding conftest, handled separately)
+    conftest_name = f"{root_package}.conftest"
+    reload_exclude = config.compute_reload_exclude()
+    modules = {
+        mod
+        for target in config.reload_targets
+        for mod in _collect_submodules(target)
+        if not mod.endswith(".conftest") and not any(mod == exc or mod.startswith(f"{exc}.") for exc in reload_exclude)
+    }
 
     if modules:
         deps = _build_dependency_graph(modules)
         for module_name in _topological_sort(modules, deps):
             _reload_module(module_name)
 
-    fixture_registry.reset_registry()
+    # Refresh the GooseApp instance after hot reload (if configured)
+    # This ensures tools and other config are updated
+    config.refresh_app()
 
     # Import or reload conftest.py to register fixtures (required)
-    conftest_name = f"{root_package}.conftest"
     if conftest_name in sys.modules:
         importlib.reload(sys.modules[conftest_name])
     else:
