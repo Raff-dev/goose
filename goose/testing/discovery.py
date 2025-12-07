@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import importlib
 import inspect
+import os
 import pkgutil
 import sys
 from pathlib import Path
 from types import ModuleType
 
-from goose.api import config as api_config
+from goose.core.config import GooseConfig
+from goose.core.reload import collect_submodules, reload_module, reload_source_modules
 from goose.testing import fixtures as fixture_registry
 from goose.testing.exceptions import TestLoadError, UnknownTestError
 from goose.testing.models.tests import TestDefinition
@@ -35,88 +37,34 @@ def _collect_functions(module: ModuleType):
 
 
 def _ensure_test_import_paths() -> Path:
-    """Ensure the configured tests root and its parent are importable."""
-    tests_path = api_config.get_tests_root()
-    for candidate in (tests_path, tests_path.parent):
-        candidate_path = str(candidate)
-        if candidate_path not in sys.path:
-            sys.path.insert(0, candidate_path)
+    """Ensure necessary paths are importable for test discovery.
+
+    Adds the current working directory and the parent of tests_dir to sys.path.
+    This allows importing project modules (e.g., gooseapp) and test modules.
+    """
+    config = GooseConfig()
+    tests_path = config.tests_dir
+
+    # Ensure cwd is in path (for importing project modules like gooseapp)
+    cwd = os.getcwd()
+    if cwd not in sys.path:
+        sys.path.insert(0, cwd)
+
+    # Also add parent of tests_dir for test discovery
+    # (needed when tests_dir is a nested directory like tmp_path/sample_suite)
+    parent_path = str(tests_path.parent)
+    if parent_path not in sys.path:
+        sys.path.insert(0, parent_path)
+
     return tests_path
 
 
-def _reload_module(module_name: str) -> None:
-    """Reload a single module by name.
-
-    If the module file was deleted, removes it from sys.modules.
-    Raises import-time errors (syntax errors, missing deps) so they propagate.
-    Only AttributeError/TypeError during reload are suppressed.
-    """
-    module = sys.modules.get(module_name)
-    if module is not None:
-        try:
-            importlib.reload(module)
-        except ModuleNotFoundError as exc:
-            # Only catch if the module itself is missing (file deleted).
-            # If a dependency is missing, propagate the error.
-            if exc.name == module_name:
-                sys.modules.pop(module_name, None)
-            else:
-                raise
-        except (AttributeError, TypeError):  # pragma: no cover - best effort
-            pass
-
-
-def _collect_submodules(package_name: str, *, exclude_suffix: str | None = None) -> list[str]:
-    """Find all loaded modules under a package prefix."""
-    prefix = f"{package_name}."
-    matches = []
-    for name in sys.modules:
-        if name != package_name and not name.startswith(prefix):
-            continue
-        if exclude_suffix and name.endswith(exclude_suffix):
-            continue
-        matches.append(name)
-    return matches
-
-
-def _build_dependency_graph(modules: set[str]) -> dict[str, set[str]]:
-    """Build a mapping of module -> modules it imports from (within the set)."""
-    deps: dict[str, set[str]] = {}
-    for module_name in modules:
-        module = sys.modules.get(module_name)
-        if module is None:
-            deps[module_name] = set()
-            continue
-        imported_from = set()
-        for name in dir(module):
-            attr = getattr(module, name, None)
-            attr_module = getattr(attr, "__module__", None)
-            if attr_module and attr_module != module_name and attr_module in modules:
-                imported_from.add(attr_module)
-        deps[module_name] = imported_from
-    return deps
-
-
-def _topological_sort(modules: set[str], deps: dict[str, set[str]]) -> list[str]:
-    """Sort modules so dependencies come before dependents."""
-    reloaded: set[str] = set()
-    reload_order: list[str] = []
-
-    while len(reloaded) < len(modules):
-        progress = False
-        for module_name in modules:
-            if module_name in reloaded:
-                continue
-            if deps[module_name] <= reloaded:
-                reload_order.append(module_name)
-                reloaded.add(module_name)
-                progress = True
-        if not progress:
-            # Circular dependency - add remaining in any order
-            reload_order.extend(m for m in modules if m not in reloaded)
-            break
-
-    return reload_order
+def _collect_submodules_with_exclude(package_name: str, *, exclude_suffix: str | None = None) -> list[str]:
+    """Find all loaded modules under a package prefix, with optional suffix exclusion."""
+    modules = collect_submodules(package_name)
+    if exclude_suffix:
+        modules = [m for m in modules if not m.endswith(exclude_suffix)]
+    return modules
 
 
 def _try_as_package(qualified_name: str) -> list[TestDefinition] | None:
@@ -181,8 +129,7 @@ def load_from_qualified_name(qualified_name: str) -> list[TestDefinition]:
         3. Function - return single ``module.function`` reference
 
     Assumptions:
-        - ``goose.api.config.get_tests_root()`` points to a valid test directory.
-        - The target package/module is importable after ``sys.path`` is adjusted.
+        - The target package/module is importable (cwd is in sys.path).
         - Test functions are top-level, named ``test_*`` or ``tests_*``.
 
     Side effects (every call):
@@ -221,15 +168,19 @@ def _load_from_qualified_name(qualified_name: str) -> list[TestDefinition]:
 
     _ensure_test_import_paths()
 
-    # Reload configured source targets in dependency order
-    modules = {mod for target in api_config.get_reload_targets() for mod in _collect_submodules(target)}
+    config = GooseConfig()
 
-    if modules:
-        deps = _build_dependency_graph(modules)
-        for module_name in _topological_sort(modules, deps):
-            _reload_module(module_name)
-
+    # Clear fixture registry before reloading any modules
+    # (conftest modules will re-register fixtures when reloaded)
     fixture_registry.reset_registry()
+
+    # Reload configured source targets in dependency order
+    # Exclude conftest modules (handled separately below)
+    reload_source_modules(extra_exclude_suffixes=[".conftest"])
+
+    # Refresh the GooseApp instance after hot reload (if configured)
+    # This ensures tools and other config are updated
+    config.refresh_app()
 
     # Import or reload conftest.py to register fixtures (required)
     conftest_name = f"{root_package}.conftest"
@@ -239,8 +190,8 @@ def _load_from_qualified_name(qualified_name: str) -> list[TestDefinition]:
         importlib.import_module(conftest_name)
 
     # Reload test modules so file changes are picked up
-    for module_name in _collect_submodules(root_package, exclude_suffix=".conftest"):
-        _reload_module(module_name)
+    for module_name in _collect_submodules_with_exclude(root_package, exclude_suffix=".conftest"):
+        reload_module(module_name)
 
     # Attempt resolution strategies in order
     for resolver in (_try_as_package, _try_as_module, _try_as_function):

@@ -11,7 +11,38 @@ export function GlobalError({ error, errorKey }: GlobalErrorProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [copied, setCopied] = useState(false);
   const prevErrorRef = useRef<string | null>(null);
+
+  // Reset copied state after 1.5 seconds
+  useEffect(() => {
+    if (!copied || typeof window === 'undefined') {
+      return;
+    }
+    const timeout = window.setTimeout(() => setCopied(false), 1500);
+    return () => window.clearTimeout(timeout);
+  }, [copied]);
+
+  const handleCopy = () => {
+    if (!error) {
+      return;
+    }
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(error).then(() => setCopied(true)).catch(() => setCopied(false));
+      return;
+    }
+    try {
+      const fallback = document.createElement('textarea');
+      fallback.value = error;
+      document.body.appendChild(fallback);
+      fallback.select();
+      document.execCommand('copy');
+      document.body.removeChild(fallback);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  };
 
   // Animate in when error appears or changes
   useEffect(() => {
@@ -97,9 +128,25 @@ export function GlobalError({ error, errorKey }: GlobalErrorProps) {
                 showDetails ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
               }`}
             >
-              <pre className="whitespace-pre-wrap text-sm font-mono bg-slate-50 p-4 rounded-lg overflow-x-auto max-h-96 overflow-y-auto text-slate-800 border border-slate-200">
-                {error}
-              </pre>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:text-slate-900"
+                  aria-label="Copy stack trace"
+                  aria-live="polite"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 4h9a2 2 0 012 2v11M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h9a2 2 0 002-2m-9-16v3a2 2 0 002 2h3" />
+                  </svg>
+                </button>
+                <pre className="whitespace-pre-wrap text-sm font-mono bg-slate-50 p-4 pr-14 rounded-lg overflow-x-auto max-h-96 overflow-y-auto text-slate-800 border border-slate-200">
+                  {error}
+                </pre>
+                {copied && (
+                  <span className="absolute right-3 top-12 rounded bg-slate-900 px-2 py-0.5 text-xs text-white">Copied</span>
+                )}
+              </div>
             </div>
           </div>
         </div>

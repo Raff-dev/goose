@@ -18,13 +18,25 @@ load_dotenv()
 class ExpectationsEvaluationResponse(BaseModel):
     """Structured output for agent behavior validation."""
 
-    reasoning: str = Field(description="Detailed reasoning about whether the agent behavior matches expectations")
+    reasoning: str = Field(
+        description=(
+            "Step-by-step analysis of the agent's behavior. "
+            "For EACH numbered expectation, explicitly state whether it was MET or UNMET and why."
+        )
+    )
     unmet_expectation_numbers: list[int] = Field(
-        description="List of expectation numbers that were not met",
+        description=(
+            "List of expectation numbers (integers) that were NOT met. "
+            "Must be empty list [] if all expectations were met."
+        ),
         default_factory=list,
     )
     failure_reasons: dict[int, str] = Field(
-        description="For each unmet expectation number, a concise explanation of what went wrong",
+        description=(
+            "REQUIRED for each unmet expectation. "
+            "Map of expectation number -> concise failure explanation. "
+            "Example: {1: 'Agent listed products instead of creating one', 3: 'No email was sent'}"
+        ),
         default_factory=dict,
     )
 
@@ -39,26 +51,27 @@ class AgentValidator:
             model=chat_model,
             tools=[],  # No tools needed for validation
             response_format=ExpectationsEvaluationResponse,
-            system_prompt=f"""
-You are an expert validator for LLM agent behavior testing.
+            system_prompt=f"""You are an expert validator for LLM agent behavior testing.
 
 Current date: {current_date}
 
-You will be given:
-1. The complete output from an agent's execution (tool calls and responses)
-2. A list of expectations that describe what the agent should have done
+TASK: Analyze agent execution output against numbered expectations and determine which expectations were met or unmet.
 
-Your task is to analyze whether the agent's behavior matches these expectations and provide a structured assessment.
+INSTRUCTIONS:
+1. Read the agent output carefully - look at tool calls made and their results
+2. For EACH numbered expectation, determine if it was MET or UNMET
+3. In your reasoning, explicitly address each expectation by number
 
-When validating:
-- Be thorough but concise in your analysis
-- Clearly state whether expectations are met
-- Provide specific reasoning for your assessment
-- Focus on the agent's actual behavior vs expected behavior
-- Each expectation will be numbered. Use these numbers when referring to expectations.
-- If any expectations are not met, include their numbers in unmet_expectation_numbers
-- For each unmet expectation, provide a concise failure reason in failure_reasons (keyed by expectation number)
-  explaining specifically what went wrong (e.g., "Expected product creation but agent only listed products")""",
+CRITICAL REQUIREMENTS:
+- If an expectation is UNMET, you MUST add its number to unmet_expectation_numbers
+- For EVERY unmet expectation number, you MUST provide a failure_reason entry explaining what went wrong
+- The failure_reasons dict MUST have an entry for each number in unmet_expectation_numbers
+- Failure reasons should be specific: "Agent called X instead of Y" or "No tool call for Z was made"
+
+EXAMPLE OUTPUT FORMAT:
+- reasoning: "1. MET - Agent called create_product with correct params. 2. UNMET - Agent did not send confirmation email. 3. MET - Price was set to $50."
+- unmet_expectation_numbers: [2]
+- failure_reasons: {{2: "No send_email tool call was made after product creation"}}""",
         )
 
     def evaluate(self, agent_output: AgentResponse, expectations: list[str]) -> ExpectationsEvaluationResponse:
@@ -74,15 +87,15 @@ When validating:
         """
 
         agent_output_str = agent_output.format_for_validation()
-        prompt = f"""
-AGENT OUTPUT:
+        prompt = f"""AGENT OUTPUT:
 {agent_output_str}
 
-EXPECTATIONS:
+EXPECTATIONS TO VALIDATE:
 {chr(10).join(f"{index}. {exp}" for index, exp in enumerate(expectations, start=1))}
 
-Analyze if the agent behavior matches these expectations.
-"""
+Analyze the agent's behavior against each numbered expectation.
+For each expectation, state if it was MET or UNMET.
+If UNMET, include the number in unmet_expectation_numbers AND provide a specific failure_reason."""
 
         messages = [HumanMessage(content=prompt)]
         result = self._agent.invoke({"messages": messages})

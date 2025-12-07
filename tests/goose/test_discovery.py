@@ -1,21 +1,29 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 
-from goose.api.config import set_reload_targets, set_tests_root
-from goose.api.schema import TestSummary
+from goose.core.config import GooseConfig
+from goose.core.reload import _build_dependency_graph, _topological_sort, collect_submodules
+from goose.testing.api.schema import TestSummary
 from goose.testing.discovery import (
-    _build_dependency_graph,
-    _collect_submodules,
+    _collect_submodules_with_exclude,
     _is_test_module,
-    _topological_sort,
     load_from_qualified_name,
 )
 from goose.testing.exceptions import TestLoadError, UnknownTestError
 from goose.testing.models.tests import TestDefinition
+
+
+@pytest.fixture(autouse=True)
+def reset_config() -> Iterator[None]:
+    """Reset GooseConfig singleton before each test."""
+    GooseConfig.reset()
+    yield
+    GooseConfig.reset()
 
 
 def _write_sample_tests(tmp_path: Path) -> Path:
@@ -55,6 +63,13 @@ def _clear_suite_paths(monkeypatch, suite_root: Path) -> None:
     monkeypatch.setattr(sys, "path", new_path, raising=False)
 
 
+def _setup_test_path(monkeypatch, suite_root: Path) -> None:
+    """Clear cached modules and add suite's parent to sys.path."""
+    _clear_suite_paths(monkeypatch, suite_root)
+    # Add the parent of the suite to sys.path so imports work
+    monkeypatch.syspath_prepend(str(suite_root.parent))
+
+
 # -----------------------------------------------------------------------------
 # _is_test_module
 # -----------------------------------------------------------------------------
@@ -85,7 +100,7 @@ def test_is_test_module(name: str, expected: bool):
 
 
 def test_collect_submodules_finds_loaded_modules(monkeypatch):
-    """Verify _collect_submodules returns modules matching the package prefix."""
+    """Verify collect_submodules returns modules matching the package prefix."""
     fake_modules = {
         "mypackage": object(),
         "mypackage.sub": object(),
@@ -96,12 +111,12 @@ def test_collect_submodules_finds_loaded_modules(monkeypatch):
     }
     monkeypatch.setattr(sys, "modules", fake_modules)
 
-    result = _collect_submodules("mypackage")
+    result = collect_submodules("mypackage")
     assert set(result) == {"mypackage", "mypackage.sub", "mypackage.sub.deep", "mypackage.conftest"}
 
 
 def test_collect_submodules_excludes_suffix(monkeypatch):
-    """Verify exclude_suffix filters out matching modules."""
+    """Verify _collect_submodules_with_exclude filters out matching modules."""
     fake_modules = {
         "pkg": object(),
         "pkg.test_foo": object(),
@@ -109,7 +124,7 @@ def test_collect_submodules_excludes_suffix(monkeypatch):
     }
     monkeypatch.setattr(sys, "modules", fake_modules)
 
-    result = _collect_submodules("pkg", exclude_suffix=".conftest")
+    result = _collect_submodules_with_exclude("pkg", exclude_suffix=".conftest")
     assert set(result) == {"pkg", "pkg.test_foo"}
 
 
@@ -211,9 +226,8 @@ def test_topological_sort_handles_independent_modules():
 
 def test_load_from_root_collects_all_modules(tmp_path, monkeypatch):
     sample_root = _write_sample_tests(tmp_path)
-    _clear_suite_paths(monkeypatch, sample_root)
+    _setup_test_path(monkeypatch, sample_root)
 
-    set_tests_root(sample_root)
     definitions = load_from_qualified_name(sample_root.name)
 
     qualified = sorted(definition.qualified_name for definition in definitions)
@@ -226,9 +240,7 @@ def test_load_from_root_collects_all_modules(tmp_path, monkeypatch):
 
 def test_load_from_qualified_name_supports_function_and_module(tmp_path, monkeypatch):
     sample_root = _write_sample_tests(tmp_path)
-    _clear_suite_paths(monkeypatch, sample_root)
-
-    set_tests_root(sample_root)
+    _setup_test_path(monkeypatch, sample_root)
 
     single = load_from_qualified_name("sample_suite.test_alpha.test_one")
     assert [definition.qualified_name for definition in single] == [
@@ -244,9 +256,7 @@ def test_load_from_qualified_name_supports_function_and_module(tmp_path, monkeyp
 
 def test_load_from_qualified_name_errors_for_unknown_function(tmp_path, monkeypatch):
     sample_root = _write_sample_tests(tmp_path)
-    _clear_suite_paths(monkeypatch, sample_root)
-
-    set_tests_root(sample_root)
+    _setup_test_path(monkeypatch, sample_root)
 
     with pytest.raises(UnknownTestError):
         load_from_qualified_name("sample_suite.test_alpha.missing")
@@ -255,8 +265,7 @@ def test_load_from_qualified_name_errors_for_unknown_function(tmp_path, monkeypa
 def test_load_from_qualified_name_picks_up_file_changes(tmp_path, monkeypatch):
     """Verify that changes to test files are picked up on subsequent loads."""
     sample_root = _write_sample_tests(tmp_path)
-    _clear_suite_paths(monkeypatch, sample_root)
-    set_tests_root(sample_root)
+    _setup_test_path(monkeypatch, sample_root)
 
     definitions = load_from_qualified_name("sample_suite.test_alpha.test_one")
     assert len(definitions) == 1
@@ -282,11 +291,28 @@ def test_two():
     assert refreshed_func() == "modified"
 
 
+def test_load_from_qualified_name_does_not_duplicate_fixtures_on_reload(tmp_path, monkeypatch):
+    """Calling load_from_qualified_name multiple times should not cause duplicate fixture registration."""
+    sample_root = _write_sample_tests(tmp_path)
+    _setup_test_path(monkeypatch, sample_root)
+
+    # First load - should work fine
+    definitions = load_from_qualified_name("sample_suite")
+    assert len(definitions) == 3
+
+    # Second load - should NOT raise "Fixture already registered"
+    definitions = load_from_qualified_name("sample_suite")
+    assert len(definitions) == 3
+
+    # Third load - still should work
+    definitions = load_from_qualified_name("sample_suite")
+    assert len(definitions) == 3
+
+
 def test_load_from_qualified_name_reloads_source_targets(tmp_path, monkeypatch):
     """Verify that reload targets are reloaded before discovering tests."""
     sample_root = _write_sample_tests(tmp_path)
-    _clear_suite_paths(monkeypatch, sample_root)
-    set_tests_root(sample_root)
+    _setup_test_path(monkeypatch, sample_root)
 
     # Create a source package that will be reloaded
     source_pkg = tmp_path / "my_source"
@@ -299,7 +325,8 @@ def test_load_from_qualified_name_reloads_source_targets(tmp_path, monkeypatch):
     try:
         import my_source.tools  # noqa: F401
 
-        set_reload_targets(["my_source"])
+        config = GooseConfig()
+        config.reload_targets = ["my_source"]
 
         # Modify the source file
         (source_pkg / "tools.py").write_text("VALUE = 42\n", encoding="utf-8")
@@ -312,7 +339,7 @@ def test_load_from_qualified_name_reloads_source_targets(tmp_path, monkeypatch):
 
         assert tools_module.VALUE == 42
     finally:
-        set_reload_targets([])
+        config.reload_targets = []
         sys.path.remove(str(tmp_path))
         # Clean up imported modules
         for name in list(sys.modules):
@@ -378,8 +405,7 @@ this is not valid python syntax!!!
         encoding="utf-8",
     )
 
-    _clear_suite_paths(monkeypatch, root)
-    set_tests_root(root)
+    _setup_test_path(monkeypatch, root)
 
     with pytest.raises(TestLoadError) as exc_info:
         load_from_qualified_name("broken_suite")
@@ -406,8 +432,7 @@ def test_one():
         encoding="utf-8",
     )
 
-    _clear_suite_paths(monkeypatch, root)
-    set_tests_root(root)
+    _setup_test_path(monkeypatch, root)
 
     with pytest.raises(TestLoadError) as exc_info:
         load_from_qualified_name("import_error_suite")
@@ -433,8 +458,7 @@ def test_load_from_qualified_name_handles_deleted_file(tmp_path, monkeypatch):
         encoding="utf-8",
     )
 
-    _clear_suite_paths(monkeypatch, root)
-    set_tests_root(root)
+    _setup_test_path(monkeypatch, root)
 
     # First load succeeds
     definitions = load_from_qualified_name("delete_suite")

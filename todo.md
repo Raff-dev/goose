@@ -7,6 +7,8 @@
 | P1 | S | Add "Copy conversation" button to Thread section |
 | P1 | S | Show live elapsed time for currently running test |
 | P1 | S | Store config in pyproject.toml [tool.goose] (tests_root, reload_targets) |
+| P1 | M | Scaffolding module - init the goose project (creating gooseapp/, tests folder, sample test, conftest, etc.) |
+| P1 | M | Chatting module - interactive CLI/UI to interact with the agents directly |
 | P2 | L | Run identical cases across a model matrix (mini, standard, etc.) and diff summaries/metrics |
 | P2 | M | Run the full suite multiple times to surface flaky behavior |
 | P2 | M | Introduce declarative tool-call operators (patterns, `in`, `set`, exact, range, optional) |

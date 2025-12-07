@@ -77,8 +77,7 @@ all = [
 ]
 
 [project.scripts]
-goose-run = "goose.cli:app"
-goose-api = "goose.api.cli:app"
+goose = "goose.cli:app"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
@@ -127,9 +126,9 @@ ignore-init-module-imports = true
 
 [tool.pylint.main]
 max-line-length = 120
-disable = ["too-few-public-methods", "missing-module-docstring"]
-ignore = ["migrations", "tests"]
-ignore-patterns = [".*/migrations/.*", "tests/.*"]
+disable = ["too-few-public-methods", "missing-module-docstring", "fixme", "duplicate-code"]
+ignore = ["migrations", "tests", "template"]
+ignore-patterns = [".*/migrations/.*", "tests/.*", ".*/template/.*"]
 
 [tool.pytest.ini_options]
 addopts = "-ra"
@@ -141,7 +140,8 @@ filterwarnings = [
 [tool.coverage.run]
 branch = true
 source = ["goose"]
-omit = ["example_system/*", "goose/cli.py", "goose/api/cli.py"]
+omit = ["example_system/*", "goose/cli.py", "goose/api/cli.py", "goose/testing/cli.py"]
 
 [tool.coverage.report]
 show_missing = true
+skip_covered = true

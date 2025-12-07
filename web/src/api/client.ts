@@ -11,23 +11,23 @@ const http: AxiosInstance = axios.create({
 
 export const apiClient = {
   async listTests(): Promise<TestSummary[]> {
-    const response = await http.get<TestSummary[]>('/tests');
+    const response = await http.get<TestSummary[]>('/testing/tests');
     return response.data;
   },
 
   async listRuns(): Promise<JobResource[]> {
-    const response = await http.get<JobResource[]>('/runs');
+    const response = await http.get<JobResource[]>('/testing/runs');
     return response.data;
   },
 
   async getRun(id: string): Promise<JobResource> {
-    const response = await http.get<JobResource>(`/runs/${id}`);
+    const response = await http.get<JobResource>(`/testing/runs/${id}`);
     return response.data;
   },
 
   async createRun(payload: RunRequestPayload | undefined = undefined): Promise<JobResource> {
     const body: RunRequestPayload | undefined = payload?.tests?.length ? payload : undefined;
-    const response = await http.post<JobResource>('/runs', body);
+    const response = await http.post<JobResource>('/testing/runs', body);
     return response.data;
   },
 };

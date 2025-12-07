@@ -16,7 +16,7 @@ const buildRunsWebSocketUrl = (): string | null => {
     const url = new URL(API_BASE_URL);
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     const trimmedPath = url.pathname.replace(/\/+$/, '');
-    url.pathname = `${trimmedPath}/ws/runs`.replace(/\/{2,}/g, '/');
+    url.pathname = `${trimmedPath}/testing/ws/runs`.replace(/\/{2,}/g, '/');
     url.search = '';
     url.hash = '';
     return url.toString();
