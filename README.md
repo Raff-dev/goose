@@ -54,27 +54,30 @@ npm install -g @llm-goose/dashboard-cli
 ### CLI
 
 ```bash
+# Initialize a new gooseapp/ project structure
+goose init
+
 # run tests from the terminal
-goose test run example_tests
+goose test run gooseapp.tests
 
 # list tests without running them
-goose test list example_tests
+goose test list gooseapp.tests
 
 # add -v / --verbose to stream detailed steps
-goose test run -v example_tests
+goose test run -v gooseapp.tests
 ```
 
 ### API & Dashboard
 
 ```bash
-# Start the dashboard with GooseApp configuration
-goose api --app gooseapp.app:app
+# Start the dashboard (auto-discovers gooseapp/ in current directory)
+goose api
 
 # Enable hot-reloading of your agent/tools code during development
-goose api --app gooseapp.app:app --reload
+goose api --reload
 
-# With custom reload targets
-goose api --app gooseapp.app:app --reload --reload-target my_agent
+# Custom host and port
+goose api --host 0.0.0.0 --port 3000
 
 # run the dashboard (connects to localhost:8000 by default)
 goose-dashboard
@@ -85,7 +88,7 @@ GOOSE_API_URL="http://localhost:8000" goose-dashboard
 
 ### GooseApp Configuration
 
-For larger projects, create a `gooseapp/` folder with centralized configuration:
+Run `goose init` to create a `gooseapp/` folder with centralized configuration:
 
 ```python
 # gooseapp/app.py
@@ -94,7 +97,8 @@ from my_agent.tools import get_weather, get_forecast
 
 app = GooseApp(
     tools=[get_weather, get_forecast],  # Tools visible in the Tooling dashboard
-    reload_targets=["my_agent"],          # Modules to hot-reload during development
+    reload_targets=["my_agent"],         # Modules to hot-reload during development
+    reload_exclude=["my_agent.data"],    # Modules to skip during reload
 )
 ```
 
@@ -139,17 +143,18 @@ def query_weather_agent(question: str) -> AgentResponse:
 Create `tests/conftest.py`:
 
 ```python
-from goose.testing import Goose, fixture
+from langchain_openai import ChatOpenAI
 
+from goose.testing import Goose, fixture
 from my_agent import query_weather_agent
 
-@fixture(name="weather_goose") # name is optional - defaults to func name
+@fixture(name="weather_goose")  # name is optional - defaults to func name
 def weather_goose_fixture() -> Goose:
     """Provide a Goose instance wired up to the sample LangChain agent."""
 
     return Goose(
         agent_query_func=query_weather_agent,
-        validator_model=ChatOpenAI(model="gpt-4o-mini")
+        validator_model=ChatOpenAI(model="gpt-4o-mini"),
     )
 ```
 
@@ -247,6 +252,8 @@ class MyLifecycleHooks(TestLifecycleHook):
 
 
 # tests/conftest.py
+from langchain_openai import ChatOpenAI
+
 from goose.testing import Goose, fixture
 from my_agent import query
 
@@ -254,11 +261,10 @@ from my_agent import query
 def goose_fixture() -> Goose:
     """Provide a Goose instance wired up to the sample LangChain agent."""
 
-    model = ChatOpenAI(model="gpt-4o-mini")
     return Goose(
         agent_query_func=query,
-        validator_model=model,
-        hooks=MyLifecycleHooks()
+        validator_model=ChatOpenAI(model="gpt-4o-mini"),
+        hooks=MyLifecycleHooks(),
     )
 ```
 

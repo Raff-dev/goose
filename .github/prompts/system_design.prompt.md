@@ -92,7 +92,7 @@ Break into phases, each ending with passing tests:
 
 These are stable constraints that apply to all designs:
 
-1. **No breaking changes** to existing apps without migration path
+1. **Breaking changes require a migration phase** - no deprecation warnings, no backwards compatibility; include a dedicated cleanup phase at the end
 2. **Tests required** for all new functionality (`make test` must pass after each phase)
 3. **Type hints everywhere** with `from __future__ import annotations`
 4. **Absolute imports only** (no relative imports like `from .module`)
@@ -115,11 +115,11 @@ Only start designing once you have enough clarity. It's better to ask questions 
 
 Produce a design document that:
 
-- Uses clear markdown section headers
-- Includes code examples for key interfaces (classes, API routes, schemas)
-- Shows ASCII diagrams for UI layout if helpful
-- Has a phased implementation plan with checkboxes
-- Is saved to `system_designs/` folder with a descriptive filename
+-   Uses clear markdown section headers
+-   Includes code examples for key interfaces (classes, API routes, schemas)
+-   Shows ASCII diagrams for UI layout if helpful
+-   Has a phased implementation plan with checkboxes
+-   Is saved to `system_designs/` folder with a descriptive filename
 
 ## Example Workflow
 
