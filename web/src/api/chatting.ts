@@ -9,7 +9,7 @@ import type {
 
 export const API_BASE_URL =
   (import.meta.env.VITE_GOOSE_API_URL as string | undefined)?.replace(/\/+$/, "") ||
-  "http://localhost:8000";
+  "http://localhost:8730";
 
 const http: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,

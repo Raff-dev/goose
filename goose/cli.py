@@ -35,7 +35,7 @@ app.command()(init)
 @app.command()
 def api(
     host: str = typer.Option("127.0.0.1", "--host", help="Host interface to bind"),
-    port: int = typer.Option(8000, "--port", help="Port to bind"),
+    port: int = typer.Option(8730, "--port", help="Port to bind"),
 ) -> None:
     """Start the Goose dashboard server.
 

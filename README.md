@@ -76,11 +76,11 @@ goose api
 # Custom host and port
 goose api --host 0.0.0.0 --port 3000
 
-# run the dashboard (connects to localhost:8000 by default)
+# run the dashboard (connects to localhost:8730 by default)
 goose-dashboard
 
 # or point the dashboard at a custom API URL
-GOOSE_API_URL="http://localhost:8000" goose-dashboard
+GOOSE_API_URL="http://localhost:8730" goose-dashboard
 ```
 
 ### GooseApp Configuration

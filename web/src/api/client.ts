@@ -2,7 +2,7 @@ import axios, { type AxiosInstance } from "axios";
 
 import type { JobResource, RunRequestPayload, TestSummary } from "./types";
 
-export const API_BASE_URL = (import.meta.env.VITE_GOOSE_API_URL as string | undefined)?.replace(/\/+$/, "") || "http://localhost:8000";
+export const API_BASE_URL = (import.meta.env.VITE_GOOSE_API_URL as string | undefined)?.replace(/\/+$/, "") || "http://localhost:8730";
 
 const http: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,

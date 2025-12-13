@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const port = Number(process.env.GOOSE_DASHBOARD_PORT ?? 8001);
+const port = Number(process.env.GOOSE_DASHBOARD_PORT ?? 8729);
 const distDir = resolve(__dirname, 'client');
 
 if (!existsSync(distDir)) {

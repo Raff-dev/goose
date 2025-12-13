@@ -27,6 +27,34 @@ goose api
 goose-dashboard
 ```
 
+## Dashboard Features
+
+The Goose dashboard provides three main views:
+
+### Testing View
+Run and monitor your agent tests with real-time results, detailed tool call inspection, and conversation thread visualization.
+
+### Tooling View
+Interactively test your agent's tools in isolation. Select a tool, fill in parameters, and see the output instantly.
+
+### Chat View
+Chat with your agents directly. Configure agents in `gooseapp/app.py`:
+
+```python
+from goose import GooseApp
+from my_agent.agent import get_agent
+
+app = GooseApp(
+    agents=[
+        {
+            "name": "My Agent",
+            "get_agent": get_agent,  # def get_agent(model: str) -> Agent
+            "models": ["gpt-4o-mini", "gpt-4o"],
+        },
+    ],
+)
+```
+
 ---
 
 ## Writing Tests Guidelines
