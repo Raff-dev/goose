@@ -1,6 +1,6 @@
 {
   "name": "@llm-goose/dashboard-cli",
-  "version": "0.1.22",
+  "version": "0.1.23",
   "description": "Web dashboard CLI for LLM Goose - the testing framework for LLM agents. Run tests, inspect tool calls, and chat with your agents.",
   "private": false,
   "type": "module",

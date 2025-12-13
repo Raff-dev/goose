@@ -1,5 +1,5 @@
 import { PaperPlaneIcon } from "@radix-ui/react-icons";
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 interface MessageInputProps {
   onSend: (content: string) => void;
@@ -13,6 +13,14 @@ export function MessageInput({
   placeholder = "Type a message...",
 }: MessageInputProps) {
   const [content, setContent] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Keep focus on input after sending
+  useEffect(() => {
+    if (!disabled) {
+      textareaRef.current?.focus();
+    }
+  }, [disabled]);
 
   const handleSend = () => {
     const trimmed = content.trim();
@@ -23,22 +31,22 @@ export function MessageInput({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && !disabled) {
       e.preventDefault();
       handleSend();
     }
   };
 
   return (
-    <div className="flex items-end gap-2 p-4 border-t border-gray-200 bg-white">
+    <div className="flex items-end gap-2 px-4 pb-4">
       <textarea
+        ref={textareaRef}
         value={content}
         onChange={(e) => setContent(e.target.value)}
         onKeyDown={handleKeyDown}
-        disabled={disabled}
         placeholder={placeholder}
         rows={1}
-        className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
+        className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         style={{ minHeight: "42px", maxHeight: "120px" }}
       />
       <button

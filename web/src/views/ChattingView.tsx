@@ -132,12 +132,10 @@ app = GooseApp(
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900">Chat</h2>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left sidebar: Agent selector + Conversation List */}
-        <div className="lg:col-span-1 space-y-4">
+    <div className="h-[calc(100vh-140px)]">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+        {/* Left sidebar: Agent selector + Conversation List - fixed */}
+        <div className="lg:col-span-1 space-y-4 overflow-y-auto">
           <AgentSelector
             agents={agents}
             selectedAgentId={selectedAgentId}
@@ -154,8 +152,8 @@ app = GooseApp(
           />
         </div>
 
-        {/* Chat Panel */}
-        <div className="lg:col-span-3">
+        {/* Chat Panel - messages scroll, input fixed */}
+        <div className="lg:col-span-3 flex flex-col min-h-0 h-full">
           {selectedConversationId ? (
             <ChatPanel
               conversationId={selectedConversationId}
@@ -163,7 +161,7 @@ app = GooseApp(
               onConversationUpdate={handleConversationUpdate}
             />
           ) : (
-            <div className="bg-white border border-gray-200 rounded-lg flex items-center justify-center h-[600px]">
+            <div className="flex items-center justify-center h-full">
               <div className="text-center text-gray-500">
                 <p>Select a conversation or click "New" to start chatting.</p>
               </div>

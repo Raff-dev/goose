@@ -40,6 +40,44 @@ async def send_event(websocket: WebSocket, event_type: str, data: dict[str, Any]
         return False
 
 
+def _parse_args_from_string(args_str: str) -> dict[str, Any]:
+    """Parse JSON args string into a dict, returning empty dict on failure."""
+    if not args_str:
+        return {}
+    try:
+        return json.loads(args_str)
+    except json.JSONDecodeError:
+        logger.warning("Failed to parse tool call args: %s", args_str)
+        return {}
+
+
+def _accumulate_tool_chunk(
+    chunks: dict[int, dict[str, Any]],
+    tool_chunk: dict[str, Any],
+) -> None:
+    """Accumulate a tool call chunk into the chunks dict."""
+    idx = tool_chunk.get("index", 0)
+    if idx not in chunks:
+        chunks[idx] = {"name": "", "args": "", "id": ""}
+
+    tc = chunks[idx]
+    if tool_chunk.get("name"):
+        tc["name"] += tool_chunk["name"]
+    if tool_chunk.get("args"):
+        tc["args"] += tool_chunk["args"]
+    if tool_chunk.get("id"):
+        tc["id"] = tool_chunk["id"]
+
+
+def _build_tool_call_from_chunk(acc_tc: dict[str, Any]) -> ToolCall:
+    """Build a ToolCall from an accumulated chunk."""
+    return ToolCall(
+        name=acc_tc.get("name", ""),
+        args=_parse_args_from_string(acc_tc.get("args", "")),
+        id=acc_tc.get("id"),
+    )
+
+
 async def stream_agent_response(
     websocket: WebSocket,
     conversation: Conversation,
@@ -122,59 +160,53 @@ async def _stream_response(
     conversation_id: str,
     store: Any,
 ) -> None:
-    """Stream the agent response and save messages.
-
-    Args:
-        websocket: The WebSocket connection.
-        agent: The LangChain agent.
-        messages: The conversation history as LangChain messages.
-        conversation_id: The conversation ID.
-        store: The conversation store.
-    """
+    """Stream the agent response and save messages."""
     accumulated_content = ""
     accumulated_tool_calls: list[ToolCall] = []
     current_tool_call_chunks: dict[int, dict[str, Any]] = {}
 
     for event in agent.stream({"messages": messages}, stream_mode="messages"):
-        # event is a tuple: (message_chunk, metadata)
         chunk, _metadata = event
 
         if isinstance(chunk, AIMessageChunk):
-            # Handle content tokens
             if chunk.content:
                 accumulated_content += chunk.content
                 if not await send_event(websocket, "token", {"content": chunk.content}):
                     return
 
-            # Handle tool calls (may come in chunks)
-            if chunk.tool_call_chunks:
-                for tool_chunk in chunk.tool_call_chunks:
-                    idx = tool_chunk.get("index", 0)
-                    if idx not in current_tool_call_chunks:
-                        current_tool_call_chunks[idx] = {"name": "", "args": "", "id": ""}
+            # Accumulate tool call chunks (args come as partial JSON strings)
+            for tool_chunk in chunk.tool_call_chunks or []:
+                _accumulate_tool_chunk(current_tool_call_chunks, tool_chunk)
 
-                    tc = current_tool_call_chunks[idx]
-                    if tool_chunk.get("name"):
-                        tc["name"] += tool_chunk["name"]
-                    if tool_chunk.get("args"):
-                        tc["args"] += tool_chunk["args"]
-                    if tool_chunk.get("id"):
-                        tc["id"] = tool_chunk["id"]
-
-            # Handle complete tool calls
-            if chunk.tool_calls:
-                for tool_call in chunk.tool_calls:
-                    tc = ToolCall(
-                        name=tool_call.get("name", ""),
-                        args=tool_call.get("args", {}),
-                        id=tool_call.get("id"),
-                    )
+        elif isinstance(chunk, ToolMessage):
+            # Tool is being executed - flush accumulated tool calls first
+            if current_tool_call_chunks:
+                # Build tool calls from accumulated chunks
+                pending_tool_calls: list[ToolCall] = []
+                for acc_tc in current_tool_call_chunks.values():
+                    if not acc_tc.get("name"):
+                        continue
+                    tc = _build_tool_call_from_chunk(acc_tc)
+                    pending_tool_calls.append(tc)
                     accumulated_tool_calls.append(tc)
+
+                # Save AI message with tool_calls BEFORE tool output (required by OpenAI API)
+                if pending_tool_calls or accumulated_content:
+                    ai_message = Message(
+                        type="ai",
+                        content=accumulated_content,
+                        tool_calls=pending_tool_calls,
+                    )
+                    store.add_message(conversation_id, ai_message)
+                    accumulated_content = ""  # Reset for next AI response
+
+                # Send tool_call events to frontend
+                for tc in pending_tool_calls:
                     if not await send_event(websocket, "tool_call", tc.model_dump()):
                         return
 
-        elif isinstance(chunk, ToolMessage):
-            # Tool execution result
+                current_tool_call_chunks.clear()
+
             tool_message = Message(
                 type="tool",
                 content=str(chunk.content),
@@ -194,16 +226,15 @@ async def _stream_response(
             ):
                 return
 
-    # Save accumulated AI message
-    if accumulated_content or accumulated_tool_calls:
+    # Save any remaining accumulated AI message (for responses without tool calls)
+    if accumulated_content:
         ai_message = Message(
             type="ai",
             content=accumulated_content,
-            tool_calls=accumulated_tool_calls,
+            tool_calls=[],
         )
         store.add_message(conversation_id, ai_message)
 
-    # Send message_end
     await send_event(websocket, "message_end", {})
 
 

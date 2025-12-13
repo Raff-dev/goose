@@ -18,7 +18,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Tab Navigation */}
-      <nav className="bg-white border-b border-gray-200">
+      <nav className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex space-x-8">
             <NavLink to="/testing" className={linkClass}>
@@ -35,7 +35,7 @@ function AppContent() {
       </nav>
 
       {/* Tab Content */}
-      <main className="max-w-7xl mx-auto py-8 px-4">
+      <main className="max-w-7xl mx-auto py-6 px-4">
         <GlobalError error={error} errorKey={errorKey} />
         <Routes>
           <Route path="/testing/*" element={<TestingView />} />

@@ -229,17 +229,9 @@ export function ChatPanel({ conversationId, onError, onConversationUpdate }: Cha
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg flex flex-col h-[600px]">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-900">{conversation.title}</h3>
-        <p className="text-xs text-gray-500">
-          {conversation.agent_name} · {conversation.model}
-        </p>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4">
+    <div className="flex flex-col h-full min-h-0">
+      {/* Messages - only this scrolls */}
+      <div className="flex-1 overflow-y-auto min-h-0">
         {displayMessages.length === 0 ? (
           <div className="text-center text-gray-500 py-8">
             No messages yet. Start the conversation below.
@@ -258,12 +250,14 @@ export function ChatPanel({ conversationId, onError, onConversationUpdate }: Cha
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <MessageInput
-        onSend={handleSendMessage}
-        disabled={streaming}
-        placeholder={streaming ? "Agent is responding..." : "Type a message..."}
-      />
+      {/* Input - fixed at bottom, never scrolls */}
+      <div className="flex-shrink-0 relative z-10">
+        <MessageInput
+          onSend={handleSendMessage}
+          disabled={streaming}
+          placeholder={streaming ? "Agent is responding..." : "Type a message..."}
+        />
+      </div>
     </div>
   );
 }

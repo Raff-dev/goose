@@ -473,20 +473,13 @@ export function TestDetail({
             </SurfaceCard>
           )}
 
-          <section aria-labelledby="thread-heading" className="pt-2">
-            <div className="flex items-center justify-between">
-              <div id="thread-heading" className="text-lg font-semibold text-slate-900">
-                Thread
-              </div>
-            </div>
-            <div className="mt-4">
-              {result.response && Array.isArray((result.response as any).messages) ? (
-                <MessageCards messages={(result.response as any).messages} />
-              ) : (
-                <CodeBlock value={result.response ?? 'No response captured.'} className="text-sm whitespace-pre-wrap" />
-              )}
-            </div>
-          </section>
+          <div className="pt-2">
+            {result.response && Array.isArray((result.response as any).messages) ? (
+              <MessageCards messages={(result.response as any).messages} />
+            ) : (
+              <CodeBlock value={result.response ?? 'No response captured.'} className="text-sm whitespace-pre-wrap" />
+            )}
+          </div>
         </div>
       )}
     </div>

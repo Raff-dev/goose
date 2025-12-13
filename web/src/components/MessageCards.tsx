@@ -68,8 +68,7 @@ export function MessageCards({ messages }: MessageCardsProps) {
   }
 
   return (
-    <div className="relative pl-12">
-      <div className="absolute left-5 top-0 bottom-0 w-px bg-slate-300" aria-hidden="true" />
+    <div className="relative">
       <div className="flex flex-col gap-6">
         {messages.map((m, i) => {
           const isHuman = m.type === 'human';
