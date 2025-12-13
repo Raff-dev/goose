@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from example_system.agent import get_agent
 from example_system.tools import (
     calculate_revenue,
     check_inventory,
@@ -25,4 +26,11 @@ app = GooseApp(
     ],
     reload_targets=["example_system"],
     reload_exclude=["example_system.models"],
+    agents=[
+        {
+            "name": "Goose Outfitters Agent",
+            "get_agent": get_agent,
+            "models": ["gpt-4o-mini", "gpt-4o"],
+        },
+    ],
 )

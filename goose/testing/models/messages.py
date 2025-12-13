@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from pydantic import BaseModel, Field
 
 
@@ -30,6 +31,7 @@ class Message(BaseModel):
     content: str = ""
     tool_calls: list[ToolCall] = Field(default_factory=list)
     tool_name: str | None = None
+    tool_call_id: str | None = None
     token_usage: TokenUsage | None = None
 
     @classmethod
@@ -56,9 +58,25 @@ class Message(BaseModel):
             case "tool":
                 content = str(getattr(message, "content", ""))
                 tool_name = getattr(message, "name", "unknown")
-                return cls(type="tool", content=content, tool_name=tool_name)
+                tool_call_id = getattr(message, "tool_call_id", None)
+                return cls(type="tool", content=content, tool_name=tool_name, tool_call_id=tool_call_id)
             case _:
                 return cls(type=msg_type, content=str(message))
+
+    def to_langchain(self) -> Any:
+        """Convert this Message to a LangChain message object."""
+        match self.type:
+            case "human":
+                return HumanMessage(content=self.content)
+            case "ai":
+                tool_calls = [{"name": tc.name, "args": tc.args, "id": tc.id or ""} for tc in self.tool_calls]
+                return AIMessage(content=self.content, tool_calls=tool_calls)
+            case "tool":
+                return ToolMessage(
+                    content=self.content, name=self.tool_name or "", tool_call_id=self.tool_call_id or ""
+                )
+            case _:
+                return HumanMessage(content=self.content)
 
 
 def _extract_token_usage(message: Any) -> TokenUsage | None:

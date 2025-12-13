@@ -73,7 +73,7 @@ class TestGooseAppRepr:
     def test_repr_empty(self) -> None:
         """Repr shows tool count and reload targets."""
         app = GooseApp()
-        assert repr(app) == "GooseApp(tools=0, reload_targets=[], reload_exclude=[])"
+        assert repr(app) == "GooseApp(tools=0, agents=0, reload_targets=[], reload_exclude=[])"
 
     def test_repr_with_content(self) -> None:
         """Repr shows correct counts."""
@@ -82,4 +82,116 @@ class TestGooseAppRepr:
             reload_targets=["my_agent"],
             reload_exclude=["my_agent.models"],
         )
-        assert repr(app) == "GooseApp(tools=2, reload_targets=['my_agent'], reload_exclude=['my_agent.models'])"
+        assert (
+            repr(app) == "GooseApp(tools=2, agents=0, reload_targets=['my_agent'], reload_exclude=['my_agent.models'])"
+        )
+
+
+def sample_get_agent(model: str) -> str:
+    """Sample agent factory for testing."""
+    return f"agent-{model}"
+
+
+class TestGooseAppAgents:
+    """Tests for GooseApp agent configuration."""
+
+    def test_init_with_agents(self) -> None:
+        """GooseApp stores agent configs with generated IDs."""
+        app = GooseApp(
+            agents=[
+                {
+                    "name": "Test Agent",
+                    "get_agent": sample_get_agent,
+                    "models": ["gpt-4o-mini", "gpt-4o"],
+                },
+            ],
+        )
+
+        assert len(app.agents) == 1
+        agent = app.agents[0]
+        assert agent["name"] == "Test Agent"
+        assert agent["models"] == ["gpt-4o-mini", "gpt-4o"]
+        assert agent["get_agent"] is sample_get_agent
+        assert agent["id"] == "1"  # Sequential ID
+
+    def test_get_agent_config_by_id(self) -> None:
+        """Can retrieve agent config by ID."""
+        app = GooseApp(
+            agents=[
+                {
+                    "name": "Test Agent",
+                    "get_agent": sample_get_agent,
+                    "models": ["gpt-4o-mini"],
+                },
+            ],
+        )
+
+        agent_id = app.agents[0]["id"]
+        config = app.get_agent_config(agent_id)
+
+        assert config is not None
+        assert config["name"] == "Test Agent"
+
+    def test_get_agent_config_returns_none_for_unknown(self) -> None:
+        """Returns None for unknown agent ID."""
+        app = GooseApp()
+
+        assert app.get_agent_config("unknown-id") is None
+
+    def test_multiple_agents_get_unique_ids(self) -> None:
+        """Each agent gets a unique ID."""
+        app = GooseApp(
+            agents=[
+                {"name": "Agent 1", "get_agent": sample_get_agent, "models": ["gpt-4o"]},
+                {"name": "Agent 2", "get_agent": sample_get_agent, "models": ["gpt-4o"]},
+            ],
+        )
+
+        ids = [a["id"] for a in app.agents]
+        assert len(ids) == 2
+        assert ids[0] != ids[1]
+
+    def test_duplicate_names_raises_error(self) -> None:
+        """Duplicate agent names raise ValueError."""
+        import pytest
+
+        with pytest.raises(ValueError, match="Agent names must be unique"):
+            GooseApp(
+                agents=[
+                    {"name": "Same Name", "get_agent": sample_get_agent, "models": ["gpt-4o"]},
+                    {"name": "Same Name", "get_agent": sample_get_agent, "models": ["gpt-4o"]},
+                ],
+            )
+
+    def test_missing_required_field_raises_error(self) -> None:
+        """Missing required agent field raises ValueError."""
+        import pytest
+
+        with pytest.raises(ValueError, match="missing required fields"):
+            GooseApp(
+                agents=[
+                    {"name": "Agent", "models": ["gpt-4o"]},  # Missing get_agent
+                ],
+            )
+
+    def test_invalid_get_agent_raises_error(self) -> None:
+        """Non-callable get_agent raises ValueError."""
+        import pytest
+
+        with pytest.raises(ValueError, match="'get_agent' must be callable"):
+            GooseApp(
+                agents=[
+                    {"name": "Agent", "get_agent": "not-callable", "models": ["gpt-4o"]},
+                ],
+            )
+
+    def test_empty_models_raises_error(self) -> None:
+        """Empty models list raises ValueError."""
+        import pytest
+
+        with pytest.raises(ValueError, match="'models' must be a non-empty list"):
+            GooseApp(
+                agents=[
+                    {"name": "Agent", "get_agent": sample_get_agent, "models": []},
+                ],
+            )

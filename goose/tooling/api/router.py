@@ -90,7 +90,7 @@ async def invoke_tool_endpoint(name: str, request: InvokeRequest) -> InvokeRespo
         return InvokeResponse(success=True, result=result)
     except ToolExecutionError as exc:
         return InvokeResponse(success=False, error=exc.message)
-    except Exception as exc:  # noqa: BLE001 pylint: disable=broad-exception-caught
+    except Exception as exc:
         # Intentionally catch all exceptions from user tools to return clean error
         return InvokeResponse(success=False, error=str(exc))
 

@@ -75,3 +75,61 @@ export interface ToolInvokeResponse {
   result?: unknown;
   error?: string;
 }
+
+// Chatting types
+
+export interface AgentSummary {
+  id: string;
+  name: string;
+  models: string[];
+}
+
+export interface ConversationSummary {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  model: string;
+  title: string;
+  message_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Message {
+  type: string;
+  content: string;
+  tool_calls?: Array<{
+    name: string;
+    args: Record<string, unknown>;
+    id?: string;
+  }>;
+  tool_name?: string;
+  tool_call_id?: string;
+  token_usage?: {
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+  } | null;
+}
+
+export interface Conversation {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  model: string;
+  title: string;
+  messages: Message[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateConversationRequest {
+  agent_id: string;
+  model: string;
+  title?: string;
+}
+
+export interface StreamEvent {
+  type: 'message' | 'token' | 'tool_call' | 'tool_output' | 'message_end' | 'error';
+  data: Record<string, unknown>;
+}

@@ -6,7 +6,7 @@ from datetime import datetime
 
 from django.utils import timezone
 
-from example_system.agent import Agent
+from example_system.agent import query
 from example_system.models import Product, ProductInventory, Transaction, TransactionItem, create_transaction
 from goose.testing import DjangoTestHooks, Goose, fixture
 
@@ -61,9 +61,8 @@ def goose_fixture() -> Goose:
     The GooseApp tools are available via gooseapp.app for reference,
     but the Goose instance uses the agent's built-in tools.
     """
-    agent = Agent()
     return Goose(
-        agent_query_func=agent.query,
+        agent_query_func=query,
         hooks=DjangoTestHooks(),
         validator_model="gpt-4o-mini",
     )

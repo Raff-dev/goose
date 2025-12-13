@@ -5,7 +5,7 @@ import sys
 import typer
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 
-from example_system.agent import Agent
+from example_system.agent import query
 
 app = typer.Typer()
 
@@ -17,7 +17,6 @@ def chat() -> None:
     typer.echo("Ask questions about our store, products, sales, and promotions.\n")
 
     history: list[BaseMessage] = []
-    agent = Agent()
 
     while True:
         try:
@@ -27,7 +26,7 @@ def chat() -> None:
                 break
 
             typer.echo("Assistant: ", nl=False)
-            response = agent.query(user_input, history)
+            response = query(user_input, history)
 
             content = response["messages"][-1].content
             typer.echo(content)
@@ -52,9 +51,8 @@ def ask() -> None:
         typer.echo("Error: Please provide a message to query", err=True)
         sys.exit(1)
 
-    agent = Agent()
     message = " ".join(sys.argv[1:])
-    response = agent.query(message)
+    response = query(message)
     content = response["messages"][-1].content
     typer.echo(content)
 

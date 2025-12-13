@@ -131,6 +131,9 @@ disable = [
     "missing-module-docstring",
     "fixme",
     "duplicate-code",
+    "broad-exception-caught",
+    "too-many-locals",
+    "too-many-branches",
 ]
 ignore = ["migrations", "tests", "template"]
 ignore-patterns = [".*/migrations/.*", "tests/.*", ".*/template/.*"]

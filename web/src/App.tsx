@@ -1,14 +1,19 @@
-import { useState } from 'react';
+import { BrowserRouter, NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { GlobalError } from './components/GlobalError';
 import { GlobalErrorProvider, useGlobalError } from './context/GlobalErrorContext';
+import { ChattingView } from './views/ChattingView';
 import { TestingView } from './views/TestingView';
 import { ToolingView } from './views/ToolingView';
 
-type Tab = 'testing' | 'tooling';
-
 function AppContent() {
-  const [activeTab, setActiveTab] = useState<Tab>('testing');
   const { error, errorKey } = useGlobalError();
+
+  const linkClass = ({ isActive }: { isActive: boolean }) =>
+    `py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+      isActive
+        ? 'border-blue-500 text-blue-600'
+        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+    }`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -16,26 +21,15 @@ function AppContent() {
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex space-x-8">
-            <button
-              onClick={() => setActiveTab('testing')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'testing'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
+            <NavLink to="/testing" className={linkClass}>
               Testing
-            </button>
-            <button
-              onClick={() => setActiveTab('tooling')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'tooling'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
+            </NavLink>
+            <NavLink to="/tooling" className={linkClass}>
               Tooling
-            </button>
+            </NavLink>
+            <NavLink to="/chat" className={linkClass}>
+              Chat
+            </NavLink>
           </div>
         </div>
       </nav>
@@ -43,7 +37,12 @@ function AppContent() {
       {/* Tab Content */}
       <main className="max-w-7xl mx-auto py-8 px-4">
         <GlobalError error={error} errorKey={errorKey} />
-        {activeTab === 'testing' ? <TestingView /> : <ToolingView />}
+        <Routes>
+          <Route path="/testing/*" element={<TestingView />} />
+          <Route path="/tooling" element={<ToolingView />} />
+          <Route path="/chat" element={<ChattingView />} />
+          <Route path="*" element={<Navigate to="/testing" replace />} />
+        </Routes>
       </main>
     </div>
   );
@@ -51,9 +50,11 @@ function AppContent() {
 
 function App() {
   return (
-    <GlobalErrorProvider>
-      <AppContent />
-    </GlobalErrorProvider>
+    <BrowserRouter>
+      <GlobalErrorProvider>
+        <AppContent />
+      </GlobalErrorProvider>
+    </BrowserRouter>
   );
 }
 

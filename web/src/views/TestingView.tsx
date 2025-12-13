@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { TestResultModel, TestStatus, TestSummary } from '../api/types';
 import { RunControls } from '../components/RunControls';
 import { Summary } from '../components/Summary';
@@ -9,6 +10,8 @@ import { useCreateRun, useRun, useRuns, useTests } from '../hooks';
 import { getErrorMessage } from '../utils/errors';
 
 export function TestingView() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const {
     data: tests = [],
     isLoading: testsLoading,
@@ -19,8 +22,15 @@ export function TestingView() {
   const { data: runs = [], isLoading: runsLoading } = useRuns();
   const createRunMutation = useCreateRun();
 
-  const [view, setView] = useState<'dashboard' | 'detail'>('dashboard');
-  const [selectedTest, setSelectedTest] = useState<string | null>(null);
+  // Parse view state from URL
+  const { view, selectedTest } = useMemo(() => {
+    const path = location.pathname;
+    const match = path.match(/^\/testing\/tests\/(.+)$/);
+    if (match) {
+      return { view: 'detail' as const, selectedTest: decodeURIComponent(match[1]) };
+    }
+    return { view: 'dashboard' as const, selectedTest: null };
+  }, [location.pathname]);
   const [onlyFailures, setOnlyFailures] = useState(false);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const { setError } = useGlobalError();
@@ -106,53 +116,12 @@ export function TestingView() {
   }, [currentJob]);
 
   const handleViewDetails = (testName: string) => {
-    try {
-      const url = `/testing/tests/${encodeURIComponent(testName)}`;
-      window.history.pushState({}, '', url);
-    } catch {
-      // ignore
-    }
-    setSelectedTest(testName);
-    setView('detail');
+    navigate(`/testing/tests/${encodeURIComponent(testName)}`);
   };
 
   const handleBack = () => {
-    if (window.history.length > 1) {
-      window.history.back();
-      setView('dashboard');
-      setSelectedTest(null);
-      return;
-    }
-    try {
-      window.history.pushState({}, '', '/testing');
-    } catch {
-      // ignore
-    }
-    setView('dashboard');
-    setSelectedTest(null);
+    navigate('/testing');
   };
-
-  // Sync app state with URL on mount and when user navigates with back/forward
-  useEffect(() => {
-    const syncFromLocation = () => {
-      const path = window.location.pathname || '/';
-      const match = path.match(/^\/testing\/tests\/(.+)$/);
-      if (match) {
-        const testName = decodeURIComponent(match[1]);
-        setSelectedTest(testName);
-        setView('detail');
-      } else if (path.startsWith('/testing')) {
-        setSelectedTest(null);
-        setView('dashboard');
-      }
-    };
-
-    syncFromLocation();
-
-    const onPop = () => syncFromLocation();
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-  }, []);
 
   const handleRunTest = async (testName: string) => {
     try {

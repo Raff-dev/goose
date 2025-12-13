@@ -6,6 +6,7 @@
 | S | Fix Tooling page showing "network error" instead of actual error details |
 | S | Persist Tooling inputs/outputs when switching tabs (avoid reload on tab change) |
 | M | Add abort-execution controls so long-running cases can stop early |
+| M | Add streaming to the testing module (live updates as agent responds) |
 | L | Async support |
 
 ## �📋 Important + Not Urgent (Schedule)
@@ -33,3 +34,4 @@
 | M | Introduce declarative tool-call operators (patterns, `in`, `set`, exact, range, optional) |
 | L | Let testing agents call helper agents/tools for due diligence |
 | M | Evaluate Goose core once per session, not after every test |
+| L | Overview module - save test execution data to files, analytical dashboards with tables and graphs |
