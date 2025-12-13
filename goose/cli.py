@@ -36,12 +36,6 @@ app.command()(init)
 def api(
     host: str = typer.Option("127.0.0.1", "--host", help="Host interface to bind"),
     port: int = typer.Option(8000, "--port", help="Port to bind"),
-    reload: bool = typer.Option(
-        False,
-        "--reload/--no-reload",
-        help="Enable autoreload for development",
-        show_default=True,
-    ),
 ) -> None:
     """Start the Goose dashboard server.
 
@@ -55,7 +49,6 @@ def api(
     Example:
         goose api
         goose api --port 3000
-        goose api --reload
     """
     # Get singleton config and set base path
     config = GooseConfig()
@@ -85,7 +78,7 @@ def api(
     typer.echo(f"  Tests: {config.TESTS_MODULE}")
     typer.echo(f"  Reload targets: {config.reload_targets}")
 
-    uvicorn_config = Config(app=fastapi_app, host=host, port=port, reload=reload)
+    uvicorn_config = Config(app=fastapi_app, host=host, port=port, reload=True)
     server = Server(uvicorn_config)
     raise SystemExit(server.run())
 

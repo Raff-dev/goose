@@ -73,9 +73,6 @@ goose test run -v gooseapp.tests
 # Start the dashboard (auto-discovers gooseapp/ in current directory)
 goose api
 
-# Enable hot-reloading of your agent/tools code during development
-goose api --reload
-
 # Custom host and port
 goose api --host 0.0.0.0 --port 3000
 
