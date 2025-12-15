@@ -64,7 +64,7 @@ export function ConversationList({
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-900 truncate">{conv.title}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {conv.agent_name} · {conv.model}
+                    {conv.agent_name}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
                     {conv.message_count} messages · {formatDate(conv.updated_at)}

@@ -137,12 +137,10 @@ async def stream_agent_response(
 
     messages = [msg.to_langchain() for msg in updated_conversation.messages]
 
-    # Build fresh agent with the conversation's model
-    try:
-        agent = agent_config["get_agent"](conversation.model)
-    except Exception as exc:
-        logger.exception("Failed to build agent")
-        await send_event(websocket, "error", {"message": f"Failed to build agent: {exc}"})
+    # Get the pre-built agent from config
+    agent = agent_config["agent"]
+    if agent is None:
+        await send_event(websocket, "error", {"message": "Agent not configured"})
         return
 
     # Stream the response

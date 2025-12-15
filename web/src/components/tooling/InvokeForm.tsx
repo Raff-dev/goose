@@ -5,11 +5,11 @@ interface InvokeFormProps {
   schema: ToolSchema | null;
   onInvoke: (args: Record<string, unknown>) => void;
   isLoading: boolean;
+  useRawJson: boolean;
 }
 
-export function InvokeForm({ schema, onInvoke, isLoading }: InvokeFormProps) {
+export function InvokeForm({ schema, onInvoke, isLoading, useRawJson }: InvokeFormProps) {
   const [values, setValues] = useState<Record<string, string>>({});
-  const [useRawJson, setUseRawJson] = useState(false);
   const [rawJson, setRawJson] = useState('{}');
 
   // Reset values when schema changes
@@ -89,18 +89,6 @@ export function InvokeForm({ schema, onInvoke, isLoading }: InvokeFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-gray-700">Parameters</h4>
-        <label className="flex items-center text-sm text-gray-500">
-          <input
-            type="checkbox"
-            checked={useRawJson}
-            onChange={e => setUseRawJson(e.target.checked)}
-            className="mr-2 rounded border-gray-300"
-          />
-          Raw JSON
-        </label>
-      </div>
 
       {useRawJson ? (
         <textarea
@@ -132,6 +120,38 @@ export function InvokeForm({ schema, onInvoke, isLoading }: InvokeFormProps) {
         {isLoading ? 'Invoking...' : 'Invoke Tool'}
       </button>
     </form>
+  );
+}
+
+interface ToggleProps {
+  label: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}
+
+function Toggle({ label, checked, onChange }: ToggleProps) {
+  return (
+    <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+      <input
+        type="checkbox"
+        className="sr-only"
+        checked={checked}
+        onChange={e => onChange(e.target.checked)}
+      />
+      <span
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+          checked ? 'bg-blue-600' : 'bg-slate-200'
+        }`}
+        aria-hidden="true"
+      >
+        <span
+          className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+            checked ? 'translate-x-5' : 'translate-x-0.5'
+          }`}
+        />
+      </span>
+      <span className="text-sm text-gray-500">{label}</span>
+    </label>
   );
 }
 

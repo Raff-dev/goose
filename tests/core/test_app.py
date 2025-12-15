@@ -15,6 +15,16 @@ def sample_tool_2() -> str:
     return "tool2"
 
 
+class MockAgent:
+    """Mock agent for testing."""
+
+    def __init__(self, name: str | None = None) -> None:
+        self.name = name
+
+    def invoke(self, inputs: dict) -> dict:
+        return {"messages": []}
+
+
 class TestGooseAppInit:
     """Tests for GooseApp initialization."""
 
@@ -26,12 +36,27 @@ class TestGooseAppInit:
         assert app.reload_targets == []
 
     def test_init_with_tools(self) -> None:
-        """GooseApp stores tools list."""
+        """GooseApp stores tools list from tools parameter."""
         app = GooseApp(tools=[sample_tool_1, sample_tool_2])
 
         assert len(app.tools) == 2
         assert app.tools[0] is sample_tool_1
         assert app.tools[1] is sample_tool_2
+
+    def test_init_with_tool_groups(self) -> None:
+        """GooseApp stores tools list from tool_groups."""
+        app = GooseApp(tool_groups={"Default": [sample_tool_1, sample_tool_2]})
+
+        assert len(app.tools) == 2
+        assert app.tools[0] is sample_tool_1
+        assert app.tools[1] is sample_tool_2
+
+    def test_tools_and_tool_groups_mutually_exclusive(self) -> None:
+        """Cannot specify both tools and tool_groups."""
+        import pytest
+
+        with pytest.raises(ValueError, match="Cannot specify both 'tools' and 'tool_groups'"):
+            GooseApp(tools=[sample_tool_1], tool_groups={"Default": [sample_tool_2]})
 
     def test_init_with_reload_targets(self) -> None:
         """GooseApp stores reload targets."""
@@ -50,14 +75,13 @@ class TestGooseAppInit:
         assert app.reload_targets == ["my_agent"]
 
     def test_tools_is_new_list(self) -> None:
-        """Tools list is a copy, not a reference to the original."""
+        """Tools list is a copy from tools parameter."""
         original = [sample_tool_1]
         app = GooseApp(tools=original)
 
         # Modifying original shouldn't affect app
         original.append(sample_tool_2)
-        # Note: Current implementation doesn't copy, but this tests the interface
-        # If we want isolation, we'd need to copy in __init__
+        assert len(app.tools) == 1  # App's list is independent
 
     def test_reload_targets_is_new_list(self) -> None:
         """Reload targets list is a copy, not a reference."""
@@ -87,50 +111,31 @@ class TestGooseAppRepr:
         )
 
 
-def sample_get_agent(model: str) -> str:
-    """Sample agent factory for testing."""
-    return f"agent-{model}"
-
-
 class TestGooseAppAgents:
     """Tests for GooseApp agent configuration."""
 
     def test_init_with_agents(self) -> None:
-        """GooseApp stores agent configs with generated IDs."""
-        app = GooseApp(
-            agents=[
-                {
-                    "name": "Test Agent",
-                    "get_agent": sample_get_agent,
-                    "models": ["gpt-4o-mini", "gpt-4o"],
-                },
-            ],
-        )
+        """GooseApp stores agents with generated IDs."""
+        agent = MockAgent(name="Test Agent")
+        app = GooseApp(agents=[agent])
 
         assert len(app.agents) == 1
-        agent = app.agents[0]
-        assert agent["name"] == "Test Agent"
-        assert agent["models"] == ["gpt-4o-mini", "gpt-4o"]
-        assert agent["get_agent"] is sample_get_agent
-        assert agent["id"] == "1"  # Sequential ID
+        config = app.agents[0]
+        assert config["name"] == "Test Agent"
+        assert config["agent"] is agent
+        assert config["id"] == "1"  # Sequential ID
 
     def test_get_agent_config_by_id(self) -> None:
         """Can retrieve agent config by ID."""
-        app = GooseApp(
-            agents=[
-                {
-                    "name": "Test Agent",
-                    "get_agent": sample_get_agent,
-                    "models": ["gpt-4o-mini"],
-                },
-            ],
-        )
+        agent = MockAgent(name="Test Agent")
+        app = GooseApp(agents=[agent])
 
         agent_id = app.agents[0]["id"]
         config = app.get_agent_config(agent_id)
 
         assert config is not None
         assert config["name"] == "Test Agent"
+        assert config["agent"] is agent
 
     def test_get_agent_config_returns_none_for_unknown(self) -> None:
         """Returns None for unknown agent ID."""
@@ -140,12 +145,9 @@ class TestGooseAppAgents:
 
     def test_multiple_agents_get_unique_ids(self) -> None:
         """Each agent gets a unique ID."""
-        app = GooseApp(
-            agents=[
-                {"name": "Agent 1", "get_agent": sample_get_agent, "models": ["gpt-4o"]},
-                {"name": "Agent 2", "get_agent": sample_get_agent, "models": ["gpt-4o"]},
-            ],
-        )
+        agent1 = MockAgent(name="Agent 1")
+        agent2 = MockAgent(name="Agent 2")
+        app = GooseApp(agents=[agent1, agent2])
 
         ids = [a["id"] for a in app.agents]
         assert len(ids) == 2
@@ -155,43 +157,22 @@ class TestGooseAppAgents:
         """Duplicate agent names raise ValueError."""
         import pytest
 
+        agent1 = MockAgent(name="Same Name")
+        agent2 = MockAgent(name="Same Name")
         with pytest.raises(ValueError, match="Agent names must be unique"):
-            GooseApp(
-                agents=[
-                    {"name": "Same Name", "get_agent": sample_get_agent, "models": ["gpt-4o"]},
-                    {"name": "Same Name", "get_agent": sample_get_agent, "models": ["gpt-4o"]},
-                ],
-            )
+            GooseApp(agents=[agent1, agent2])
 
-    def test_missing_required_field_raises_error(self) -> None:
-        """Missing required agent field raises ValueError."""
+    def test_missing_name_raises_error(self) -> None:
+        """Agent without name raises ValueError."""
         import pytest
 
-        with pytest.raises(ValueError, match="missing required fields"):
-            GooseApp(
-                agents=[
-                    {"name": "Agent", "models": ["gpt-4o"]},  # Missing get_agent
-                ],
-            )
+        agent = MockAgent(name=None)
+        with pytest.raises(ValueError, match="must have a 'name' attribute"):
+            GooseApp(agents=[agent])
 
-    def test_invalid_get_agent_raises_error(self) -> None:
-        """Non-callable get_agent raises ValueError."""
+    def test_agent_without_name_attr_raises_error(self) -> None:
+        """Object without name attribute raises ValueError."""
         import pytest
 
-        with pytest.raises(ValueError, match="'get_agent' must be callable"):
-            GooseApp(
-                agents=[
-                    {"name": "Agent", "get_agent": "not-callable", "models": ["gpt-4o"]},
-                ],
-            )
-
-    def test_empty_models_raises_error(self) -> None:
-        """Empty models list raises ValueError."""
-        import pytest
-
-        with pytest.raises(ValueError, match="'models' must be a non-empty list"):
-            GooseApp(
-                agents=[
-                    {"name": "Agent", "get_agent": sample_get_agent, "models": []},
-                ],
-            )
+        with pytest.raises(ValueError, match="must have a 'name' attribute"):
+            GooseApp(agents=["not-an-agent"])

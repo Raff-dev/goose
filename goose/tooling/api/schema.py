@@ -14,6 +14,7 @@ class ToolSummary(BaseModel):
 
     name: str
     description: str
+    group: str | None = None
     parameter_count: int
 
 
@@ -22,6 +23,7 @@ class ToolDetail(BaseModel):
 
     name: str
     description: str
+    group: str | None = None
     parameters: list[ToolParameter]
     json_schema: dict[str, Any] | None = None
 

@@ -14,11 +14,16 @@ app = GooseApp(
     # -------------------------------------------------------------------------
     # tools: List of LangChain @tool decorated functions
     # -------------------------------------------------------------------------
-    # Register your agent's tools here. Goose will display them in the
-    # dashboard and use them for tool-related assertions in tests.
+    # Register your agent's tools here. Goose will display them in the dashboard.
     #
     # Example:
-    #     tools=[search_products, get_order_status],
+    #     tools=[search_products, get_product_details, get_order_status],
+    #
+    # For grouped display, use tool_groups instead (cannot use both):
+    #     tool_groups={
+    #         "Products": [search_products, get_product_details],
+    #         "Orders": [get_order_status, cancel_order],
+    #     },
     tools=[],
     # -------------------------------------------------------------------------
     # agents: List of agent configurations for chatting

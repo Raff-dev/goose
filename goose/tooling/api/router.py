@@ -21,6 +21,12 @@ def _get_tools() -> list:
     return config.goose_app.tools
 
 
+def _get_goose_app():
+    """Get the GooseApp instance."""
+    config = GooseConfig()
+    return config.goose_app
+
+
 def _reload_tools() -> list:
     """Reload tool modules and return fresh tools from GooseApp."""
     config = GooseConfig()
@@ -34,14 +40,16 @@ def _reload_tools() -> list:
 def list_tools() -> list[ToolSummary]:
     """List all registered tools with their names and descriptions."""
     tools = _get_tools()
+    goose_app = _get_goose_app()
     summaries = []
 
     for tool in tools:
-        schema = extract_tool_schema(tool)
+        schema = extract_tool_schema(tool, goose_app)
         summaries.append(
             ToolSummary(
                 name=schema.name,
                 description=schema.description,
+                group=schema.group,
                 parameter_count=len(schema.parameters),
             )
         )
@@ -53,6 +61,7 @@ def list_tools() -> list[ToolSummary]:
 def get_tool(name: str) -> ToolDetail:
     """Get detailed information about a specific tool."""
     tools = _get_tools()
+    goose_app = _get_goose_app()
     tool = get_tool_by_name(tools, name)
 
     if tool is None:
@@ -61,10 +70,11 @@ def get_tool(name: str) -> ToolDetail:
             detail=f"Tool '{name}' not found",
         )
 
-    schema = extract_tool_schema(tool)
+    schema = extract_tool_schema(tool, goose_app)
     return ToolDetail(
         name=schema.name,
         description=schema.description,
+        group=schema.group,
         parameters=schema.parameters,
         json_schema=schema.json_schema,
     )

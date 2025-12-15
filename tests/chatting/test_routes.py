@@ -11,9 +11,14 @@ from goose.core.app import GooseApp
 from goose.core.config import GooseConfig
 
 
-def sample_get_agent(model: str) -> str:
-    """Sample agent factory for testing."""
-    return f"agent-{model}"
+class MockAgent:
+    """Mock agent for testing."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def invoke(self, inputs: dict) -> dict:
+        return {"messages": []}
 
 
 @pytest.fixture(autouse=True)
@@ -35,16 +40,8 @@ def config_with_agents() -> GooseConfig:
     config = GooseConfig()
     config.goose_app = GooseApp(
         agents=[
-            {
-                "name": "Test Agent",
-                "get_agent": sample_get_agent,
-                "models": ["gpt-4o-mini", "gpt-4o"],
-            },
-            {
-                "name": "Another Agent",
-                "get_agent": sample_get_agent,
-                "models": ["gpt-4o"],
-            },
+            MockAgent(name="Test Agent"),
+            MockAgent(name="Another Agent"),
         ],
     )
     return config
@@ -71,7 +68,6 @@ class TestListAgents:
         agent = agents[0]
         assert "id" in agent
         assert agent["name"] == "Test Agent"
-        assert agent["models"] == ["gpt-4o-mini", "gpt-4o"]
 
 
 class TestGetAgent:
@@ -121,7 +117,6 @@ class TestCreateConversation:
             "/chatting/conversations",
             json={
                 "agent_id": agent_id,
-                "model": "gpt-4o-mini",
                 "title": "Test Chat",
             },
         )
@@ -131,7 +126,6 @@ class TestCreateConversation:
         assert "id" in data
         assert data["agent_id"] == agent_id
         assert data["agent_name"] == "Test Agent"
-        assert data["model"] == "gpt-4o-mini"
         assert data["title"] == "Test Chat"
 
     def test_creates_with_default_title(self, client: TestClient, config_with_agents: GooseConfig) -> None:
@@ -143,7 +137,6 @@ class TestCreateConversation:
             "/chatting/conversations",
             json={
                 "agent_id": agent_id,
-                "model": "gpt-4o-mini",
             },
         )
 
@@ -156,28 +149,11 @@ class TestCreateConversation:
             "/chatting/conversations",
             json={
                 "agent_id": "unknown-agent",
-                "model": "gpt-4o-mini",
             },
         )
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
-
-    def test_rejects_unavailable_model(self, client: TestClient, config_with_agents: GooseConfig) -> None:
-        """Rejects model not available for agent."""
-        agents_response = client.get("/chatting/agents")
-        agent_id = agents_response.json()[1]["id"]  # Another Agent - only has gpt-4o
-
-        response = client.post(
-            "/chatting/conversations",
-            json={
-                "agent_id": agent_id,
-                "model": "gpt-4o-mini",  # Not available for this agent
-            },
-        )
-
-        assert response.status_code == 400
-        assert "not available" in response.json()["detail"].lower()
 
 
 class TestGetConversation:
@@ -190,7 +166,7 @@ class TestGetConversation:
 
         create_response = client.post(
             "/chatting/conversations",
-            json={"agent_id": agent_id, "model": "gpt-4o-mini"},
+            json={"agent_id": agent_id},
         )
         conversation_id = create_response.json()["id"]
 
@@ -218,7 +194,7 @@ class TestDeleteConversation:
 
         create_response = client.post(
             "/chatting/conversations",
-            json={"agent_id": agent_id, "model": "gpt-4o-mini"},
+            json={"agent_id": agent_id},
         )
         conversation_id = create_response.json()["id"]
 
@@ -254,7 +230,7 @@ class TestConversationWebSocket:
 
         create_response = client.post(
             "/chatting/conversations",
-            json={"agent_id": agent_id, "model": "gpt-4o-mini"},
+            json={"agent_id": agent_id},
         )
         conversation_id = create_response.json()["id"]
 

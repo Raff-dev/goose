@@ -56,7 +56,7 @@ class TestToolFailuresAreInBand:
         from langchain_core.messages import AIMessageChunk
 
         store = ConversationStore()
-        conv = store.create(agent_id="a1", agent_name="Agent", model="m1")
+        conv = store.create(agent_id="a1", agent_name="Agent")
 
         # Simulate agent emitting a tool call chunk, then crashing before tool output.
         chunk = AIMessageChunk(

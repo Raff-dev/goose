@@ -15,7 +15,6 @@ class AgentSummary(BaseModel):
 
     id: str
     name: str
-    models: list[str]
 
 
 class ConversationSummary(BaseModel):
@@ -24,7 +23,6 @@ class ConversationSummary(BaseModel):
     id: str
     agent_id: str
     agent_name: str
-    model: str
     title: str
     message_count: int
     created_at: datetime
@@ -37,7 +35,6 @@ class Conversation(BaseModel):
     id: str
     agent_id: str
     agent_name: str
-    model: str
     title: str
     messages: list[Message] = Field(default_factory=list)
     created_at: datetime
@@ -48,7 +45,6 @@ class CreateConversationRequest(BaseModel):
     """Request to create a new conversation."""
 
     agent_id: str
-    model: str
     title: str | None = None
 
 
@@ -58,7 +54,6 @@ class CreateConversationResponse(BaseModel):
     id: str
     agent_id: str
     agent_name: str
-    model: str
     title: str
     created_at: datetime
 

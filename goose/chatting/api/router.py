@@ -36,7 +36,6 @@ def list_agents() -> list[AgentSummary]:
         AgentSummary(
             id=agent["id"],
             name=agent["name"],
-            models=agent["models"],
         )
         for agent in goose_app.agents
     ]
@@ -58,7 +57,6 @@ def get_agent(agent_id: str) -> AgentSummary:
     return AgentSummary(
         id=agent_config["id"],
         name=agent_config["name"],
-        models=agent_config["models"],
     )
 
 
@@ -83,18 +81,10 @@ def create_conversation(request: CreateConversationRequest) -> CreateConversatio
     if agent_config is None:
         raise HTTPException(status_code=404, detail=f"Agent not found: {request.agent_id}")
 
-    # Validate model is available for this agent
-    if request.model not in agent_config["models"]:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Model '{request.model}' not available for agent. Available: {agent_config['models']}",
-        )
-
     store = get_store()
     conversation = store.create(
         agent_id=request.agent_id,
         agent_name=agent_config["name"],
-        model=request.model,
         title=request.title,
     )
 
@@ -102,7 +92,6 @@ def create_conversation(request: CreateConversationRequest) -> CreateConversatio
         id=conversation.id,
         agent_id=conversation.agent_id,
         agent_name=conversation.agent_name,
-        model=conversation.model,
         title=conversation.title,
         created_at=conversation.created_at,
     )

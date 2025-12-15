@@ -105,7 +105,7 @@ class TestGooseAppConfig:
     def test_set_and_get_goose_app(self) -> None:
         """Can set and get goose_app."""
         config = GooseConfig()
-        app = GooseApp(tools=[], reload_targets=["my_agent"])
+        app = GooseApp(reload_targets=["my_agent"])
         config.goose_app = app
 
         assert config.goose_app is app
@@ -124,7 +124,7 @@ class TestComputeReloadTargets:
     def test_includes_app_reload_targets(self) -> None:
         """compute_reload_targets includes targets from GooseApp."""
         config = GooseConfig()
-        config.goose_app = GooseApp(tools=[], reload_targets=["my_agent", "my_tools"])
+        config.goose_app = GooseApp(reload_targets=["my_agent", "my_tools"])
         targets = config.compute_reload_targets()
         assert "gooseapp" in targets
         assert "my_agent" in targets

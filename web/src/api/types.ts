@@ -61,12 +61,14 @@ export interface ToolParameter {
 export interface ToolSchema {
   name: string;
   description: string;
+  group?: string | null;
   parameters: ToolParameter[];
 }
 
 export interface ToolSummary {
   name: string;
   description: string;
+  group?: string | null;
   parameter_count: number;
 }
 
@@ -81,14 +83,12 @@ export interface ToolInvokeResponse {
 export interface AgentSummary {
   id: string;
   name: string;
-  models: string[];
 }
 
 export interface ConversationSummary {
   id: string;
   agent_id: string;
   agent_name: string;
-  model: string;
   title: string;
   message_count: number;
   created_at: string;
@@ -125,7 +125,6 @@ export interface Conversation {
 
 export interface CreateConversationRequest {
   agent_id: string;
-  model: string;
   title?: string;
 }
 

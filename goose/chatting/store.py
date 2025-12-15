@@ -21,13 +21,12 @@ class ConversationStore:
         self._conversations: dict[str, dict[str, Any]] = {}
         self._next_id = 1
 
-    def create(self, agent_id: str, agent_name: str, model: str, title: str | None = None) -> Conversation:
+    def create(self, agent_id: str, agent_name: str, title: str | None = None) -> Conversation:
         """Create a new conversation.
 
         Args:
             agent_id: ID of the agent to chat with.
             agent_name: Display name of the agent (denormalized).
-            model: Model to use for this conversation.
             title: Optional title. Auto-generated if not provided.
 
         Returns:
@@ -41,7 +40,6 @@ class ConversationStore:
             "id": conversation_id,
             "agent_id": agent_id,
             "agent_name": agent_name,
-            "model": model,
             "title": title or "New conversation",
             "messages": [],
             "created_at": now,
@@ -76,7 +74,6 @@ class ConversationStore:
                 id=data["id"],
                 agent_id=data["agent_id"],
                 agent_name=data["agent_name"],
-                model=data["model"],
                 title=data["title"],
                 message_count=len(data["messages"]),
                 created_at=data["created_at"],

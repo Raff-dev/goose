@@ -1,6 +1,6 @@
 [project]
 name = "llm-goose"
-version = "0.1.29"
+version = "0.1.30"
 description = "LLM testing framework for validating agent behavior and tool usage"
 license = "MIT"
 authors = [{ name = "Rafał Łazicki", email = "rafal.lazicki99@gmail.com" }]
@@ -126,6 +126,7 @@ ignore-init-module-imports = true
 
 [tool.pylint.main]
 max-line-length = 120
+max-args = 6
 disable = [
     "too-few-public-methods",
     "missing-module-docstring",

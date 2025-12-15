@@ -248,6 +248,82 @@ def trigger_system_fault() -> str:
     raise RuntimeError("System diagnostic failed: simulated infrastructure outage.")
 
 
+@tool
+def get_markdown_demo() -> str:
+    """Returns a markdown-formatted string demonstrating various markdown features.
+
+    This tool is useful for testing markdown rendering capabilities.
+
+    Returns:
+        A string containing various markdown elements.
+    """
+    return """# Goose Outfitters - Store Report
+
+Welcome to the **Goose Outfitters** store report! This document showcases our *amazing* outdoor gear.
+
+## Product Categories
+
+We offer a wide range of products:
+
+- **Backpacks** - For all your hiking needs
+- **Tents** - From solo to family-sized
+- **Footwear** - Boots, sandals, and more
+  - Trail runners
+  - Waterproof boots
+  - Camp shoes
+
+### Top Sellers
+
+1. Trail Master Pro Backpack
+2. Summit 4-Season Tent
+3. Alpine Waterproof Boots
+
+## Pricing Table
+
+| Product | Category | Price | Stock |
+|---------|----------|-------|-------|
+| Trail Master Pro | Backpacks | $249.99 | 45 |
+| Summit Tent | Tents | $399.99 | 12 |
+| Alpine Boots | Footwear | $189.99 | 78 |
+
+## Code Example
+
+Here\'s how to use our API:
+
+```python
+from goose_outfitters import Client
+
+client = Client(api_key="your-key")
+products = client.get_products(category="backpacks")
+
+for product in products:
+    print(f"{product.name}: ${product.price}")
+```
+
+Inline code example: Use `get_product_details("Trail Master Pro")` to fetch details.
+
+## Important Notes
+
+> **Pro Tip:** Sign up for our newsletter to get 15% off your first order!
+>
+> We also offer free shipping on orders over $100.
+
+---
+
+### Links & References
+
+Visit our [website](https://example.com) for more information.
+
+![Goose Logo](https://example.com/logo.png)
+
+### Contact
+
+For support, email us at support@goose-outfitters.com or call ~~1-800-OLD-NUMBER~~ **1-800-GOOSE-GO**.
+
+**Happy trails!** 🏔️
+"""
+
+
 # Export all tools for the agent
 TOOLS = [
     get_product_details,
@@ -257,4 +333,5 @@ TOOLS = [
     find_products_by_category,
     create_sale,
     trigger_system_fault,
+    get_markdown_demo,
 ]

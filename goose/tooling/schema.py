@@ -23,15 +23,34 @@ class ToolSchema(BaseModel):
 
     name: str
     description: str
+    group: str | None = None
     parameters: list[ToolParameter]
     json_schema: dict[str, Any] | None = None
 
 
-def extract_tool_schema(tool: Callable) -> ToolSchema:
+def _extract_tool_group(tool: Callable[..., Any], goose_app: Any | None = None) -> str | None:
+    # First check GooseApp's tool_groups
+    if goose_app is not None:
+        tool_name = getattr(tool, "name", None) or getattr(tool, "__name__", None)
+        if tool_name and hasattr(goose_app, "get_tool_group"):
+            group = goose_app.get_tool_group(tool_name)
+            if group:
+                return group
+
+    # Fallback to tool's own group attribute
+    group = getattr(tool, "group", None)
+    if isinstance(group, str) and group.strip():
+        return group.strip()
+
+    return None
+
+
+def extract_tool_schema(tool: Callable, goose_app: Any | None = None) -> ToolSchema:
     """Extract schema information from a LangChain tool.
 
     Args:
         tool: A LangChain @tool decorated function or StructuredTool.
+        goose_app: Optional GooseApp instance for tool group lookup.
 
     Returns:
         ToolSchema with name, description, and parameters.
@@ -97,6 +116,7 @@ def extract_tool_schema(tool: Callable) -> ToolSchema:
     return ToolSchema(
         name=name,
         description=description,
+        group=_extract_tool_group(tool, goose_app),
         parameters=parameters,
         json_schema=json_schema,
     )
@@ -136,16 +156,17 @@ def _get_type_name(annotation: Any) -> str:
     return str(annotation)
 
 
-def list_tool_schemas(tools: Sequence[Callable[..., Any]]) -> list[ToolSchema]:
+def list_tool_schemas(tools: Sequence[Callable[..., Any]], goose_app: Any | None = None) -> list[ToolSchema]:
     """Extract schemas from a list of tools.
 
     Args:
         tools: List of LangChain @tool decorated functions.
+        goose_app: Optional GooseApp instance for tool group lookup.
 
     Returns:
         List of ToolSchema objects.
     """
-    return [extract_tool_schema(tool) for tool in tools]
+    return [extract_tool_schema(tool, goose_app) for tool in tools]
 
 
 def get_tool_by_name(tools: Sequence[Callable[..., Any]], name: str) -> Callable[..., Any] | None:

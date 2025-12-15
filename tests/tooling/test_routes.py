@@ -19,9 +19,10 @@ client = TestClient(app)
 class MockTool:
     """Mock LangChain tool."""
 
-    def __init__(self, name: str, description: str):
+    def __init__(self, name: str, description: str, group: str | None = None):
         self.name = name
         self.description = description
+        self.group = group
         self.args_schema = None
 
     def invoke(self, args: dict[str, Any]) -> str:
@@ -42,11 +43,14 @@ def reset_config() -> Iterator[None]:
 @pytest.fixture
 def mock_goose_app() -> GooseApp:
     """Create a GooseApp with mock tools."""
-    tools = [
-        MockTool("get_weather", "Get weather for a location"),
-        MockTool("search", "Search for information"),
-    ]
-    return GooseApp(tools=tools)
+    weather_tool = MockTool("get_weather", "Get weather for a location", group="Weather")
+    search_tool = MockTool("search", "Search for information")
+    return GooseApp(
+        tool_groups={
+            "Weather": [weather_tool],
+            "Search": [search_tool],
+        }
+    )
 
 
 @pytest.fixture
@@ -58,6 +62,7 @@ def setup_goose_app(mock_goose_app: GooseApp) -> Iterator[GooseApp]:
     config.goose_app = None
 
 
+@pytest.mark.usefixtures("setup_goose_app")
 class TestListTools:
     """Tests for GET /tooling/tools."""
 
@@ -71,7 +76,7 @@ class TestListTools:
         assert response.status_code == 200
         assert response.json() == []
 
-    def test_returns_tool_summaries(self, setup_goose_app: GooseApp) -> None:
+    def test_returns_tool_summaries(self) -> None:
         """Returns tool summaries with name, description, parameter_count."""
         response = client.get("/tooling/tools")
 
@@ -80,13 +85,15 @@ class TestListTools:
         assert len(data) == 2
         assert data[0]["name"] == "get_weather"
         assert data[0]["description"] == "Get weather for a location"
+        assert data[0]["group"] == "Weather"
         assert "parameter_count" in data[0]
 
 
+@pytest.mark.usefixtures("setup_goose_app")
 class TestGetTool:
     """Tests for GET /tooling/tools/{name}."""
 
-    def test_returns_tool_detail(self, setup_goose_app) -> None:
+    def test_returns_tool_detail(self) -> None:
         """Returns detailed tool information."""
         response = client.get("/tooling/tools/get_weather")
 
@@ -94,9 +101,10 @@ class TestGetTool:
         data = response.json()
         assert data["name"] == "get_weather"
         assert data["description"] == "Get weather for a location"
+        assert data["group"] == "Weather"
         assert "parameters" in data
 
-    def test_returns_404_for_unknown_tool(self, setup_goose_app) -> None:
+    def test_returns_404_for_unknown_tool(self) -> None:
         """Returns 404 for unknown tool name."""
         response = client.get("/tooling/tools/nonexistent")
 
@@ -104,10 +112,11 @@ class TestGetTool:
         assert "not found" in response.json()["detail"].lower()
 
 
+@pytest.mark.usefixtures("setup_goose_app")
 class TestInvokeTool:
     """Tests for POST /tooling/tools/{name}/invoke."""
 
-    def test_invokes_tool_successfully(self, setup_goose_app) -> None:
+    def test_invokes_tool_successfully(self) -> None:
         """Successfully invokes a tool and returns result."""
         response = client.post(
             "/tooling/tools/get_weather/invoke",
@@ -120,7 +129,7 @@ class TestInvokeTool:
         assert "Result for get_weather" in data["result"]
         assert data["error"] is None
 
-    def test_returns_404_for_unknown_tool(self, setup_goose_app) -> None:
+    def test_returns_404_for_unknown_tool(self) -> None:
         """Returns 404 when invoking unknown tool."""
         response = client.post(
             "/tooling/tools/nonexistent/invoke",
@@ -129,7 +138,7 @@ class TestInvokeTool:
 
         assert response.status_code == 404
 
-    def test_returns_error_on_failure(self, setup_goose_app: GooseApp) -> None:
+    def test_returns_error_on_failure(self) -> None:
         """Returns error when tool execution fails."""
         # Create a tool that raises an error
 
@@ -158,7 +167,7 @@ class TestInvokeTool:
         assert data["success"] is False
         assert "Intentional failure" in data["error"]
 
-    def test_invoke_with_empty_args(self, setup_goose_app: GooseApp) -> None:
+    def test_invoke_with_empty_args(self) -> None:
         """Can invoke with empty args."""
         response = client.post(
             "/tooling/tools/search/invoke",

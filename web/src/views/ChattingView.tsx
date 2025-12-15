@@ -15,7 +15,6 @@ export function ChattingView() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedAgentId, setSelectedAgentId] = useState("");
-  const [selectedModel, setSelectedModel] = useState("");
   const { setError } = useGlobalError();
 
   // Fetch agents and conversations on mount
@@ -28,12 +27,9 @@ export function ChattingView() {
         ]);
         setAgents(agentsData);
         setConversations(conversationsData);
-        // Set default selections
+        // Set default agent selection
         if (agentsData.length > 0) {
           setSelectedAgentId(agentsData[0].id);
-          if (agentsData[0].models.length > 0) {
-            setSelectedModel(agentsData[0].models[0]);
-          }
         }
         setError(null);
       } catch (err) {
@@ -70,7 +66,6 @@ export function ChattingView() {
     try {
       const conversation = await chattingApi.createConversation({
         agent_id: selectedAgentId,
-        model: selectedModel,
       });
       // Add to list and select it
       const conversationsData = await chattingApi.listConversations();
@@ -79,7 +74,7 @@ export function ChattingView() {
     } catch (err) {
       setError(getErrorMessage(err));
     }
-  }, [agents.length, selectedAgentId, selectedModel, setError]);
+  }, [agents.length, selectedAgentId, setError]);
 
   const handleSelectConversation = useCallback((id: string | null) => {
     setSelectedConversationId(id);
@@ -115,17 +110,16 @@ export function ChattingView() {
         </p>
         <pre className="mt-4 bg-yellow-100 rounded p-3 text-left text-sm overflow-x-auto">
 {`from goose import GooseApp
-from example_system.agent import get_agent
+from langchain_openai import ChatOpenAI
+from langgraph.prebuilt import create_react_agent
 
-app = GooseApp(
-    agents=[
-        {
-            "name": "My Agent",
-            "get_agent": get_agent,
-            "models": ["gpt-4o-mini", "gpt-4o"],
-        },
-    ],
-)`}
+agent = create_react_agent(
+    ChatOpenAI(model="gpt-4o-mini"),
+    tools=[...],
+)
+agent.name = "My Agent"
+
+app = GooseApp(agents=[agent])`}
         </pre>
       </div>
     );
@@ -139,9 +133,7 @@ app = GooseApp(
           <AgentSelector
             agents={agents}
             selectedAgentId={selectedAgentId}
-            selectedModel={selectedModel}
             onAgentChange={setSelectedAgentId}
-            onModelChange={setSelectedModel}
           />
           <ConversationList
             conversations={conversations}

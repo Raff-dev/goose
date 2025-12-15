@@ -23,14 +23,12 @@ class TestConversationStore:
         conversation = store.create(
             agent_id="agent-123",
             agent_name="Test Agent",
-            model="gpt-4o-mini",
             title="Test Chat",
         )
 
         assert conversation.id == "1"  # Sequential ID
         assert conversation.agent_id == "agent-123"
         assert conversation.agent_name == "Test Agent"
-        assert conversation.model == "gpt-4o-mini"
         assert conversation.title == "Test Chat"
         assert conversation.messages == []
         assert conversation.created_at is not None
@@ -42,7 +40,6 @@ class TestConversationStore:
         conversation = store.create(
             agent_id="agent-123",
             agent_name="Test Agent",
-            model="gpt-4o-mini",
         )
 
         assert conversation.title == "New conversation"
@@ -54,17 +51,14 @@ class TestConversationStore:
         conv1 = store.create(
             agent_id="agent-123",
             agent_name="Test Agent",
-            model="gpt-4o-mini",
         )
         conv2 = store.create(
             agent_id="agent-123",
             agent_name="Test Agent",
-            model="gpt-4o-mini",
         )
         conv3 = store.create(
             agent_id="agent-123",
             agent_name="Test Agent",
-            model="gpt-4o-mini",
         )
 
         assert conv1.id == "1"
@@ -77,7 +71,6 @@ class TestConversationStore:
         created = store.create(
             agent_id="agent-123",
             agent_name="Test Agent",
-            model="gpt-4o-mini",
         )
 
         fetched = store.get(created.id)
@@ -95,8 +88,8 @@ class TestConversationStore:
     def test_list_all_returns_summaries(self) -> None:
         """List returns conversation summaries."""
         store = ConversationStore()
-        store.create(agent_id="a1", agent_name="Agent 1", model="m1", title="Chat 1")
-        store.create(agent_id="a2", agent_name="Agent 2", model="m2", title="Chat 2")
+        store.create(agent_id="a1", agent_name="Agent 1", title="Chat 1")
+        store.create(agent_id="a2", agent_name="Agent 2", title="Chat 2")
 
         summaries = store.list_all()
 
@@ -114,7 +107,7 @@ class TestConversationStore:
     def test_delete_existing(self) -> None:
         """Can delete an existing conversation."""
         store = ConversationStore()
-        created = store.create(agent_id="a1", agent_name="Agent", model="m1")
+        created = store.create(agent_id="a1", agent_name="Agent")
 
         result = store.delete(created.id)
 
@@ -130,7 +123,7 @@ class TestConversationStore:
     def test_add_message(self) -> None:
         """Can add messages to a conversation."""
         store = ConversationStore()
-        created = store.create(agent_id="a1", agent_name="Agent", model="m1")
+        created = store.create(agent_id="a1", agent_name="Agent")
 
         message = Message(type="human", content="Hello")
         result = store.add_message(created.id, message)
@@ -144,7 +137,7 @@ class TestConversationStore:
     def test_add_message_updates_timestamp(self) -> None:
         """Adding message updates updated_at."""
         store = ConversationStore()
-        created = store.create(agent_id="a1", agent_name="Agent", model="m1")
+        created = store.create(agent_id="a1", agent_name="Agent")
         original_updated = created.updated_at
 
         message = Message(type="human", content="Hello")
@@ -164,7 +157,7 @@ class TestConversationStore:
     def test_auto_title_from_first_human_message(self) -> None:
         """Title auto-updates from first human message."""
         store = ConversationStore()
-        created = store.create(agent_id="a1", agent_name="Agent", model="m1")
+        created = store.create(agent_id="a1", agent_name="Agent")
         assert created.title == "New conversation"
 
         message = Message(type="human", content="What is the weather today?")
@@ -177,7 +170,7 @@ class TestConversationStore:
     def test_auto_title_truncates_long_content(self) -> None:
         """Long messages are truncated for title."""
         store = ConversationStore()
-        created = store.create(agent_id="a1", agent_name="Agent", model="m1")
+        created = store.create(agent_id="a1", agent_name="Agent")
 
         long_content = "A" * 100
         message = Message(type="human", content=long_content)
@@ -191,8 +184,8 @@ class TestConversationStore:
     def test_clear_removes_all(self) -> None:
         """Clear removes all conversations."""
         store = ConversationStore()
-        store.create(agent_id="a1", agent_name="Agent 1", model="m1")
-        store.create(agent_id="a2", agent_name="Agent 2", model="m2")
+        store.create(agent_id="a1", agent_name="Agent 1")
+        store.create(agent_id="a2", agent_name="Agent 2")
 
         store.clear()
 

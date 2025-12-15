@@ -14,14 +14,18 @@ export function ToolDetail({ toolName }: ToolDetailProps) {
   const [schema, setSchema] = useState<ToolSchema | null>(null);
   const [loading, setLoading] = useState(true);
   const [invoking, setInvoking] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<unknown | null>(null);
   const [isError, setIsError] = useState(false);
+  const [renderMarkdown, setRenderMarkdown] = useState(true);
+  const [useRawJson, setUseRawJson] = useState(false);
   const { setError: setGlobalError } = useGlobalError();
 
   useEffect(() => {
     setLoading(true);
     setResult(null);
     setIsError(false);
+    setRenderMarkdown(true);
+    setUseRawJson(false);
 
     toolingApi
       .getToolSchema(toolName)
@@ -46,7 +50,7 @@ export function ToolDetail({ toolName }: ToolDetailProps) {
     try {
       const response = await toolingApi.invokeTool(toolName, args);
       if (response.success) {
-        setResult(JSON.stringify(response.result, null, 2));
+        setResult(response.result ?? null);
         setIsError(false);
       } else {
         setResult(response.error || 'Unknown error');
@@ -81,14 +85,69 @@ export function ToolDetail({ toolName }: ToolDetailProps) {
     <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
       <div>
         <h3 className="text-lg font-medium text-gray-900">{toolName}</h3>
-        {schema?.description && (
-          <p className="text-sm text-gray-600 mt-1">{schema.description}</p>
-        )}
+        <div className="flex items-start justify-between gap-4 mt-1">
+          {schema?.description && (
+            <p className="text-sm text-gray-600 flex-1">{schema.description}</p>
+          )}
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+            <Toggle
+              label="Markdown"
+              checked={renderMarkdown}
+              onChange={setRenderMarkdown}
+            />
+            <Toggle
+              label="Raw JSON"
+              checked={useRawJson}
+              onChange={setUseRawJson}
+            />
+          </div>
+        </div>
       </div>
 
-      <InvokeForm schema={schema} onInvoke={handleInvoke} isLoading={invoking} />
+      <InvokeForm
+        schema={schema}
+        onInvoke={handleInvoke}
+        isLoading={invoking}
+        useRawJson={useRawJson}
+      />
 
-      <InvokeResult result={result} isError={isError} />
+      <InvokeResult
+        result={result}
+        isError={isError}
+        renderMarkdown={renderMarkdown}
+      />
     </div>
+  );
+}
+
+interface ToggleProps {
+  label: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}
+
+function Toggle({ label, checked, onChange }: ToggleProps) {
+  return (
+    <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+      <input
+        type="checkbox"
+        className="sr-only"
+        checked={checked}
+        onChange={e => onChange(e.target.checked)}
+      />
+      <span
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+          checked ? 'bg-blue-600' : 'bg-slate-200'
+        }`}
+        aria-hidden="true"
+      >
+        <span
+          className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+            checked ? 'translate-x-5' : 'translate-x-0.5'
+          }`}
+        />
+      </span>
+      <span className="text-sm text-gray-500">{label}</span>
+    </label>
   );
 }

@@ -25,10 +25,11 @@ class MockArgsSchema:
 class MockToolWithSchema:
     """Mock LangChain tool with args_schema."""
 
-    def __init__(self, name: str, description: str, args_schema: type | None = None):
+    def __init__(self, name: str, description: str, args_schema: type | None = None, group: str | None = None):
         self.name = name
         self.description = description
         self.args_schema = args_schema
+        self.group = group
 
     def invoke(self, args: dict[str, Any]) -> dict[str, Any]:
         return args
@@ -67,7 +68,14 @@ class TestExtractToolSchema:
         schema = extract_tool_schema(tool)
 
         assert schema.json_schema is not None
-        assert schema.json_schema["type"] == "object"
+        assert schema.json_schema.get("type") == "object"
+
+    def test_extracts_group(self) -> None:
+        tool = MockToolWithSchema("my_tool", "Does something useful", group="Utilities")
+
+        schema = extract_tool_schema(tool)
+
+        assert schema.group == "Utilities"
 
 
 class TestListToolSchemas:
