@@ -162,69 +162,101 @@ async def _stream_response(
 ) -> None:
     """Stream the agent response and save messages."""
     accumulated_content = ""
-    accumulated_tool_calls: list[ToolCall] = []
     current_tool_call_chunks: dict[int, dict[str, Any]] = {}
 
-    for event in agent.stream({"messages": messages}, stream_mode="messages"):
-        chunk, _metadata = event
+    async def _flush_pending_tool_calls() -> tuple[bool, list[ToolCall]]:
+        if not current_tool_call_chunks:
+            return True, []
 
-        if isinstance(chunk, AIMessageChunk):
-            if chunk.content:
-                accumulated_content += chunk.content
-                if not await send_event(websocket, "token", {"content": chunk.content}):
-                    return
+        pending_tool_calls: list[ToolCall] = []
+        for acc_tc in current_tool_call_chunks.values():
+            if not acc_tc.get("name"):
+                continue
+            tc = _build_tool_call_from_chunk(acc_tc)
+            pending_tool_calls.append(tc)
 
-            # Accumulate tool call chunks (args come as partial JSON strings)
-            for tool_chunk in chunk.tool_call_chunks or []:
-                _accumulate_tool_chunk(current_tool_call_chunks, tool_chunk)
+        if pending_tool_calls or accumulated_content:
+            ai_message = Message(
+                type="ai",
+                content=accumulated_content,
+                tool_calls=pending_tool_calls,
+            )
+            store.add_message(conversation_id, ai_message)
 
-        elif isinstance(chunk, ToolMessage):
-            # Tool is being executed - flush accumulated tool calls first
-            if current_tool_call_chunks:
-                # Build tool calls from accumulated chunks
-                pending_tool_calls: list[ToolCall] = []
-                for acc_tc in current_tool_call_chunks.values():
-                    if not acc_tc.get("name"):
-                        continue
-                    tc = _build_tool_call_from_chunk(acc_tc)
-                    pending_tool_calls.append(tc)
-                    accumulated_tool_calls.append(tc)
+        for tc in pending_tool_calls:
+            if not await send_event(websocket, "tool_call", tc.model_dump()):
+                return False, pending_tool_calls
 
-                # Save AI message with tool_calls BEFORE tool output (required by OpenAI API)
-                if pending_tool_calls or accumulated_content:
-                    ai_message = Message(
-                        type="ai",
-                        content=accumulated_content,
-                        tool_calls=pending_tool_calls,
-                    )
-                    store.add_message(conversation_id, ai_message)
-                    accumulated_content = ""  # Reset for next AI response
+        current_tool_call_chunks.clear()
+        return True, pending_tool_calls
 
-                # Send tool_call events to frontend
-                for tc in pending_tool_calls:
-                    if not await send_event(websocket, "tool_call", tc.model_dump()):
+    saw_tool_calls = False
+
+    try:
+        for event in agent.stream({"messages": messages}, stream_mode="messages"):
+            chunk, _metadata = event
+
+            if isinstance(chunk, AIMessageChunk):
+                if chunk.content:
+                    accumulated_content += chunk.content
+                    if not await send_event(websocket, "token", {"content": chunk.content}):
                         return
 
-                current_tool_call_chunks.clear()
+                for tool_chunk in chunk.tool_call_chunks or []:
+                    saw_tool_calls = True
+                    _accumulate_tool_chunk(current_tool_call_chunks, tool_chunk)
 
-            tool_message = Message(
-                type="tool",
-                content=str(chunk.content),
-                tool_name=chunk.name,
-                tool_call_id=getattr(chunk, "tool_call_id", None),
-            )
-            store.add_message(conversation_id, tool_message)
+            elif isinstance(chunk, ToolMessage):
+                saw_tool_calls = True
+                ok, _pending_tool_calls = await _flush_pending_tool_calls()
+                if not ok:
+                    return
+                accumulated_content = ""
 
-            if not await send_event(
-                websocket,
-                "tool_output",
-                {
-                    "tool_name": chunk.name,
-                    "tool_call_id": getattr(chunk, "tool_call_id", None),
-                    "content": str(chunk.content),
-                },
-            ):
+                tool_message = Message(
+                    type="tool",
+                    content=str(chunk.content),
+                    tool_name=chunk.name,
+                    tool_call_id=getattr(chunk, "tool_call_id", None),
+                )
+                store.add_message(conversation_id, tool_message)
+
+                if not await send_event(
+                    websocket,
+                    "tool_output",
+                    {
+                        "tool_name": chunk.name,
+                        "tool_call_id": getattr(chunk, "tool_call_id", None),
+                        "content": str(chunk.content),
+                    },
+                ):
+                    return
+    except Exception as exc:
+        if saw_tool_calls or current_tool_call_chunks:
+            ok, pending_tool_calls = await _flush_pending_tool_calls()
+            if not ok:
                 return
+            accumulated_content = ""
+
+            # If the agent crashed after emitting tool_calls but before producing tool outputs,
+            # persist a tool response for each tool_call_id to keep the tool-call protocol valid.
+            for tc in pending_tool_calls:
+                if not tc.id:
+                    continue
+                tool_message = Message(
+                    type="tool",
+                    content=str(exc),
+                    tool_name=tc.name,
+                    tool_call_id=tc.id,
+                )
+                store.add_message(conversation_id, tool_message)
+
+            error_message = Message(type="error", content=str(exc))
+            store.add_message(conversation_id, error_message)
+            await send_event(websocket, "message", error_message.model_dump())
+            await send_event(websocket, "message_end", {})
+            return
+        raise
 
     # Save any remaining accumulated AI message (for responses without tool calls)
     if accumulated_content:

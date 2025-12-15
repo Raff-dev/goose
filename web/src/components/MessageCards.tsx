@@ -8,14 +8,14 @@ import CodeBlock from './CodeBlock';
 type MessageType = 'human' | 'ai' | 'tool' | string;
 
 interface TokenUsage {
-  input_tokens?: number;
-  output_tokens?: number;
-  total_tokens?: number;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
 }
 
 interface ToolCall {
-  name?: string;
-  args?: any;
+  name: string;
+  args: any;
   id?: string;
 }
 
@@ -74,15 +74,18 @@ export function MessageCards({ messages }: MessageCardsProps) {
           const isHuman = m.type === 'human';
           const isAI = m.type === 'ai';
           const isTool = m.type === 'tool';
+          const isError = m.type === 'error';
           const bubbleTint = isHuman
             ? 'bg-blue-50 border border-blue-100'
             : isAI
             ? 'bg-white border border-slate-200'
             : isTool
             ? 'bg-emerald-50 border border-emerald-100'
+            : isError
+            ? 'bg-red-50 border border-red-100'
             : 'bg-white border border-slate-200';
           const avatarClass = 'bg-blue-500/85';
-          const roleLabel = isHuman ? 'User Prompt' : isAI ? 'Agent Reply' : isTool ? 'Tool Output' : 'Message';
+          const roleLabel = isHuman ? 'User Prompt' : isAI ? 'Agent Reply' : isTool ? 'Tool Output' : isError ? 'Error' : 'Message';
           const icon = isHuman ? (
             <PersonIcon className="w-5 h-5 text-white" aria-hidden />
           ) : isAI ? (

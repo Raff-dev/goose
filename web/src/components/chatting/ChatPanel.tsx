@@ -19,34 +19,31 @@ export function ChatPanel({ conversationId, onError, onConversationUpdate }: Cha
   const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const fetchConversation = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await chattingApi.getConversation(conversationId);
+      setConversation(data);
+    } catch {
+      onError("Failed to load conversation");
+    } finally {
+      setLoading(false);
+    }
+  }, [conversationId, onError]);
+
   // Fetch conversation on mount or when ID changes
   useEffect(() => {
-    let cancelled = false;
+    setStreaming(false);
+    setStreamingContent("");
 
-    const fetchConversation = async () => {
-      setLoading(true);
-      try {
-        const data = await chattingApi.getConversation(conversationId);
-        if (!cancelled) {
-          setConversation(data);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          onError("Failed to load conversation");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
 
     void fetchConversation();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [conversationId, onError]);
+    return undefined;
+  }, [conversationId, fetchConversation]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -93,14 +90,14 @@ export function ChatPanel({ conversationId, onError, onConversationUpdate }: Cha
 
           switch (streamEvent.type) {
             case "message":
-              // Human message echoed back - add to conversation
-              const humanMsg = streamEvent.data as unknown as Message;
-              pendingMessages.push(humanMsg);
+              // In-band message (human echo, tool error, etc.)
+              const msg = streamEvent.data as unknown as Message;
+              pendingMessages.push(msg);
               setConversation((prev) =>
                 prev
                   ? {
                       ...prev,
-                      messages: [...prev.messages, humanMsg],
+                      messages: [...prev.messages, msg],
                     }
                   : prev
               );
@@ -200,7 +197,7 @@ export function ChatPanel({ conversationId, onError, onConversationUpdate }: Cha
         wsRef.current = null;
       };
     },
-    [conversation, conversationId, onError, streaming]
+    [conversation, conversationId, onConversationUpdate, onError, streaming]
   );
 
   if (loading) {
