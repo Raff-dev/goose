@@ -5,7 +5,7 @@ import sys
 import typer
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 
-from example_system.agent import query
+from gooseapp.conftest import query
 
 app = typer.Typer()
 

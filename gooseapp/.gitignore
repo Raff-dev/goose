@@ -1,0 +1,3 @@
+# Test run history data
+data/*.json
+data/history/

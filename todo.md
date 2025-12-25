@@ -17,6 +17,7 @@
 | S | Store config in pyproject.toml [tool.goose] (tests_root, reload_targets) |
 | M | Detect whether failures stem from tool errors or agent reasoning mistakes |
 | M | Anomaly detection - surface unexpected deviations that derailed the intended flow |
+| M | Hallucination detection - flag when agent uses information not present in tool outputs or context |
 
 ## ⚡ Urgent + Less Important (Quick Wins)
 | Size | Task |
@@ -35,3 +36,6 @@
 | L | Let testing agents call helper agents/tools for due diligence |
 | M | Evaluate Goose core once per session, not after every test |
 | L | Overview module - save test execution data to files, analytical dashboards with tables and graphs |
+
+
+# Goose Home Page!

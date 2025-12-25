@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { toolingApi } from '../../api/tooling';
 import type { ToolSchema } from '../../api/types';
 import { useGlobalError } from '../../context/GlobalErrorContext';
+import { useToolingPrefs } from '../../context/ToolingPrefsContext';
 import { getErrorMessage } from '../../utils/errors';
 import { InvokeForm } from './InvokeForm';
 import { InvokeResult } from './InvokeResult';
@@ -16,16 +17,13 @@ export function ToolDetail({ toolName }: ToolDetailProps) {
   const [invoking, setInvoking] = useState(false);
   const [result, setResult] = useState<unknown | null>(null);
   const [isError, setIsError] = useState(false);
-  const [renderMarkdown, setRenderMarkdown] = useState(true);
-  const [useRawJson, setUseRawJson] = useState(false);
+  const { renderMarkdown, useRawJson, setRenderMarkdown, setUseRawJson } = useToolingPrefs();
   const { setError: setGlobalError } = useGlobalError();
 
   useEffect(() => {
     setLoading(true);
     setResult(null);
     setIsError(false);
-    setRenderMarkdown(true);
-    setUseRawJson(false);
 
     toolingApi
       .getToolSchema(toolName)

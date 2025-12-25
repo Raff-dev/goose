@@ -753,20 +753,16 @@ wheels = [
 
 [[package]]
 name = "llm-goose"
-version = "0.1.30"
+version = "0.1.32"
 source = { editable = "." }
 dependencies = [
+    { name = "fastapi" },
     { name = "langchain" },
     { name = "langchain-openai" },
     { name = "openai" },
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "typer" },
-]
-
-[package.optional-dependencies]
-api = [
-    { name = "fastapi" },
     { name = "uvicorn" },
     { name = "websockets" },
 ]
@@ -821,17 +817,16 @@ example = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastapi", marker = "extra == 'api'", specifier = ">=0.115.0" },
+    { name = "fastapi", specifier = ">=0.115.0" },
     { name = "langchain", specifier = ">=1.0.4" },
     { name = "langchain-openai", specifier = ">=0.1.0" },
     { name = "openai", specifier = ">=2.7.1" },
     { name = "pydantic", specifier = ">=2.12.4" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "typer", specifier = ">=0.12.5" },
-    { name = "uvicorn", marker = "extra == 'api'", specifier = ">=0.32.0" },
-    { name = "websockets", marker = "extra == 'api'", specifier = ">=15.0.1" },
+    { name = "uvicorn", specifier = ">=0.32.0" },
+    { name = "websockets", specifier = ">=15.0.1" },
 ]
-provides-extras = ["api"]
 
 [package.metadata.requires-dev]
 all = [

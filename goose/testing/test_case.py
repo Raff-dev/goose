@@ -30,6 +30,16 @@ class TestCase:
         self.expected_tool_calls = expected_tool_calls
         self.last_response: AgentResponse | None = None
 
+        # Validate expected_tool_calls contains actual tools
+        if expected_tool_calls:
+            for item in expected_tool_calls:
+                if not isinstance(item, BaseTool):
+                    item_type = type(item).__name__
+                    raise TypeError(
+                        f"expected_tool_calls must contain BaseTool instances, got {item_type}: {item!r}. "
+                        f"Make sure you're passing the tool function decorated with @tool, not a module."
+                    )
+
     @property
     def expected_tool_call_names(self) -> list[str]:
         """Return the names of the expected tool calls."""

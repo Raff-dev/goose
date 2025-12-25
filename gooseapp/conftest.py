@@ -5,10 +5,46 @@ from __future__ import annotations
 from datetime import datetime
 
 from django.utils import timezone
+from langchain_core.messages import BaseMessage, HumanMessage
 
-from example_system.agent import query
+from example_system.agent import agent
 from example_system.models import Product, ProductInventory, Transaction, TransactionItem, create_transaction
 from goose.testing import DjangoTestHooks, Goose, fixture
+from goose.testing.exceptions import AgentQueryError
+from goose.testing.models.messages import AgentResponse, Message
+
+
+def query(question: str, history: list[BaseMessage] | None = None) -> AgentResponse:
+    """Query the agent with a question using streaming to capture partial responses.
+
+    Args:
+        question: The question to ask the agent.
+        history: Optional list of previous conversation messages.
+
+    Returns:
+        The agent's response payload.
+
+    Raises:
+        AgentQueryError: If the agent fails, with partial_response attached if available.
+    """
+    input_messages = (history or []) + [HumanMessage(content=question)]
+    collected_messages: list[Message] = [Message.from_langchain_message(m) for m in input_messages]
+    last_state_messages: list[BaseMessage] = []
+
+    try:
+        # Use stream_mode="values" to get complete state after each step
+        for state in agent.stream({"messages": input_messages}, stream_mode="values"):
+            last_state_messages = state.get("messages", [])
+
+        # Convert final state messages to our Message format
+        collected_messages = [Message.from_langchain_message(m) for m in last_state_messages]
+        return AgentResponse(messages=collected_messages)
+    except Exception as exc:
+        # If we captured any state before failure, use it
+        if last_state_messages:
+            collected_messages = [Message.from_langchain_message(m) for m in last_state_messages]
+        partial = AgentResponse(messages=collected_messages) if collected_messages else None
+        raise AgentQueryError(str(exc), partial_response=partial) from exc
 
 
 @fixture(autouse=True)

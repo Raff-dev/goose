@@ -7,9 +7,11 @@ interface ToolListProps {
   tools: ToolSummary[];
   selectedTool: string | null;
   onSelectTool: (name: string) => void;
+  onReload?: () => void;
+  reloading?: boolean;
 }
 
-export function ToolList({ tools, selectedTool, onSelectTool }: ToolListProps) {
+export function ToolList({ tools, selectedTool, onSelectTool, onReload, reloading }: ToolListProps) {
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
   const groupedByGroup = useMemo(() => {
@@ -31,6 +33,31 @@ export function ToolList({ tools, selectedTool, onSelectTool }: ToolListProps) {
 
   return (
     <div className="space-y-6">
+      {onReload && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={onReload}
+            disabled={reloading}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-md transition-colors disabled:opacity-50"
+          >
+            <svg
+              className={`w-4 h-4 ${reloading ? 'animate-spin' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            {reloading ? 'Reloading...' : 'Reload'}
+          </button>
+        </div>
+      )}
       {[...groupedByGroup.entries()].map(([groupName, groupTools], index) => {
         const isCollapsed = collapsedGroups[groupName] ?? false;
         return (

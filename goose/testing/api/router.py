@@ -1,19 +1,39 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, status  # type: ignore[import-not-found]
 
 from goose.core.config import GooseConfig
 from goose.testing.api.jobs import JobNotifier, JobQueue
 from goose.testing.api.jobs.job_target_resolver import resolve_targets
-from goose.testing.api.schema import JobResource, RunRequest, TestSummary
+from goose.testing.api.persistence import TestRunStore
+from goose.testing.api.schema import JobResource, RunRequest, TestResultModel, TestSummary
 from goose.testing.discovery import load_from_qualified_name
+from goose.testing.models.tests import TestResult
 
 router = APIRouter()
 
 notifier = JobNotifier()
-job_queue = JobQueue(on_job_update=notifier.publish)
+
+
+def _get_data_path() -> Path:
+    """Return the data directory path for persisting test results."""
+    config = GooseConfig()
+    return config.gooseapp_dir / "data"
+
+
+test_run_store = TestRunStore(_get_data_path())
+
+
+def _on_result_added(job_id: str, result: TestResult) -> None:
+    """Callback for when a test result is added - persists to disk."""
+    result_model = TestResultModel.from_result(result)
+    test_run_store.add_run(job_id, result_model)
+
+
+job_queue = JobQueue(on_job_update=notifier.publish, on_result_added=_on_result_added)
 
 
 @router.get("/tests", response_model=list[TestSummary])
@@ -72,6 +92,39 @@ async def runs_stream(websocket: WebSocket) -> None:
         pass
     finally:
         notifier.unsubscribe(queue)
+
+
+@router.get("/history", response_model=dict[str, TestResultModel])
+def get_history() -> dict[str, TestResultModel]:
+    """Return the latest result for each test from persisted history."""
+    return test_run_store.get_latest_results()
+
+
+@router.get("/history/{qualified_name:path}", response_model=list[TestResultModel])
+def get_test_history(qualified_name: str) -> list[TestResultModel]:
+    """Return all historical results for a specific test, oldest first."""
+    runs = test_run_store.get_runs_for_test(qualified_name)
+    return [run.result for run in runs]
+
+
+@router.delete("/history", status_code=status.HTTP_204_NO_CONTENT)
+def clear_history() -> None:
+    """Clear all persisted test run history."""
+    test_run_store.clear()
+
+
+@router.delete("/history/{qualified_name:path}/{index}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_test_run(qualified_name: str, index: int) -> None:
+    """Delete a specific run by index (0-based, oldest first)."""
+    success = test_run_store.delete_run_at_index(qualified_name, index)
+    if not success:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Run not found")
+
+
+@router.delete("/history/{qualified_name:path}", status_code=status.HTTP_204_NO_CONTENT)
+def clear_test_history(qualified_name: str) -> None:
+    """Clear all history for a specific test."""
+    test_run_store.clear_test_history(qualified_name)
 
 
 __all__ = ["router"]

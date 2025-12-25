@@ -1,6 +1,6 @@
 [project]
 name = "llm-goose"
-version = "0.1.30"
+version = "0.1.32"
 description = "LLM testing framework for validating agent behavior and tool usage"
 license = "MIT"
 authors = [{ name = "Rafał Łazicki", email = "rafal.lazicki99@gmail.com" }]
@@ -30,16 +30,16 @@ classifiers = [
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi>=0.115.0",
     "langchain>=1.0.4",
     "langchain-openai>=0.1.0",
     "openai>=2.7.1",
     "pydantic>=2.12.4",
     "python-dotenv>=1.0.1",
     "typer>=0.12.5",
+    "uvicorn>=0.32.0",
+    "websockets>=15.0.1",
 ]
-
-[project.optional-dependencies]
-api = ["fastapi>=0.115.0", "uvicorn>=0.32.0", "websockets>=15.0.1"]
 
 [project.urls]
 Homepage = "https://github.com/Raff-dev/goose"

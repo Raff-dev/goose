@@ -21,6 +21,9 @@ def collect_submodules(package_name: str) -> list[str]:
 def reload_module(module_name: str) -> None:
     """Reload a single module by name.
 
+    Clears the module namespace before reload to ensure removed attributes
+    (like deleted functions) are properly removed.
+
     If the module file was deleted, removes it from sys.modules.
     Raises import-time errors (syntax errors, missing deps) so they propagate.
     Only AttributeError/TypeError during reload are suppressed.
@@ -28,6 +31,20 @@ def reload_module(module_name: str) -> None:
     module = sys.modules.get(module_name)
     if module is not None:
         try:
+            # Clear module namespace before reload to remove deleted attributes
+            # Keep only essential module attributes that Python requires
+            preserved_attrs = {
+                "__name__",
+                "__loader__",
+                "__package__",
+                "__spec__",
+                "__path__",
+                "__file__",
+                "__cached__",
+            }
+            for attr in list(module.__dict__.keys()):
+                if attr not in preserved_attrs:
+                    delattr(module, attr)
             importlib.reload(module)
         except ModuleNotFoundError as exc:
             if exc.name == module_name:

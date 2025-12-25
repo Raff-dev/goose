@@ -57,6 +57,27 @@ def list_tools() -> list[ToolSummary]:
     return summaries
 
 
+@router.post("/reload", response_model=list[ToolSummary])
+def reload_tools() -> list[ToolSummary]:
+    """Reload tool modules and return updated tool list."""
+    tools = _reload_tools()
+    goose_app = _get_goose_app()
+    summaries = []
+
+    for tool in tools:
+        schema = extract_tool_schema(tool, goose_app)
+        summaries.append(
+            ToolSummary(
+                name=schema.name,
+                description=schema.description,
+                group=schema.group,
+                parameter_count=len(schema.parameters),
+            )
+        )
+
+    return summaries
+
+
 @router.get("/tools/{name}", response_model=ToolDetail)
 def get_tool(name: str) -> ToolDetail:
     """Get detailed information about a specific tool."""

@@ -1,13 +1,11 @@
-"""Agent building and query functions for the Goose Outfitters system."""
+"""Agent building for the Goose Outfitters system."""
 
 from __future__ import annotations
 
 from dotenv import load_dotenv
 from langchain.agents import create_agent
-from langchain_core.messages import BaseMessage, HumanMessage
 
 from example_system.tools import TOOLS
-from goose.testing.models.messages import AgentResponse
 
 load_dotenv()
 
@@ -31,18 +29,3 @@ agent = create_agent(
     system_prompt=SYSTEM_PROMPT,
     name="Goose Outfitters Agent",
 )
-
-
-def query(question: str, history: list[BaseMessage] | None = None) -> AgentResponse:
-    """Query the agent with a question.
-
-    Args:
-        question: The question to ask the agent.
-        history: Optional list of previous conversation messages.
-
-    Returns:
-        The agent's response payload.
-    """
-    messages = (history or []) + [HumanMessage(content=question)]
-    result = agent.invoke({"messages": messages})
-    return AgentResponse.from_langchain(result)

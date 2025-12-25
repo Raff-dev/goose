@@ -26,9 +26,10 @@ class _FakeAgent:
         self._events = events
         self._exc = exc
 
-    def stream(self, _payload: dict[str, Any], stream_mode: str) -> Any:
+    async def astream(self, _payload: dict[str, Any], stream_mode: str) -> Any:
         assert stream_mode == "messages"
-        yield from self._events
+        for event in self._events:
+            yield event
         if self._exc is not None:
             raise self._exc
 

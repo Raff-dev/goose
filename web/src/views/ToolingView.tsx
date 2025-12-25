@@ -8,21 +8,36 @@ import { getErrorMessage } from '../utils/errors';
 export function ToolingView() {
   const [tools, setTools] = useState<ToolSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reloading, setReloading] = useState(false);
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const { setError } = useGlobalError();
 
+  const fetchTools = async () => {
+    try {
+      const data = await toolingApi.listTools();
+      setTools(data);
+      setError(null);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReload = async () => {
+    setReloading(true);
+    try {
+      const data = await toolingApi.reloadTools();
+      setTools(data);
+      setError(null);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setReloading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchTools = async () => {
-      try {
-        const data = await toolingApi.listTools();
-        setTools(data);
-        setError(null);
-      } catch (err) {
-        setError(getErrorMessage(err));
-      } finally {
-        setLoading(false);
-      }
-    };
     void fetchTools();
   }, [setError]);
 
@@ -45,24 +60,33 @@ app = GooseApp(
     tools=[get_products, create_order],
 )`}
         </pre>
+        <button
+          onClick={handleReload}
+          disabled={reloading}
+          className="mt-4 px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:opacity-50"
+        >
+          {reloading ? 'Reloading...' : 'Reload Tools'}
+        </button>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="h-[calc(100vh-8rem)]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
         {/* Tool List */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 overflow-y-auto min-h-0 scrollbar-hide">
           <ToolList
             tools={tools}
             selectedTool={selectedTool}
             onSelectTool={setSelectedTool}
+            onReload={handleReload}
+            reloading={reloading}
           />
         </div>
 
         {/* Tool Details & Invoke */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 overflow-y-auto min-h-0 scrollbar-hide">
           {selectedTool ? (
             <ToolDetail toolName={selectedTool} />
           ) : (

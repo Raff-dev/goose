@@ -6,7 +6,7 @@ import { Summary } from '../components/Summary';
 import { TestDetail } from '../components/TestDetail';
 import { TestGrid } from '../components/TestGrid';
 import { useGlobalError } from '../context/GlobalErrorContext';
-import { useCreateRun, useRun, useRuns, useTests } from '../hooks';
+import { useClearHistory, useCreateRun, useHistory, useRun, useRuns, useTests } from '../hooks';
 import { getErrorMessage } from '../utils/errors';
 
 export function TestingView() {
@@ -20,7 +20,9 @@ export function TestingView() {
     error: testsError,
   } = useTests();
   const { data: runs = [], isLoading: runsLoading } = useRuns();
+  const { data: history = {}, isLoading: historyLoading } = useHistory();
   const createRunMutation = useCreateRun();
+  const clearHistoryMutation = useClearHistory();
 
   // Parse view state from URL
   const { view, selectedTest } = useMemo(() => {
@@ -51,27 +53,30 @@ export function TestingView() {
   const resultsMap = useMemo(() => {
     const map = new Map<string, TestResultModel>();
 
-    // First, add results from the active job (these take priority for tests being run)
+    // First, seed with persisted history (lowest priority)
+    for (const [name, result] of Object.entries(history)) {
+      map.set(name, result);
+    }
+
+    // Then, add results from historical runs (overrides history)
+    const sortedRuns = [...runs].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    for (const run of sortedRuns) {
+      for (const result of run.results) {
+        if (!activeJobTests.has(result.qualified_name)) {
+          map.set(result.qualified_name, result);
+        }
+      }
+    }
+
+    // Finally, add results from the active job (highest priority for tests being run)
     if (activeJob) {
       for (const result of activeJob.results) {
         map.set(result.qualified_name, result);
       }
     }
 
-    // Then, aggregate historical results for tests NOT in the active job
-    const sortedRuns = [...runs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    for (const run of sortedRuns) {
-      for (const result of run.results) {
-        if (activeJobTests.has(result.qualified_name)) {
-          continue;
-        }
-        if (!map.has(result.qualified_name)) {
-          map.set(result.qualified_name, result);
-        }
-      }
-    }
     return map;
-  }, [runs, activeJob, activeJobTests]);
+  }, [runs, activeJob, activeJobTests, history]);
 
   // Compute status for each test
   const statusMap = useMemo(() => {
@@ -145,6 +150,14 @@ export function TestingView() {
     void refetchTests();
   };
 
+  const handleClearHistory = async () => {
+    try {
+      await clearHistoryMutation.mutateAsync();
+    } catch {
+      // Error captured in mutation
+    }
+  };
+
   const latestRun = runs[0];
   const currentError = getErrorMessage(testsError) || getErrorMessage(createRunMutation.error) || latestRun?.error || null;
 
@@ -160,7 +173,7 @@ export function TestingView() {
     }
   };
 
-  if (testsLoading || runsLoading) {
+  if (testsLoading || runsLoading || historyLoading) {
     return <div className="text-center py-8">Loading...</div>;
   }
 
@@ -193,6 +206,8 @@ export function TestingView() {
             isRunning={isRunning}
             onReloadTests={handleReloadTests}
             isReloadingTests={testsFetching}
+            onClearHistory={handleClearHistory}
+            isClearingHistory={clearHistoryMutation.isPending}
           />
           <TestGrid
             tests={tests}

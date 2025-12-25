@@ -42,7 +42,16 @@ class Goose:
             expectations=expectations,
             expected_tool_calls=expected_tool_calls,
         )
-        response = self._agent_query_func(self._test_case.query_message)
+
+        try:
+            response = self._agent_query_func(self._test_case.query_message)
+        except Exception as exc:
+            # Try to extract partial response from the exception if available
+            # Some agent implementations attach partial results to exceptions
+            partial_response = getattr(exc, "partial_response", None)
+            if partial_response is not None:
+                self._test_case.last_response = partial_response
+            raise
 
         self._test_case.last_response = response
         self._test_case.validate_tool_calls(actual_tool_call_names=response.tool_call_names)

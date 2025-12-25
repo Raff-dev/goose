@@ -15,6 +15,11 @@ export const toolingApi = {
     return response.data;
   },
 
+  async reloadTools(): Promise<ToolSummary[]> {
+    const response = await http.post<ToolSummary[]>('/tooling/reload');
+    return response.data;
+  },
+
   async getToolSchema(name: string): Promise<ToolSchema> {
     const response = await http.get<ToolSchema>(`/tooling/tools/${name}`);
     return response.data;

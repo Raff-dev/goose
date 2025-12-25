@@ -21,11 +21,13 @@ class JobQueue:
         self,
         *,
         on_job_update: Callable[[Job], None] | None = None,
+        on_result_added: Callable[[str, TestResult], None] | None = None,
         job_store: JobStore = JobStore(),
     ) -> None:
         self.job_store = job_store
         self._queue: queue.Queue[tuple[str, list[TestDefinition]]] = queue.Queue()
         self._on_job_update = on_job_update
+        self._on_result_added = on_result_added
         threading.Thread(target=self._worker_loop, daemon=True, name="GooseJobWorker").start()
 
     def enqueue(self, targets: list[TestDefinition]) -> Job:
@@ -50,6 +52,10 @@ class JobQueue:
             # Add result to job immediately so frontend can show details
             snapshot = self.job_store.add_test_result(job_id, result)
             self._notify(snapshot)
+
+            # Notify that a result was added (for persistence)
+            if self._on_result_added is not None:
+                self._on_result_added(job_id, result)
 
         return results
 

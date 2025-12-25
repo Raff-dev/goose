@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime
 from typing import Any
 
@@ -324,6 +325,32 @@ For support, email us at support@goose-outfitters.com or call ~~1-800-OLD-NUMBER
 """
 
 
+@tool
+async def check_weather_async(location: str) -> dict[str, Any]:
+    """Check the current weather for a location (async demo tool).
+
+    This is an async tool that simulates fetching weather data from an external API.
+
+    Args:
+        location: The location to check weather for (e.g., "Denver, CO").
+
+    Returns:
+        Weather information as a dictionary.
+    """
+    # Simulate async API call delay
+    await asyncio.sleep(0.5)
+
+    # Return mock weather data
+    return {
+        "location": location,
+        "temperature_f": 42,
+        "conditions": "Partly cloudy",
+        "wind_mph": 8,
+        "humidity_percent": 35,
+        "forecast": "Great day for hiking!",
+    }
+
+
 # Export all tools for the agent
 TOOLS = [
     get_product_details,
@@ -334,4 +361,5 @@ TOOLS = [
     create_sale,
     trigger_system_fault,
     get_markdown_demo,
+    check_weather_async,
 ]

@@ -141,6 +141,13 @@ export function MessageCards({ messages }: MessageCardsProps) {
                           }
                           return <CodeBlock value={String(children)} />;
                         },
+                        table({ children, ...props }) {
+                          return (
+                            <div className="overflow-x-auto">
+                              <table className="border-collapse border border-slate-300 [&_th]:border [&_th]:border-slate-300 [&_th]:px-3 [&_th]:py-2 [&_td]:border [&_td]:border-slate-300 [&_td]:px-3 [&_td]:py-2" {...props}>{children}</table>
+                            </div>
+                          );
+                        },
                       }}
                     >
                       {m.content}

@@ -191,7 +191,7 @@ async def _stream_response(
     saw_tool_calls = False
 
     try:
-        for event in agent.stream({"messages": messages}, stream_mode="messages"):
+        async for event in agent.astream({"messages": messages}, stream_mode="messages"):
             chunk, _metadata = event
 
             if isinstance(chunk, AIMessageChunk):

@@ -58,3 +58,41 @@ def test_validate_expectations_records_unmet():
         assert error.failure_reasons == {"say hi": "Agent did not say hi"}
     else:  # pragma: no cover
         raise AssertionError("Expected ExpectationValidationError")
+
+
+def test_expected_tool_calls_rejects_non_tools():
+    """Passing non-BaseTool items to expected_tool_calls should raise TypeError."""
+    import types
+
+    fake_module = types.ModuleType("fake_tools")
+
+    try:
+        TestCase(
+            query_message="test",
+            expectations=["test"],
+            expected_tool_calls=[fake_module],  # type: ignore[list-item]
+        )
+    except TypeError as error:
+        assert "expected_tool_calls must contain BaseTool instances" in str(error)
+        assert "module" in str(error)
+    else:  # pragma: no cover
+        raise AssertionError("Expected TypeError for non-tool item")
+
+
+def test_expected_tool_calls_rejects_plain_functions():
+    """Passing plain functions (not decorated with @tool) should raise TypeError."""
+
+    def my_function():
+        pass
+
+    try:
+        TestCase(
+            query_message="test",
+            expectations=["test"],
+            expected_tool_calls=[my_function],  # type: ignore[list-item]
+        )
+    except TypeError as error:
+        assert "expected_tool_calls must contain BaseTool instances" in str(error)
+        assert "function" in str(error)
+    else:  # pragma: no cover
+        raise AssertionError("Expected TypeError for plain function")

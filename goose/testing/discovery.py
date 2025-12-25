@@ -27,13 +27,20 @@ def _is_test_module(name: str) -> bool:
 
 
 def _collect_functions(module: ModuleType):
-    """Yield TestDefinitions for test functions defined in *module*."""
+    """Yield TestDefinitions for test functions defined in *module*, ordered by line number."""
+    functions = []
     for name in dir(module):
         if not any(name.startswith(prefix) for prefix in FUNCTION_PREFIXES):
             continue
         attr = getattr(module, name)
         if inspect.isfunction(attr) and attr.__module__ == module.__name__:
-            yield TestDefinition(module=module.__name__, name=name, func=attr)
+            functions.append((attr.__code__.co_firstlineno, name, attr))
+
+    # Sort by line number to preserve source order
+    functions.sort(key=lambda x: x[0])
+
+    for _lineno, name, func in functions:
+        yield TestDefinition(module=module.__name__, name=name, func=func)
 
 
 def _ensure_test_import_paths() -> Path:

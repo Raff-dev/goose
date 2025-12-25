@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { API_BASE_URL, apiClient } from './api/client';
-import type { JobResource, RunRequestPayload, TestStatus } from './api/types';
+import type { JobResource, RunRequestPayload, TestResultModel, TestStatus } from './api/types';
 
 type RunsStreamMessage =
   | { type: 'snapshot'; jobs: JobResource[] }
@@ -72,6 +72,16 @@ export const useRuns = () => {
             return sortRuns(next);
           });
           queryClient.setQueryData(['runs', job.id], job);
+
+          // When a job completes (succeeded/failed), invalidate test history for affected tests
+          // so that TestDetail components show accurate history counts
+          if (job.status === 'succeeded' || job.status === 'failed') {
+            for (const result of job.results) {
+              queryClient.invalidateQueries({ queryKey: ['history', result.qualified_name] });
+            }
+            // Also invalidate the global history
+            queryClient.invalidateQueries({ queryKey: ['history'] });
+          }
         }
       } catch (err) {
         console.error('Failed to process runs websocket payload', err);
@@ -167,6 +177,68 @@ export const useCreateRun = () => {
       if (context?.previousRuns) {
         queryClient.setQueryData(['runs'], context.previousRuns);
       }
+    },
+  });
+};
+
+export const useHistory = () => {
+  return useQuery({
+    queryKey: ['history'],
+    queryFn: apiClient.getHistory,
+    retry: false,
+  });
+};
+
+export const useTestHistory = (qualifiedName: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['history', qualifiedName],
+    queryFn: () => apiClient.getTestHistory(qualifiedName),
+    enabled: enabled && !!qualifiedName,
+    retry: false,
+  });
+};
+
+export const useClearHistory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiClient.clearHistory(),
+    onSuccess: () => {
+      // Clear the history cache and refetch
+      queryClient.setQueryData(['history'], {});
+      // Also clear runs since we're resetting state
+      queryClient.setQueryData(['runs'], []);
+    },
+  });
+};
+
+export const useClearTestHistory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (qualifiedName: string) => apiClient.clearTestHistory(qualifiedName),
+    onSuccess: (_, qualifiedName) => {
+      // Clear the test-specific history cache
+      queryClient.setQueryData(['history', qualifiedName], []);
+      // Remove from global history cache
+      queryClient.setQueryData(['history'], (old: Record<string, TestResultModel> | undefined) => {
+        if (!old) return {};
+        const next = { ...old };
+        delete next[qualifiedName];
+        return next;
+      });
+    },
+  });
+};
+
+export const useDeleteTestRun = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ qualifiedName, index }: { qualifiedName: string; index: number }) =>
+      apiClient.deleteTestRun(qualifiedName, index),
+    onSuccess: (_, { qualifiedName }) => {
+      // Invalidate the test-specific history to refetch
+      queryClient.invalidateQueries({ queryKey: ['history', qualifiedName] });
+      // Invalidate global history too
+      queryClient.invalidateQueries({ queryKey: ['history'] });
     },
   });
 };

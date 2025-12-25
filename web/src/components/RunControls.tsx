@@ -1,4 +1,4 @@
-import { ReloadIcon } from '@radix-ui/react-icons';
+import { ReloadIcon, TrashIcon } from '@radix-ui/react-icons';
 import { useEffect, useState } from 'react';
 
 import type { TestSummary } from '../api/types';
@@ -13,6 +13,8 @@ interface RunControlsProps {
   isRunning: boolean;
   onReloadTests: () => void;
   isReloadingTests: boolean;
+  onClearHistory: () => void;
+  isClearingHistory: boolean;
 }
 
 export function RunControls({
@@ -23,6 +25,8 @@ export function RunControls({
   isRunning,
   onReloadTests,
   isReloadingTests,
+  onClearHistory,
+  isClearingHistory,
 }: RunControlsProps) {
   const runDisabled = !tests.length || isRunning;
   const exitDelayMs = 600;
@@ -83,6 +87,16 @@ export function RunControls({
             <ReloadIcon className="w-4 h-4" />
           </span>
           {isReloadingTests ? 'Reloading...' : 'Reload tests'}
+        </button>
+        <button
+          type="button"
+          onClick={onClearHistory}
+          disabled={isClearingHistory}
+          title="Clear all persisted test run history"
+          className="inline-flex items-center gap-2 rounded-full border border-red-200 px-5 py-2 text-sm font-semibold text-red-600 shadow transition hover:bg-red-50 disabled:opacity-50"
+        >
+          <TrashIcon className="w-4 h-4" />
+          {isClearingHistory ? 'Clearing...' : 'Clear history'}
         </button>
       </div>
     </SurfaceCard>
