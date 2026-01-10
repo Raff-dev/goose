@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { TestResultModel, TestStatus, TestSummary } from '../api/types';
 import { RunControls } from '../components/RunControls';
@@ -6,12 +6,14 @@ import { Summary } from '../components/Summary';
 import { TestDetail } from '../components/TestDetail';
 import { TestGrid } from '../components/TestGrid';
 import { useGlobalError } from '../context/GlobalErrorContext';
+import { useTestingViewState } from '../context/TestingViewStateContext';
 import { useClearHistory, useCreateRun, useHistory, useRun, useRuns, useTests } from '../hooks';
 import { getErrorMessage } from '../utils/errors';
 
 export function TestingView() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { dashboardScrollPosition, setDashboardScrollPosition, saveScrollPosition } = useTestingViewState();
   const {
     data: tests = [],
     isLoading: testsLoading,
@@ -36,6 +38,27 @@ export function TestingView() {
   const [onlyFailures, setOnlyFailures] = useState(false);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const { setError } = useGlobalError();
+
+  // Restore scroll position when mounting dashboard view (e.g., coming back from another tab)
+  useLayoutEffect(() => {
+    if (view === 'dashboard' && dashboardScrollPosition > 0) {
+      window.scrollTo(0, dashboardScrollPosition);
+    }
+  }, []); // Only on mount
+
+  // Save scroll position on scroll when in dashboard view
+  useEffect(() => {
+    if (view !== 'dashboard') {
+      return;
+    }
+
+    const handleScroll = () => {
+      setDashboardScrollPosition(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [view, setDashboardScrollPosition]);
 
   const { data: currentJob } = useRun(currentJobId || '', !!currentJobId);
 
@@ -121,6 +144,7 @@ export function TestingView() {
   }, [currentJob]);
 
   const handleViewDetails = (testName: string) => {
+    saveScrollPosition();
     navigate(`/testing/tests/${encodeURIComponent(testName)}`);
   };
 

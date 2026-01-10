@@ -3,6 +3,7 @@ import { toolingApi } from '../../api/tooling';
 import type { ToolSchema } from '../../api/types';
 import { useGlobalError } from '../../context/GlobalErrorContext';
 import { useToolingPrefs } from '../../context/ToolingPrefsContext';
+import { useToolingViewState } from '../../context/ToolingViewStateContext';
 import { getErrorMessage } from '../../utils/errors';
 import { InvokeForm } from './InvokeForm';
 import { InvokeResult } from './InvokeResult';
@@ -15,15 +16,12 @@ export function ToolDetail({ toolName }: ToolDetailProps) {
   const [schema, setSchema] = useState<ToolSchema | null>(null);
   const [loading, setLoading] = useState(true);
   const [invoking, setInvoking] = useState(false);
-  const [result, setResult] = useState<unknown | null>(null);
-  const [isError, setIsError] = useState(false);
+  const { toolResult: result, toolIsError: isError, setToolResult } = useToolingViewState();
   const { renderMarkdown, useRawJson, setRenderMarkdown, setUseRawJson } = useToolingPrefs();
   const { setError: setGlobalError } = useGlobalError();
 
   useEffect(() => {
     setLoading(true);
-    setResult(null);
-    setIsError(false);
 
     toolingApi
       .getToolSchema(toolName)
@@ -42,17 +40,14 @@ export function ToolDetail({ toolName }: ToolDetailProps) {
 
   const handleInvoke = async (args: Record<string, unknown>) => {
     setInvoking(true);
-    setResult(null);
-    setIsError(false);
+    setToolResult(null, false);
 
     try {
       const response = await toolingApi.invokeTool(toolName, args);
       if (response.success) {
-        setResult(response.result ?? null);
-        setIsError(false);
+        setToolResult(response.result ?? null, false);
       } else {
-        setResult(response.error || 'Unknown error');
-        setIsError(true);
+        setToolResult(response.error || 'Unknown error', true);
       }
     } catch (err) {
       // For HTTP/network errors, show in global error
@@ -60,8 +55,7 @@ export function ToolDetail({ toolName }: ToolDetailProps) {
       const errorMessage = getErrorMessage(err) || 'Unknown error';
       console.log('Extracted error message:', errorMessage);
       setGlobalError(errorMessage);
-      setResult(errorMessage);
-      setIsError(true);
+      setToolResult(errorMessage, true);
     } finally {
       setInvoking(false);
     }

@@ -1,7 +1,10 @@
 import { BrowserRouter, NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { GlobalError } from './components/GlobalError';
+import { ChattingViewStateProvider } from './context/ChattingViewStateContext';
 import { GlobalErrorProvider, useGlobalError } from './context/GlobalErrorContext';
+import { TestingViewStateProvider } from './context/TestingViewStateContext';
 import { ToolingPrefsProvider } from './context/ToolingPrefsContext';
+import { ToolingViewStateProvider } from './context/ToolingViewStateContext';
 import { ChattingView } from './views/ChattingView';
 import { TestingView } from './views/TestingView';
 import { ToolingView } from './views/ToolingView';
@@ -54,7 +57,13 @@ function App() {
     <BrowserRouter>
       <GlobalErrorProvider>
         <ToolingPrefsProvider>
-          <AppContent />
+          <ToolingViewStateProvider>
+            <TestingViewStateProvider>
+              <ChattingViewStateProvider>
+                <AppContent />
+              </ChattingViewStateProvider>
+            </TestingViewStateProvider>
+          </ToolingViewStateProvider>
         </ToolingPrefsProvider>
       </GlobalErrorProvider>
     </BrowserRouter>

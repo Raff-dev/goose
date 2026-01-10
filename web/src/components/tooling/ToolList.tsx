@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import type { ToolSummary } from '../../api/types';
+import { useToolingViewState } from '../../context/ToolingViewStateContext';
 import { ToolCard } from './ToolCard';
 
 interface ToolListProps {
@@ -12,7 +13,7 @@ interface ToolListProps {
 }
 
 export function ToolList({ tools, selectedTool, onSelectTool, onReload, reloading }: ToolListProps) {
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const { collapsedGroups, toggleGroup } = useToolingViewState();
 
   const groupedByGroup = useMemo(() => {
     return tools.reduce((map, tool) => {
@@ -23,13 +24,6 @@ export function ToolList({ tools, selectedTool, onSelectTool, onReload, reloadin
       return map;
     }, new Map<string, ToolSummary[]>());
   }, [tools]);
-
-  const toggleGroup = (groupName: string) => {
-    setCollapsedGroups(prev => ({
-      ...prev,
-      [groupName]: !(prev[groupName] ?? false),
-    }));
-  };
 
   return (
     <div className="space-y-6">

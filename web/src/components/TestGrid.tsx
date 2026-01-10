@@ -1,7 +1,8 @@
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import type { TestResultModel, TestStatus, TestSummary } from '../api/types';
+import { useTestingViewState } from '../context/TestingViewStateContext';
 import { TestCard } from './TestCard';
 
 interface TestGridProps {
@@ -15,7 +16,7 @@ interface TestGridProps {
 }
 
 export function TestGrid({ tests, resultsMap, statusMap, onlyFailures, onViewDetails, onRunTest, onRunModule }: TestGridProps) {
-  const [collapsedModules, setCollapsedModules] = useState<Record<string, boolean>>({});
+  const { collapsedModules, toggleModule } = useTestingViewState();
 
   const filtered = useMemo(() => {
     return tests.filter(test => {
@@ -35,13 +36,6 @@ export function TestGrid({ tests, resultsMap, statusMap, onlyFailures, onViewDet
       return map;
     }, new Map<string, TestSummary[]>());
   }, [filtered]);
-
-  const toggleModule = (moduleName: string) => {
-    setCollapsedModules(prev => ({
-      ...prev,
-      [moduleName]: !(prev[moduleName] ?? false),
-    }));
-  };
 
   return (
     <section className="mt-8">

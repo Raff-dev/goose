@@ -1,16 +1,43 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toolingApi } from '../api/tooling';
 import type { ToolSummary } from '../api/types';
 import { ToolDetail, ToolList } from '../components/tooling';
 import { useGlobalError } from '../context/GlobalErrorContext';
+import { useToolingViewState } from '../context/ToolingViewStateContext';
 import { getErrorMessage } from '../utils/errors';
 
 export function ToolingView() {
   const [tools, setTools] = useState<ToolSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [reloading, setReloading] = useState(false);
-  const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const { setError } = useGlobalError();
+  const { listScrollPosition, detailScrollPosition, selectedTool, setSelectedTool, setListScrollPosition, setDetailScrollPosition } = useToolingViewState();
+
+  const listScrollRef = useRef<HTMLDivElement>(null);
+  const detailScrollRef = useRef<HTMLDivElement>(null);
+
+  // Restore scroll positions when component mounts
+  useEffect(() => {
+    if (listScrollRef.current && listScrollPosition > 0) {
+      listScrollRef.current.scrollTop = listScrollPosition;
+    }
+    if (detailScrollRef.current && detailScrollPosition > 0) {
+      detailScrollRef.current.scrollTop = detailScrollPosition;
+    }
+  }, [loading]); // Run after loading completes
+
+  // Save scroll position on scroll events
+  const handleListScroll = () => {
+    if (listScrollRef.current) {
+      setListScrollPosition(listScrollRef.current.scrollTop);
+    }
+  };
+
+  const handleDetailScroll = () => {
+    if (detailScrollRef.current) {
+      setDetailScrollPosition(detailScrollRef.current.scrollTop);
+    }
+  };
 
   const fetchTools = async () => {
     try {
@@ -75,7 +102,7 @@ app = GooseApp(
     <div className="h-[calc(100vh-8rem)]">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
         {/* Tool List */}
-        <div className="lg:col-span-1 overflow-y-auto min-h-0 scrollbar-hide">
+        <div ref={listScrollRef} onScroll={handleListScroll} className="lg:col-span-1 overflow-y-auto min-h-0 scrollbar-hide">
           <ToolList
             tools={tools}
             selectedTool={selectedTool}
@@ -86,7 +113,7 @@ app = GooseApp(
         </div>
 
         {/* Tool Details & Invoke */}
-        <div className="lg:col-span-2 overflow-y-auto min-h-0 scrollbar-hide">
+        <div ref={detailScrollRef} onScroll={handleDetailScroll} className="lg:col-span-2 overflow-y-auto min-h-0 scrollbar-hide">
           {selectedTool ? (
             <ToolDetail toolName={selectedTool} />
           ) : (

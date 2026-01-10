@@ -6,13 +6,14 @@ import {
     ChatPanel,
     ConversationList,
 } from "../components/chatting";
+import { useChattingViewState } from "../context/ChattingViewStateContext";
 import { useGlobalError } from "../context/GlobalErrorContext";
 import { getErrorMessage } from "../utils/errors";
 
 export function ChattingView() {
   const [agents, setAgents] = useState<AgentSummary[]>([]);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const { selectedConversationId, setSelectedConversationId } = useChattingViewState();
   const [loading, setLoading] = useState(true);
   const [selectedAgentId, setSelectedAgentId] = useState("");
   const { setError } = useGlobalError();

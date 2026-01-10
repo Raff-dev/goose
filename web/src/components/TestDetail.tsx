@@ -55,6 +55,11 @@ export function TestDetail({
   onBack,
   onRunTest,
 }: TestDetailProps) {
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Fetch historical results for this test
   const { data: historyResults = [], refetch: refetchHistory } = useTestHistory(test.qualified_name);
 
