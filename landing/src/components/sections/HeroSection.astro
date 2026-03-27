@@ -5,7 +5,17 @@ import { withBase } from "../../lib/paths.ts";
 ---
 
 <section class="relative overflow-hidden pt-32 pb-24 sm:pt-40 sm:pb-32">
-  <div class="container-shell">
+  <div class="pointer-events-none absolute -right-24 top-4 hidden select-none lg:block xl:-right-10 xl:top-0" aria-hidden="true">
+    <img
+      src={withBase("/images/goos_transparent.png")}
+      alt=""
+      class="w-[24rem] max-w-none opacity-[0.09] saturate-[0.82] mix-blend-screen xl:w-[30rem]"
+      loading="eager"
+      decoding="async"
+    />
+  </div>
+
+  <div class="relative z-10 container-shell">
     <div class="mx-auto max-w-4xl text-center">
       <p class="eyebrow">{site.hero.eyebrow}</p>
       <h1 class="mt-6 text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
