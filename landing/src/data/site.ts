@@ -1,4 +1,4 @@
-import { NPM_URL, PYPI_URL, README_URL, REPO_URL } from "@/config";
+import { NPM_URL, PYPI_URL, README_URL, REPO_URL } from "../config";
 
 export const site = {
   metadata: {
