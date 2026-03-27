@@ -30,13 +30,13 @@ export const site = {
     eyebrow: "Open-source agent testing toolkit",
     title: "Test LLM agents without brittle regex.",
     subtitle:
-      "Goose gives you a Python library, CLI, and web dashboard for validating agent behavior the way humans actually describe it — with natural-language expectations, expected tool calls, and traces you can inspect when a prompt change breaks everything.",
+      "Python library, CLI, and dashboard for validating agent behavior the way humans describe it — natural-language expectations, tool-call assertions, and traces you can inspect when something silently breaks.",
     supportingPoints: [
       "Write the test once and rerun it every time your prompts, tools, or workflow change.",
       "See the exact execution path across Testing, Tooling, and Chat instead of guessing from logs.",
       "Keep results in files and history that agents and developers can both work with.",
     ],
-    badgeItems: ["Python 3.13+", "MIT license", "CLI + dashboard", "Projector readable"],
+    badgeItems: ["Python 3.13+", "MIT license", "CLI + dashboard"],
     primaryCta: { label: "Open the repo", href: REPO_URL },
     secondaryCtas: [
       { label: "PyPI install", href: PYPI_URL },

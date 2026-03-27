@@ -9,7 +9,7 @@ import { withBase } from "../../lib/paths.ts";
     <img
       src={withBase("/images/goos_transparent.png")}
       alt=""
-      class="w-[24rem] max-w-none opacity-[0.09] saturate-[0.82] mix-blend-screen xl:w-[30rem]"
+      class="w-[24rem] max-w-none opacity-[0.07] saturate-[0.82] mix-blend-screen xl:w-[30rem]"
       loading="eager"
       decoding="async"
     />
@@ -18,10 +18,10 @@ import { withBase } from "../../lib/paths.ts";
   <div class="relative z-10 container-shell">
     <div class="mx-auto max-w-4xl text-center">
       <p class="eyebrow">{site.hero.eyebrow}</p>
-      <h1 class="mt-6 text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
+      <h1 class="mt-6 text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
         {site.hero.title}
       </h1>
-      <p class="mx-auto mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+      <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
         {site.hero.subtitle}
       </p>
 
@@ -29,14 +29,6 @@ import { withBase } from "../../lib/paths.ts";
         <ButtonLink href={site.hero.primaryCta.href} external>{site.hero.primaryCta.label}</ButtonLink>
         {site.hero.secondaryCtas.slice(0, 1).map((cta) => (
           <ButtonLink href={cta.href} variant="secondary" external>{cta.label}</ButtonLink>
-        ))}
-      </div>
-
-      <div class="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-        {site.hero.secondaryCtas.slice(1).map((cta) => (
-          <a href={cta.href} target="_blank" rel="noreferrer noopener" class="text-link text-sm">
-            {cta.label}
-          </a>
         ))}
       </div>
 
@@ -65,7 +57,7 @@ import { withBase } from "../../lib/paths.ts";
             <div class="space-y-5 text-left">
               {site.hero.supportingPoints.map((point, index) => (
                 <div class="border-l-[3px] border-l-cyan-400/70 pl-4">
-                  <div class="text-xs font-mono uppercase tracking-[0.22em] text-cyan-300/70">
+                  <div class="text-sm font-mono uppercase tracking-[0.18em] text-cyan-300/70">
                     {String(index + 1).padStart(2, "0")}
                   </div>
                   <p class="mt-1 text-base leading-relaxed text-slate-100">{point}</p>
@@ -86,7 +78,7 @@ import { withBase } from "../../lib/paths.ts";
 
       <div class="terminal-panel p-6 sm:p-8">
         <div class="flex items-center justify-between border-b border-white/8 pb-4">
-          <span class="text-xs uppercase tracking-[0.22em] text-slate-400">Why the tests hold up</span>
+          <span class="text-sm font-medium uppercase tracking-[0.18em] text-slate-400">Why the tests hold up</span>
           <span class="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">
             natural-language validation
           </span>

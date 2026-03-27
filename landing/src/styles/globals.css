@@ -61,7 +61,7 @@
   }
 
   .eyebrow {
-    @apply text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground/70;
+    @apply text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground/70;
   }
 
   .section-title {
