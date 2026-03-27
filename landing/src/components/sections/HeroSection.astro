@@ -57,10 +57,27 @@ import { withBase } from "../../lib/paths.ts";
             <div class="space-y-5 text-left">
               {site.hero.supportingPoints.map((point, index) => (
                 <div class="border-l-[3px] border-l-cyan-400/70 pl-4">
-                  <div class="text-sm font-mono uppercase tracking-[0.18em] text-cyan-300/70">
-                    {String(index + 1).padStart(2, "0")}
+                  <div class:list={[
+                    "gap-4",
+                    index === 2 ? "flex flex-col md:flex-row md:items-center md:justify-between" : "",
+                  ]}>
+                    <div class="min-w-0">
+                      <div class="text-sm font-mono uppercase tracking-[0.18em] text-cyan-300/70">
+                        {String(index + 1).padStart(2, "0")}
+                      </div>
+                      <p class="mt-1 text-base leading-relaxed text-slate-100">{point}</p>
+                    </div>
+
+                    {index === 2 && (
+                      <img
+                        src={withBase("/images/goos_transparent.png")}
+                        alt=""
+                        class="mx-auto w-24 max-w-full shrink-0 opacity-90 md:mx-0 md:w-28"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    )}
                   </div>
-                  <p class="mt-1 text-base leading-relaxed text-slate-100">{point}</p>
                 </div>
               ))}
             </div>
