@@ -1,0 +1,27 @@
+---
+import ButtonLink from "@/components/ui/ButtonLink.astro";
+import { site } from "@/data/site";
+---
+
+<section class="py-24 sm:py-36">
+  <div class="container-shell">
+    <div class="rounded-[2rem] border border-cyan-400/15 bg-slate-950/80 px-6 py-10 shadow-glow sm:px-10 sm:py-14">
+      <p class="eyebrow">{site.finalCta.eyebrow}</p>
+      <div class="mt-5 grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+        <div>
+          <h2 class="section-title">{site.finalCta.title}</h2>
+          <p class="section-copy mt-5 max-w-3xl">{site.finalCta.body}</p>
+        </div>
+
+        <div class="flex flex-col items-start gap-4 lg:items-end">
+          <ButtonLink href={site.finalCta.primaryCta.href} external>{site.finalCta.primaryCta.label}</ButtonLink>
+          <div class="flex flex-wrap gap-4">
+            {site.finalCta.secondaryCtas.map((cta) => (
+              <ButtonLink href={cta.href} variant="secondary" external>{cta.label}</ButtonLink>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,42 @@
+---
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import { site } from "@/data/site";
+import { withBase } from "@/lib/paths";
+---
+
+<section id="views" class="py-24 sm:py-32">
+  <div class="container-shell">
+    <SectionHeading eyebrow={site.views.eyebrow} title={site.views.title} intro={site.views.intro} />
+
+    <div class="mt-14 grid gap-8 xl:grid-cols-[1.05fr_0.95fr]">
+      <div class="surface-panel overflow-hidden">
+        <div class="border-b border-white/10 px-6 py-4 sm:px-8">
+          <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Testing view</p>
+          <h3 class="mt-2 text-2xl font-semibold text-foreground">Run suites, scan history, inspect failures</h3>
+        </div>
+        <img
+          src={withBase("/images/dashboard-view.png")}
+          alt="Goose dashboard testing view"
+          class="w-full border-t border-white/5 object-cover"
+        />
+      </div>
+
+      <div class="grid gap-6">
+        {site.views.items.map((item, index) => (
+          <div class:list={[
+            "rounded-[1.5rem] border p-6 sm:p-7",
+            index === 0
+              ? "border-cyan-400/20 bg-cyan-400/8"
+              : index === 1
+                ? "border-white/10 bg-white/[0.03]"
+                : "border-emerald-400/20 bg-emerald-400/8",
+          ]}>
+            <p class="text-xs uppercase tracking-[0.22em] text-muted-foreground">{item.label}</p>
+            <h3 class="mt-3 text-2xl font-semibold text-foreground">{item.name}</h3>
+            <p class="mt-3 text-base leading-relaxed text-muted-foreground">{item.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

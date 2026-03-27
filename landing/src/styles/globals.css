@@ -1,0 +1,90 @@
+@import "@fontsource-variable/inter";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --background: 222 44% 8%;
+    --foreground: 210 40% 96%;
+    --card: 222 34% 11%;
+    --card-foreground: 210 40% 96%;
+    --primary: 192 95% 54%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 222 28% 16%;
+    --secondary-foreground: 210 30% 90%;
+    --muted: 221 24% 18%;
+    --muted-foreground: 215 18% 70%;
+    --accent: 215 24% 22%;
+    --accent-foreground: 210 35% 96%;
+    --border: 220 23% 21%;
+    --input: 220 24% 18%;
+    --ring: 192 95% 54%;
+    --success: 168 84% 44%;
+    --warning: 38 92% 58%;
+    --radius: 1rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-image:
+      radial-gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 25%),
+      radial-gradient(circle at 80% 20%, rgba(13, 148, 136, 0.12), transparent 26%),
+      linear-gradient(180deg, rgba(15, 23, 42, 1) 0%, rgba(2, 6, 23, 1) 100%);
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background: rgba(34, 211, 238, 0.3);
+    color: white;
+  }
+}
+
+@layer utilities {
+  .page-shell {
+    @apply relative overflow-hidden;
+  }
+
+  .container-shell {
+    @apply mx-auto max-w-content px-4 sm:px-6;
+  }
+
+  .eyebrow {
+    @apply text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground/70;
+  }
+
+  .section-title {
+    @apply text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl;
+  }
+
+  .section-copy {
+    @apply text-base leading-relaxed text-muted-foreground sm:text-lg;
+  }
+
+  .surface-panel {
+    @apply rounded-[1.5rem] border border-white/10 bg-white/[0.03] shadow-soft backdrop-blur-sm;
+  }
+
+  .terminal-panel {
+    @apply rounded-[1.5rem] border border-cyan-400/15 bg-slate-950/80 shadow-glow;
+  }
+
+  .anchor-link {
+    @apply text-sm text-muted-foreground transition-colors hover:text-foreground;
+  }
+
+  .text-link {
+    @apply font-semibold text-cyan-300 underline decoration-white/20 underline-offset-4 transition hover:text-cyan-200 hover:decoration-cyan-300;
+  }
+}

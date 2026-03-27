@@ -1,0 +1,17 @@
+---
+interface Props {
+  eyebrow?: string;
+  title: string;
+  intro?: string;
+  align?: "left" | "center";
+}
+
+const { eyebrow, title, intro, align = "left" } = Astro.props;
+const alignClass = align === "center" ? "mx-auto max-w-3xl text-center" : "max-w-3xl";
+---
+
+<div class={alignClass}>
+  {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+  <h2 class="section-title mt-4">{title}</h2>
+  {intro && <p class="section-copy mt-5">{intro}</p>}
+</div>

@@ -1,0 +1,70 @@
+---
+import ButtonLink from "@/components/ui/ButtonLink.astro";
+import { site } from "@/data/site";
+import { withBase } from "@/lib/paths";
+---
+
+<nav class="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
+  <div class="container-shell flex h-16 items-center justify-between gap-6">
+    <a href={withBase("/")} class="flex items-center gap-3">
+      <img src={withBase("/images/goose.png")} alt="Goose" class="h-10 w-10 rounded-xl border border-white/10 bg-white/5 object-cover p-1" />
+      <div>
+        <div class="text-sm font-semibold text-foreground">{site.nav.brand}</div>
+        <div class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Agent testing toolkit</div>
+      </div>
+    </a>
+
+    <div class="hidden items-center gap-6 md:flex">
+      {site.nav.links.map((link) => (
+        <a href={withBase(link.href)} class="anchor-link">{link.label}</a>
+      ))}
+    </div>
+
+    <div class="hidden md:block">
+      <ButtonLink href={site.nav.primaryCta.href} external>{site.nav.primaryCta.label}</ButtonLink>
+    </div>
+
+    <button
+      id="menu-toggle"
+      class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-foreground md:hidden"
+      aria-label="Toggle menu"
+      aria-expanded="false"
+    >
+      <span class="sr-only">Toggle navigation</span>
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 7h16"></path>
+        <path d="M4 12h16"></path>
+        <path d="M4 17h16"></path>
+      </svg>
+    </button>
+  </div>
+
+  <div id="mobile-menu" class="hidden border-t border-white/10 bg-slate-950/95 md:hidden">
+    <div class="container-shell flex flex-col gap-4 py-4">
+      {site.nav.links.map((link) => (
+        <a href={withBase(link.href)} class="anchor-link py-1.5">{link.label}</a>
+      ))}
+      <ButtonLink href={site.nav.primaryCta.href} external class="w-full justify-center">
+        {site.nav.primaryCta.label}
+      </ButtonLink>
+    </div>
+  </div>
+</nav>
+
+<script>
+  const toggle = document.getElementById("menu-toggle");
+  const menu = document.getElementById("mobile-menu");
+
+  toggle?.addEventListener("click", () => {
+    const isOpen = menu?.classList.contains("hidden") === false;
+    menu?.classList.toggle("hidden");
+    toggle?.setAttribute("aria-expanded", String(!isOpen));
+  });
+
+  menu?.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      menu.classList.add("hidden");
+      toggle?.setAttribute("aria-expanded", "false");
+    });
+  });
+</script>

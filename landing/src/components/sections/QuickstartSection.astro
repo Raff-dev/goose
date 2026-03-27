@@ -1,0 +1,34 @@
+---
+import CodeBlock from "@/components/ui/CodeBlock.astro";
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import { site } from "@/data/site";
+---
+
+<section id="quickstart" class="py-24 sm:py-32">
+  <div class="container-shell">
+    <SectionHeading eyebrow={site.quickstart.eyebrow} title={site.quickstart.title} intro={site.quickstart.intro} />
+
+    <div class="mt-14 grid gap-8 xl:grid-cols-[0.78fr_1.22fr]">
+      <div class="space-y-6">
+        <div class="surface-panel p-6 sm:p-7">
+          <p class="text-xs uppercase tracking-[0.22em] text-slate-400">What the first setup gives you</p>
+          <div class="mt-5 space-y-5">
+            {site.quickstart.notes.map((note, index) => (
+              <div class="border-l-[3px] border-l-cyan-400/60 pl-4">
+                <div class="text-xs font-mono uppercase tracking-[0.22em] text-cyan-300/75">
+                  step {String(index + 1).padStart(2, "0")}
+                </div>
+                <p class="mt-2 text-base leading-relaxed text-muted-foreground">{note}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <CodeBlock label={site.quickstart.installLabel} code={site.quickstart.installSnippet} />
+        <CodeBlock label={site.quickstart.commandsLabel} code={site.quickstart.commandsSnippet} />
+      </div>
+
+      <CodeBlock label={site.quickstart.codeLabel} code={site.quickstart.codeSnippet} />
+    </div>
+  </div>
+</section>

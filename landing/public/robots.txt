@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://raff-dev.github.io/goose/sitemap-index.xml
