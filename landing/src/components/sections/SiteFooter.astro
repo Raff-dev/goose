@@ -1,0 +1,42 @@
+---
+import { site } from "@/data/site";
+import { withBase } from "@/lib/paths";
+---
+
+<footer class="border-t border-white/10 py-10 sm:py-14">
+  <div class="container-shell">
+    <div class="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+      <div>
+        <a href={withBase("/")} class="flex items-center gap-3">
+          <img src={withBase("/images/goose.png")} alt="Goose" class="h-12 w-12 rounded-xl border border-white/10 bg-white/5 p-1.5" />
+          <div>
+            <div class="text-lg font-semibold text-foreground">Goose</div>
+            <div class="text-xs uppercase tracking-[0.22em] text-muted-foreground">LLM agent testing toolkit</div>
+          </div>
+        </a>
+        <p class="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground">{site.footer.blurb}</p>
+      </div>
+
+      <div class="grid gap-8 sm:grid-cols-3">
+        {site.footer.groups.map((group) => (
+          <div>
+            <h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-foreground/85">{group.title}</h3>
+            <ul class="mt-4 space-y-3">
+              {group.links.map((link) => (
+                <li>
+                  <a href={link.href} target="_blank" rel="noreferrer noopener" class="anchor-link">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div class="mt-10 border-t border-white/10 pt-6 text-sm text-muted-foreground">
+      Built for repeatable agent workflows, open debugging, and visible regressions.
+    </div>
+  </div>
+</footer>

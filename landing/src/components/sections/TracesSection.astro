@@ -1,0 +1,54 @@
+---
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import { site } from "@/data/site";
+import { withBase } from "@/lib/paths";
+---
+
+<section id="traces" class="bg-slate-950/60 py-24 sm:py-36">
+  <div class="container-shell">
+    <SectionHeading eyebrow={site.traces.eyebrow} title={site.traces.title} intro={site.traces.body} />
+
+    <div class="mt-14 grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+      <div class="space-y-6">
+        <div class="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4">
+          <span class="text-3xl font-bold text-cyan-300">→</span>
+          <p class="text-sm leading-7 text-slate-100">
+            Follow the run from expectation to tool call to failure, without flattening everything into one log stream.
+          </p>
+        </div>
+
+        <div class="rounded-[1.5rem] bg-white/95 p-6 text-slate-950 sm:p-7">
+          <p class="text-xs uppercase tracking-[0.22em] text-slate-500">What you can inspect</p>
+          <div class="mt-5 space-y-5">
+            {site.traces.bullets.map((bullet) => (
+              <div class="border-l-[3px] border-l-cyan-500/50 pl-4">
+                <p class="text-base leading-relaxed">{bullet}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div class="terminal-panel p-6">
+          <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Typical loop</p>
+          <div class="mt-4 space-y-3 text-sm font-mono text-emerald-300/85">
+            {site.traces.steps.map((step, index) => (
+              <div>✓ {index + 1}. {step}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div class="surface-panel overflow-hidden">
+        <div class="border-b border-white/10 px-6 py-4 sm:px-8">
+          <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Trace detail</p>
+          <h3 class="mt-2 text-2xl font-semibold text-foreground">Inspect expectations, tool calls, and run detail in one place</h3>
+        </div>
+        <img
+          src={withBase("/images/detail-view.png")}
+          alt="Goose detail trace view"
+          class="w-full border-t border-white/5 object-cover"
+        />
+      </div>
+    </div>
+  </div>
+</section>

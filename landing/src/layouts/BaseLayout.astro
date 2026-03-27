@@ -1,0 +1,91 @@
+---
+import "@/styles/globals.css";
+import { SITE_NAME, SITE_URL } from "@/config";
+import { site } from "@/data/site";
+import { withBase } from "@/lib/paths";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = site.metadata.title,
+  description = site.metadata.description,
+} = Astro.props;
+
+const canonicalUrl = new URL(Astro.url.pathname, SITE_URL).href;
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: SITE_NAME,
+  applicationCategory: "DeveloperApplication",
+  operatingSystem: ["Web", "macOS", "Linux", "Windows"],
+  url: "https://github.com/Raff-dev/goose",
+  downloadUrl: "https://pypi.org/project/llm-goose/",
+  softwareHelp: "https://github.com/Raff-dev/goose#readme",
+  codeRepository: "https://github.com/Raff-dev/goose",
+  author: {
+    "@type": "Person",
+    name: "Rafał Łazicki",
+    url: "https://github.com/Raff-dev",
+  },
+  image: new URL(withBase("/images/goose.png"), SITE_URL).href,
+  description,
+  keywords: site.metadata.keywords.join(", "),
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: site.faq.items.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.a,
+    },
+  })),
+};
+---
+
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="robots" content="index,follow" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="keywords" content={site.metadata.keywords.join(", ")} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={new URL(withBase("/images/goose.png"), SITE_URL).href} />
+    <meta property="og:image:alt" content="Goose mascot" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL(withBase("/images/goose.png"), SITE_URL).href} />
+
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  </head>
+  <body>
+    <div class="page-shell">
+      <slot />
+    </div>
+  </body>
+</html>

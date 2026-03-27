@@ -1,0 +1,103 @@
+---
+import ButtonLink from "@/components/ui/ButtonLink.astro";
+import { site } from "@/data/site";
+import { withBase } from "@/lib/paths";
+---
+
+<section class="relative overflow-hidden pt-32 pb-24 sm:pt-40 sm:pb-32">
+  <div class="container-shell">
+    <div class="mx-auto max-w-4xl text-center">
+      <p class="eyebrow">{site.hero.eyebrow}</p>
+      <h1 class="mt-6 text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
+        {site.hero.title}
+      </h1>
+      <p class="mx-auto mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+        {site.hero.subtitle}
+      </p>
+
+      <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+        <ButtonLink href={site.hero.primaryCta.href} external>{site.hero.primaryCta.label}</ButtonLink>
+        {site.hero.secondaryCtas.slice(0, 1).map((cta) => (
+          <ButtonLink href={cta.href} variant="secondary" external>{cta.label}</ButtonLink>
+        ))}
+      </div>
+
+      <div class="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+        {site.hero.secondaryCtas.slice(1).map((cta) => (
+          <a href={cta.href} target="_blank" rel="noreferrer noopener" class="text-link text-sm">
+            {cta.label}
+          </a>
+        ))}
+      </div>
+
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
+        {site.hero.badgeItems.map((item) => (
+          <span class="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-slate-200">
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
+
+    <div class="mt-14 grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+      <div class="surface-panel overflow-hidden p-6 sm:p-8">
+        <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+          <div>
+            <div class="mb-6 flex flex-wrap gap-3">
+              {site.hero.stats.map((item) => (
+                <div class="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3">
+                  <div class="text-2xl font-bold text-cyan-300">{item.value}</div>
+                  <div class="mt-1 max-w-[12rem] text-sm text-muted-foreground">{item.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div class="space-y-5 text-left">
+              {site.hero.supportingPoints.map((point, index) => (
+                <div class="border-l-[3px] border-l-cyan-400/70 pl-4">
+                  <div class="text-xs font-mono uppercase tracking-[0.22em] text-cyan-300/70">
+                    {String(index + 1).padStart(2, "0")}
+                  </div>
+                  <p class="mt-1 text-base leading-relaxed text-slate-100">{point}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div class="flex justify-center lg:justify-end">
+            <img
+              src={withBase("/images/goose.png")}
+              alt="Goose mascot"
+              class="w-full max-w-[19rem] rounded-[2rem] border border-cyan-400/15 bg-gradient-to-br from-cyan-400/10 via-slate-900 to-amber-300/10 p-5 shadow-glow"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="terminal-panel p-6 sm:p-8">
+        <div class="flex items-center justify-between border-b border-white/8 pb-4">
+          <span class="text-xs uppercase tracking-[0.22em] text-slate-400">Why the tests hold up</span>
+          <span class="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">
+            natural-language validation
+          </span>
+        </div>
+        <div class="mt-6 space-y-4">
+          <div class="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+            <p class="text-sm text-slate-400">Expectation</p>
+            <p class="mt-2 text-base text-slate-100">“Agent created a sale transaction and then checked remaining inventory.”</p>
+          </div>
+          <div class="rounded-2xl border border-cyan-400/20 bg-cyan-400/8 p-4">
+            <p class="text-sm text-cyan-200">Required tools</p>
+            <p class="mt-2 font-mono text-sm text-slate-100">[check_inventory, create_sale]</p>
+          </div>
+          <div class="rounded-2xl border border-amber-300/15 bg-amber-300/8 p-4">
+            <p class="text-sm text-amber-200">Result</p>
+            <p class="mt-2 text-sm leading-7 text-slate-100">
+              Goose validates the behavior semantically, checks whether the right tools ran, and keeps the trace ready for the next rerun.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,22 @@
+---
+import SectionHeading from "@/components/ui/SectionHeading.astro";
+import { site } from "@/data/site";
+---
+
+<section id="faq" class="py-24 sm:py-32">
+  <div class="container-shell">
+    <SectionHeading eyebrow={site.faq.eyebrow} title={site.faq.title} align="center" />
+
+    <div class="mx-auto mt-14 max-w-4xl space-y-4">
+      {site.faq.items.map((item) => (
+        <details class="surface-panel group px-6 py-5 sm:px-7">
+          <summary class="cursor-pointer list-none pr-8 text-left text-lg font-semibold text-foreground marker:hidden">
+            {item.q}
+            <span class="float-right text-cyan-300 transition group-open:rotate-45">+</span>
+          </summary>
+          <p class="mt-4 max-w-3xl text-base leading-relaxed text-muted-foreground">{item.a}</p>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>

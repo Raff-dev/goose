@@ -1,0 +1,20 @@
+---
+interface Props {
+  label: string;
+  code: string;
+}
+
+const { label, code } = Astro.props;
+---
+
+<div class="terminal-panel overflow-hidden">
+  <div class="flex items-center justify-between border-b border-white/8 px-4 py-3">
+    <span class="text-xs uppercase tracking-[0.22em] text-slate-400">{label}</span>
+    <div class="flex gap-2">
+      <span class="h-2.5 w-2.5 rounded-full bg-rose-400/70"></span>
+      <span class="h-2.5 w-2.5 rounded-full bg-amber-300/70"></span>
+      <span class="h-2.5 w-2.5 rounded-full bg-emerald-400/70"></span>
+    </div>
+  </div>
+  <pre class="overflow-x-auto px-4 py-5 text-sm leading-7 text-slate-100 sm:px-6"><code>{code}</code></pre>
+</div>
