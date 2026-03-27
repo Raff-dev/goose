@@ -1,0 +1,21 @@
+---
+import CodeBlock from "../ui/CodeBlock.astro";
+import SectionHeading from "../ui/SectionHeading.astro";
+import { site } from "../../data/site.ts";
+---
+
+<section id="origin-prompt" class="py-24 sm:py-32">
+  <div class="container-shell">
+    <div class="rounded-[2rem] border border-white/10 bg-slate-950/70 px-6 py-10 shadow-glow sm:px-10 sm:py-14">
+      <SectionHeading
+        eyebrow={site.promptOrigin.eyebrow}
+        title={site.promptOrigin.title}
+        intro={site.promptOrigin.body}
+      />
+
+      <div class="mt-10">
+        <CodeBlock label={site.promptOrigin.label} code={site.promptOrigin.code} />
+      </div>
+    </div>
+  </div>
+</section>
