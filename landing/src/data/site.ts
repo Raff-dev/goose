@@ -250,8 +250,7 @@ export const site = {
       "jedno stanowisko pracy mnie. chcialbym zebys[REDACTED] content na ta prezentacje i pomysl, a pozniej podzieli to na sekcje, dobierze odpowiednie komponenty do",
       "danych sekcji i wtedy zaimplementuje calosc - pamietaj ze to pojdzie",
       "do publicznego repo i ma byc na gh pages opublikowane. dzialaj.",
-      "powodzenia żołnieżu!. aha i jeszcze juz ci wrzucam ten obrazek bo rzeczywiscie tylko jpg byl teraz gedzie goos_transparent.png w /home/raff/projects/prersonal/goose/goos_transparent.png, to to checmy uzyc na tym tle i w tym komponencie co jest 03",
-      "Keep results in files and history that agents and developers can both work with. also na mobile to sie zjezdza w jedno naklada sie na siebie zamiast ukladac jedno pod drugim",
+      "powodzenia żołnieżu!.",
     ].join("\n"),
   },
   footer: {
