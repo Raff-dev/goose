@@ -15,6 +15,7 @@ const {
 } = Astro.props;
 
 const canonicalUrl = new URL(Astro.url.pathname, SITE_URL).href;
+const gooseImageUrl = new URL(withBase("/images/goos_transparent.png"), SITE_URL).href;
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
@@ -30,7 +31,7 @@ const jsonLd = {
     name: "Rafał Łazicki",
     url: "https://github.com/Raff-dev",
   },
-  image: new URL(withBase("/images/goose.png"), SITE_URL).href,
+  image: gooseImageUrl,
   description,
   keywords: site.metadata.keywords.join(", "),
   offers: {
@@ -72,13 +73,13 @@ const faqJsonLd = {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:image" content={new URL(withBase("/images/goose.png"), SITE_URL).href} />
+    <meta property="og:image" content={gooseImageUrl} />
     <meta property="og:image:alt" content="Goose mascot" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={new URL(withBase("/images/goose.png"), SITE_URL).href} />
+    <meta name="twitter:image" content={gooseImageUrl} />
 
     <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     <script is:inline type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
