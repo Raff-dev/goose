@@ -7,7 +7,7 @@ import { site } from "../../data/site.ts";
   <div class="container-shell">
     <SectionHeading eyebrow={site.problem.eyebrow} title={site.problem.title} intro={site.problem.intro} />
 
-    <div class="mt-14 grid grid-cols-12 gap-x-8 gap-y-10 md:gap-y-14">
+    <div class="mt-14 grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-12 md:gap-y-14">
       {site.problem.items.map((item, index) => (
         <div
           class:list={[
