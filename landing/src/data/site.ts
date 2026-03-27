@@ -221,8 +221,7 @@ export const site = {
     label: "redacted-init-prompt.txt",
     code: [
       "﻿dobra lsuchaj obczaj to repo https://github.com/Raff-dev/goose",
-      "znajdziesz je w /home/raff/projects/personal/goose chce zebys",
-      "zaprojektowal agent pipeline, ktory przygotuje landing page w tamtym",
+      "znajdziesz je w /home/raff/projects/personal/goose [REDACTED]",
       "repo [REDACTED]",
       "przebadaj czym jest to repozytorium, podlinkuj tam socialki, githuba",
       "mojego etc, [REDACTED] zbadaj jakie",
