@@ -21,9 +21,7 @@ const section = site.presentation.opening;
       </h1>
       <p class="section-copy mt-6 max-w-2xl">{section.body}</p>
       <p class="presentation-quote mt-8 max-w-xl">{section.narration}</p>
-      <div class="presentation-note mt-8 max-w-xl">
-        <p class="text-sm leading-relaxed text-slate-200">{section.bridge}</p>
-      </div>
+      <p class="mt-8 max-w-xl text-sm font-medium leading-relaxed text-cyan-100/80">{section.bridge}</p>
     </div>
 
     <div class="grid gap-5">
@@ -35,13 +33,6 @@ const section = site.presentation.opening;
             <p class="mt-3 text-base leading-relaxed text-muted-foreground">{item.description}</p>
           </div>
         ))}
-      </div>
-
-      <div class="surface-panel p-6 sm:p-7">
-        <p class="text-xs uppercase tracking-[0.22em] text-slate-400">{section.loopLabel}</p>
-        <p class="mt-4 text-sm leading-relaxed text-slate-200">
-          {section.loopSteps.join(" → ")}
-        </p>
       </div>
     </div>
   </div>

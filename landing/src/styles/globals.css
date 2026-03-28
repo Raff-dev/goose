@@ -115,7 +115,7 @@
   }
 
   .presentation-image {
-    @apply h-full max-h-[20rem] w-full rounded-[1.15rem] object-cover object-top sm:max-h-[24rem] lg:max-h-[30rem];
+    @apply h-full max-h-[21rem] w-full rounded-[1.15rem] object-contain object-top sm:max-h-[26rem] lg:max-h-[34rem];
   }
 
   .presentation-chip {

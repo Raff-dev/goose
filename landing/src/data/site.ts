@@ -18,7 +18,7 @@ export const site = {
   presentation: {
     chrome: {
       brand: "Goose",
-      kicker: "01-06 live walkthrough",
+      kicker: "01-09 live walkthrough",
       appendixHref: "/appendix",
       appendixLabel: "Open appendix",
       primaryCta: { label: "View on GitHub", href: REPO_URL },
@@ -56,66 +56,85 @@ export const site = {
     },
     cli: {
       step: "02",
-      eyebrow: "Repeatability",
+      eyebrow: "The fix",
       title: "The first fix was a case I could rerun.",
       body:
         "When prompt edits could quietly break half the tool stack, I stopped trusting memory. Goose cases keep the query, the expectation in plain English, and the exact tools the agent should call.",
       codeLabel: "behavior_case.py",
       code: `from goose.testing import Goose\nfrom my_agent import get_weather\n\n\ndef test_weather_query(weather_goose: Goose) -> None:\n    weather_goose.case(\n        query=\"What's the weather like in San Francisco?\",\n        expectations=[\n            \"Agent provides weather information for San Francisco\",\n            \"Response mentions sunny weather and 75°F\",\n        ],\n        expected_tool_calls=[get_weather],\n    )`,
-      callouts: [
-        {
-          label: "Query",
-          title: "Start with the real request",
-          description:
-            "Lock the scenario once, then rerun the same behavior after every prompt, tool, or workflow change.",
-        },
-        {
-          label: "Expectations",
-          title: "Keep the assertion human-readable",
-          description:
-            "Natural-language expectations survive wording drift much better than brittle regex rules.",
-        },
-        {
-          label: "Tool calls",
-          title: "Verify the path, not just the answer",
-          description:
-            "If the tool path matters, Goose checks that too instead of trusting a polished final response.",
-        },
-      ],
+      anatomy: ["query", "expectations", "expected_tool_calls"],
       bridge: "The CLI gave me repeatability. Then the logs became the next bottleneck.",
     },
-    testing: {
+    logsProblem: {
       step: "03",
-      eyebrow: "Readability",
-      title: "The CLI gave me repeatability. The UI gave me orientation.",
+      eyebrow: "The next problem",
+      title: "Repeatability solved one problem and exposed the next.",
       body:
-        "Once I could rerun cases, the next bottleneck was finding the failing path fast enough. The Testing view keeps run history, expectations, tool calls, and trace detail in one place.",
+        "Once I could rerun the same case, every failure came back as a wall of terminal output. I had proof the bug existed, but reading the bug was still too expensive.",
+      points: [
+        {
+          label: "Scrollback",
+          text: "The interesting branch gets buried somewhere inside the run.",
+        },
+        {
+          label: "Context",
+          text: "I still have to reconstruct what the agent actually did.",
+        },
+        {
+          label: "Speed",
+          text: "Reading the logs starts taking longer than fixing the bug.",
+        },
+      ],
+      bridge: "So I built the UI because the logs made me guess again.",
+    },
+    testing: {
+      step: "04",
+      eyebrow: "The solution",
+      title: "The Testing view put the failure path back in one place.",
+      body:
+        "Instead of replaying the whole story from scratch, I can open the run, keep the history, and find the failing path fast enough to actually act on it.",
       screenshot: {
         src: "/images/dashboard-view.png",
         alt: "Goose testing history view",
       },
-      detail: {
-        src: "/images/detail-view.png",
-        alt: "Goose failing trace detail",
-      },
-      callouts: [
+      notes: [
         {
           title: "History stays visible",
-          description:
-            "Open the failing run instead of replaying the whole story from scratch every time something drifts.",
+          text: "I can reopen the failing run instead of rebuilding context from zero every time something drifts.",
         },
         {
-          title: "Trace detail stays attached",
-          description:
-            "See expectations, tool calls, and outputs in the same path instead of stitching clues together from logs.",
+          title: "The trace stays attached",
+          text: "Expectations, tool calls, and outputs stay on the same screen instead of being stitched together from logs.",
         },
       ],
       bridge:
         "Seeing the failing path faster exposed a different absurdity: I was still running the whole agent just to debug one tool.",
     },
+    toolingProblem: {
+      step: "05",
+      eyebrow: "The next problem",
+      title: "Readable failures still left one absurd workflow in place.",
+      body:
+        "Even after the UI made failures readable, debugging a single tool still meant booting the whole agent and walking through the whole path just to reach one function.",
+      points: [
+        {
+          label: "Overkill",
+          text: "I was paying full-agent cost for one tiny tool check.",
+        },
+        {
+          label: "Latency",
+          text: "The shortest debugging path still included a full conversation.",
+        },
+        {
+          label: "Focus",
+          text: "The real problem was one tool, but the whole stack kept getting in the way.",
+        },
+      ],
+      bridge: "That is why Tooling had to exist as its own surface.",
+    },
     tooling: {
-      step: "04",
-      eyebrow: "Isolation",
+      step: "06",
+      eyebrow: "The solution",
       title: "Then I got tired of booting the whole agent for one tool.",
       body:
         "Once the failing path was visible, a different absurdity showed up: I still had to run the entire agent to debug one tool. Tooling cuts straight to the tool, with real arguments and immediate output.",
@@ -124,26 +143,37 @@ export const site = {
       args: `{\n  \"location\": \"San Francisco\",\n  \"unit\": \"fahrenheit\"\n}`,
       outputLabel: "Result",
       output: `{\n  \"location\": \"San Francisco\",\n  \"temperature\": \"75°F\",\n  \"condition\": \"sunny\"\n}`,
-      proofPoints: [
+      supportingLine: "Arguments in. Result out. No full-agent setup in between.",
+      bridge: "Tooling fixed isolation, but not the moment a real user arrives with a request I never put in the suite.",
+    },
+    chatProblem: {
+      step: "07",
+      eyebrow: "The next problem",
+      title: "Real user bugs do not show up as prewritten test cases.",
+      body:
+        "When someone reports a request outside the suite, I do not want to write the formal test in the dark. I want to replay the request first and watch what the agent actually does.",
+      points: [
         {
-          title: "No full-agent overkill",
-          description:
-            "Debug the tool directly instead of recreating the whole conversation just to reach it.",
+          label: "A user arrives",
+          text: "The request is real, but the suite does not have it yet.",
         },
         {
-          title: "Inputs and outputs stay explicit",
-          description:
-            "Arguments, results, and failures sit side by side instead of hiding behind the final answer.",
+          label: "I still need visibility",
+          text: "I want to see the tool path before I decide what belongs in coverage.",
+        },
+        {
+          label: "Blind test writing is slow",
+          text: "Formalizing the case too early means guessing before I understand it.",
         },
       ],
-      bridge: "Tooling fixed isolation, but real user bugs do not arrive as prewritten test cases.",
+      bridge: "So the last missing piece was a live replay surface with tool visibility.",
     },
     chat: {
-      step: "05",
-      eyebrow: "Real requests",
-      title: "Real bugs do not arrive as prewritten test cases.",
+      step: "08",
+      eyebrow: "The solution",
+      title: "Chat lets me replay the request before I freeze it into coverage.",
       body:
-        "When someone reports a request outside the suite, I want to replay it live first, see the tool calls and outputs, and only then decide whether it belongs in coverage.",
+        "Now I can replay the real request, inspect the tool calls and outputs, and only then decide whether the edge case deserves to become a formal test.",
       events: [
         {
           kind: "user",
@@ -174,7 +204,7 @@ export const site = {
       bridge: "First I understand the live request. Then I decide what deserves to become coverage.",
     },
     close: {
-      step: "06",
+      step: "09",
       eyebrow: "Closed loop",
       title: "The point was never three tabs. It was one closed loop.",
       body:
@@ -210,9 +240,9 @@ export const site = {
   },
   appendix: {
     eyebrow: "After the talk",
-    title: "Appendix: install, FAQ, and the original redacted prompt",
+    title: "Appendix: install and FAQ",
     intro:
-      "The main route stays lean on purpose. Everything denser lives here: install commands, deeper questions, and the prompt that started the page.",
+      "The main route stays lean on purpose. The practical setup details and deeper questions live here instead.",
     primaryCta: { label: "Back to the presentation", href: "/" },
     secondaryCtas: [
       { label: "View on GitHub", href: REPO_URL },
