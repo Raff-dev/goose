@@ -27,26 +27,26 @@ export const site = {
     primaryCta: { label: "View on GitHub", href: REPO_URL },
   },
   hero: {
-    eyebrow: "Open-source agent testing toolkit",
-    title: "Test LLM agents without brittle regex.",
+    eyebrow: "Open-source testing for LLM agents",
+    title: "Test LLM agents by behavior, not regex.",
     subtitle:
-      "Python library, CLI, and dashboard for validating agent behavior the way humans describe it — natural-language expectations, tool-call assertions, and traces you can inspect when something silently breaks.",
+      "Python library, CLI, and dashboard for validating agent behavior with natural-language expectations, tool-call checks, and execution traces you can inspect when a run drifts.",
     supportingPoints: [
-      "Write the test once and rerun it every time your prompts, tools, or workflow change.",
-      "See the exact execution path across Testing, Tooling, and Chat instead of guessing from logs.",
-      "Keep results in files and history that agents and developers can both work with.",
+      "Write a test once. Rerun it whenever prompts, tools, or workflows change.",
+      "See the exact path across Testing, Tooling, and Chat instead of reconstructing failures from logs.",
+      "Keep file-based results and persistent history that developers and agents can inspect, diff, and rerun.",
     ],
-    badgeItems: ["Python 3.13+", "MIT license", "CLI + dashboard"],
-    primaryCta: { label: "Open the repo", href: REPO_URL },
+    badgeItems: ["Python 3.13+", "MIT", "CLI + dashboard"],
+    primaryCta: { label: "Explore the repo", href: REPO_URL },
     secondaryCtas: [
-      { label: "PyPI install", href: PYPI_URL },
+      { label: "Install from PyPI", href: PYPI_URL },
       { label: "npm dashboard", href: NPM_URL },
       { label: "Read the docs", href: README_URL },
     ],
     stats: [
-      { value: "3", label: "working modes: Testing, Tooling, Chat" },
-      { value: "1", label: "test definition you can rerun forever" },
-      { value: "0", label: "regex rules needed to catch wording drift" },
+      { value: "3", label: "modes in one toolkit: Testing, Tooling, Chat" },
+      { value: "1", label: "test definition you keep rerunning as the agent evolves" },
+      { value: "0", label: "regex rules needed to survive wording drift" },
     ],
   },
   problem: {
