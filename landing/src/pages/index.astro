@@ -3,6 +3,7 @@ import ChatSection from "../components/sections/ChatSection.astro";
 import CliCaseSection from "../components/sections/CliCaseSection.astro";
 import LoopCloseSection from "../components/sections/LoopCloseSection.astro";
 import OpeningScarSection from "../components/sections/OpeningScarSection.astro";
+import ProblemBeatSection from "../components/sections/ProblemBeatSection.astro";
 import PresentationChrome from "../components/sections/PresentationChrome.astro";
 import TestingViewSection from "../components/sections/TestingViewSection.astro";
 import ToolingSection from "../components/sections/ToolingSection.astro";
@@ -15,8 +16,11 @@ import { site } from "../data/site.ts";
   <main class="presentation-main">
     <OpeningScarSection />
     <CliCaseSection />
+    <ProblemBeatSection id="logs-problem" section={site.presentation.logsProblem} />
     <TestingViewSection />
+    <ProblemBeatSection id="tooling-problem" section={site.presentation.toolingProblem} />
     <ToolingSection />
+    <ProblemBeatSection id="chat-problem" section={site.presentation.chatProblem} />
     <ChatSection />
     <LoopCloseSection />
   </main>

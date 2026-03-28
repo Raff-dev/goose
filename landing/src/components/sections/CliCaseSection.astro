@@ -6,14 +6,7 @@ const section = site.presentation.cli;
 ---
 
 <section id="cli" class="presentation-slide">
-  <div class="container-shell grid gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
-    <div class="space-y-5">
-      <CodeBlock label={section.codeLabel} code={section.code} />
-      <div class="presentation-note">
-        <p class="text-sm leading-relaxed text-slate-200">{section.bridge}</p>
-      </div>
-    </div>
-
+  <div class="container-shell grid gap-10 lg:grid-cols-[0.34fr_0.66fr] lg:items-center">
     <div>
       <p class="presentation-kicker">{section.step} / {section.eyebrow}</p>
       <h2 class="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
@@ -21,15 +14,17 @@ const section = site.presentation.cli;
       </h2>
       <p class="section-copy mt-6 max-w-2xl">{section.body}</p>
 
-      <div class="mt-8 grid gap-4 sm:grid-cols-3">
-        {section.callouts.map((item) => (
-          <div class="presentation-note">
-            <div class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300/80">{item.label}</div>
-            <h3 class="mt-3 text-lg font-semibold text-foreground">{item.title}</h3>
-            <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
-          </div>
+      <div class="mt-8 flex flex-wrap gap-3">
+        {section.anatomy.map((item) => (
+          <span class="presentation-chip">{item}</span>
         ))}
       </div>
+
+      <p class="presentation-quote mt-8 max-w-xl">{section.bridge}</p>
+    </div>
+
+    <div class="lg:justify-self-end lg:w-full">
+      <CodeBlock label={section.codeLabel} code={section.code} lang="python" size="sm" />
     </div>
   </div>
 </section>

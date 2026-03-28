@@ -1,13 +1,20 @@
 ---
+import { Code } from "astro:components";
+
+type CodeBlockLanguage = "plaintext" | "python" | "bash" | "json";
+
 interface Props {
   label: string;
   code: string;
+  lang?: CodeBlockLanguage;
+  wrap?: boolean;
+  size?: "default" | "sm";
 }
 
-const { label, code } = Astro.props;
+const { label, code, lang = "plaintext", wrap = true, size = "sm" } = Astro.props;
 ---
 
-<div class="terminal-panel overflow-hidden">
+<div class="code-block-shell terminal-panel overflow-hidden">
   <div class="flex items-center justify-between border-b border-white/8 px-4 py-3">
     <span class="text-xs uppercase tracking-[0.22em] text-slate-400">{label}</span>
     <div class="flex gap-2">
@@ -16,5 +23,45 @@ const { label, code } = Astro.props;
       <span class="h-2.5 w-2.5 rounded-full bg-emerald-400/70"></span>
     </div>
   </div>
-  <pre class="overflow-x-hidden whitespace-pre-wrap break-words px-4 py-5 text-sm leading-7 text-slate-100 [overflow-wrap:anywhere] sm:px-6"><code class="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{code}</code></pre>
+
+  <Code
+    code={code}
+    lang={lang}
+    theme="github-dark"
+    wrap={wrap}
+    class:list={["code-block-pre", size === "sm" && "code-block-pre-sm"]}
+  />
 </div>
+
+<style is:global>
+  .code-block-shell .astro-code {
+    margin: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 1.1rem 1rem 1.25rem !important;
+    overflow-x: hidden !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .code-block-shell .astro-code code {
+    white-space: inherit !important;
+    overflow-wrap: inherit !important;
+  }
+
+  .code-block-shell .astro-code.code-block-pre {
+    font-size: 0.825rem !important;
+    line-height: 1.7 !important;
+  }
+
+  .code-block-shell .astro-code.code-block-pre-sm {
+    font-size: 0.76rem !important;
+    line-height: 1.65 !important;
+  }
+
+  @media (min-width: 640px) {
+    .code-block-shell .astro-code {
+      padding: 1.3rem 1.35rem 1.45rem !important;
+    }
+  }
+</style>

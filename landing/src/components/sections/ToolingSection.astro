@@ -1,11 +1,12 @@
 ---
+import CodeBlock from "../ui/CodeBlock.astro";
 import { site } from "../../data/site.ts";
 
 const section = site.presentation.tooling;
 ---
 
 <section id="tooling" class="presentation-slide">
-  <div class="container-shell grid gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
+  <div class="container-shell grid gap-10 lg:grid-cols-[0.34fr_0.66fr] lg:items-center">
     <div>
       <p class="presentation-kicker">{section.step} / {section.eyebrow}</p>
       <h2 class="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
@@ -25,30 +26,12 @@ const section = site.presentation.tooling;
         <span class="presentation-chip">Tooling</span>
       </div>
 
-      <div class="mt-6 grid gap-4 md:grid-cols-2">
-        <div class="terminal-panel overflow-hidden">
-          <div class="border-b border-white/8 px-4 py-3 text-xs uppercase tracking-[0.22em] text-slate-400">
-            {section.argsLabel}
-          </div>
-          <pre class="overflow-x-hidden whitespace-pre-wrap break-words px-4 py-5 text-sm leading-7 text-slate-100 [overflow-wrap:anywhere]"><code>{section.args}</code></pre>
-        </div>
-
-        <div class="terminal-panel overflow-hidden">
-          <div class="border-b border-white/8 px-4 py-3 text-xs uppercase tracking-[0.22em] text-slate-400">
-            {section.outputLabel}
-          </div>
-          <pre class="overflow-x-hidden whitespace-pre-wrap break-words px-4 py-5 text-sm leading-7 text-slate-100 [overflow-wrap:anywhere]"><code>{section.output}</code></pre>
-        </div>
+      <div class="mt-6 space-y-4">
+        <CodeBlock label={section.argsLabel} code={section.args} lang="json" size="sm" />
+        <CodeBlock label={section.outputLabel} code={section.output} lang="json" size="sm" />
       </div>
 
-      <div class="mt-6 grid gap-3 sm:grid-cols-2">
-        {section.proofPoints.map((item) => (
-          <div class="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4">
-            <div class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300/80">{item.title}</div>
-            <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
-          </div>
-        ))}
-      </div>
+      <p class="mt-6 text-sm leading-relaxed text-slate-200">{section.supportingLine}</p>
     </div>
   </div>
 </section>
