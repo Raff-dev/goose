@@ -6,6 +6,7 @@ import OpeningScarSection from "../components/sections/OpeningScarSection.astro"
 import ProblemBeatSection from "../components/sections/ProblemBeatSection.astro";
 import PresentationChrome from "../components/sections/PresentationChrome.astro";
 import TestingViewSection from "../components/sections/TestingViewSection.astro";
+import TransitionSlide from "../components/sections/TransitionSlide.astro";
 import ToolingSection from "../components/sections/ToolingSection.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { site } from "../data/site.ts";
@@ -15,12 +16,17 @@ import { site } from "../data/site.ts";
   <PresentationChrome />
   <main class="presentation-main">
     <OpeningScarSection />
+    <ProblemBeatSection id="manual-problem" section={site.presentation.manualProblem} />
+    <TransitionSlide id="cli-idea" section={site.presentation.cliIdea} />
     <CliCaseSection />
     <ProblemBeatSection id="logs-problem" section={site.presentation.logsProblem} />
+    <TransitionSlide id="testing-idea" section={site.presentation.testingIdea} />
     <TestingViewSection />
     <ProblemBeatSection id="tooling-problem" section={site.presentation.toolingProblem} />
+    <TransitionSlide id="tooling-idea" section={site.presentation.toolingIdea} />
     <ToolingSection />
     <ProblemBeatSection id="chat-problem" section={site.presentation.chatProblem} />
+    <TransitionSlide id="chat-idea" section={site.presentation.chatIdea} />
     <ChatSection />
     <LoopCloseSection />
   </main>

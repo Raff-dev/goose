@@ -18,7 +18,7 @@ export const site = {
   presentation: {
     chrome: {
       brand: "Goose",
-      kicker: "01-09 live walkthrough",
+      kicker: "01-14 live walkthrough",
       appendixHref: "/appendix",
       appendixLabel: "Open appendix",
       primaryCta: { label: "View on GitHub", href: REPO_URL },
@@ -27,47 +27,50 @@ export const site = {
       step: "01",
       eyebrow: "Builder scar",
       title: "Goose started when manual testing stopped being a method.",
-      body:
-        "I was fine while the system had one or two tools. Then the tool count, prompt routing, and side effects grew past what memory could honestly verify, and a plausible answer stopped meaning the agent had actually behaved correctly.",
+      support:
+        "At first, a few manual chats still felt like a real check.",
       narration:
-        "At first I changed the prompt, asked a few questions, and trusted that the chat sounding right meant the system was still right. That stopped working long before the agent stopped sounding confident.",
-      comparison: [
+        "Then the answers kept sounding right long after I stopped knowing whether the agent had actually behaved correctly.",
+    },
+    manualProblem: {
+      step: "02",
+      eyebrow: "The problem",
+      title: "The real break was when plausible output became a false positive.",
+      body:
+        "With one or two tools, a few chats can still feel like a real check. With fifteen or twenty, the same plausible answer can hide a skipped tool, a wrong branch, or the wrong file being written.",
+      points: [
         {
           label: "1-2 tools",
           title: "Manual chats still feel honest",
-          description:
+          text:
             "You tweak the prompt, ask a few questions, and the answer sounds fine enough to move on.",
         },
         {
           label: "15-20 tools",
           title: "Plausible output stops meaning correct behavior",
-          description:
+          text:
             "One small prompt change can silently skip a tool, change a branch, or write the wrong file while the answer still sounds plausible.",
         },
       ],
-      loopLabel: "What broke first",
-      loopSteps: [
-        "Change the system prompt.",
-        "Ask a few manual questions.",
-        "Get a plausible answer.",
-        "Miss the broken tool path.",
-      ],
-      bridge: "So the first thing I needed was a rerunnable case, not another manual check.",
+    },
+    cliIdea: {
+      step: "03",
+      eyebrow: "The idea",
+      line: "So I needed a rerunnable case, not another manual check.",
     },
     cli: {
-      step: "02",
-      eyebrow: "The fix",
-      title: "The first fix was a case I could rerun.",
+      step: "04",
+      eyebrow: "The solution",
+      title: "The first fix was a case I could rerun on every prompt change.",
       body:
-        "When prompt edits could quietly break half the tool stack, I stopped trusting memory. Goose cases keep the query, the expectation in plain English, and the exact tools the agent should call.",
+        "Instead of trusting memory, I turned the request into a case with a query, a human-readable expectation, and the exact tools the agent should call.",
       codeLabel: "behavior_case.py",
       code: `from goose.testing import Goose\nfrom my_agent import get_weather\n\n\ndef test_weather_query(weather_goose: Goose) -> None:\n    weather_goose.case(\n        query=\"What's the weather like in San Francisco?\",\n        expectations=[\n            \"Agent provides weather information for San Francisco\",\n            \"Response mentions sunny weather and 75°F\",\n        ],\n        expected_tool_calls=[get_weather],\n    )`,
       anatomy: ["query", "expectations", "expected_tool_calls"],
-      bridge: "The CLI gave me repeatability. Then the logs became the next bottleneck.",
     },
     logsProblem: {
-      step: "03",
-      eyebrow: "The next problem",
+      step: "05",
+      eyebrow: "The problem",
       title: "Repeatability solved one problem and exposed the next.",
       body:
         "Once I could rerun the same case, every failure came back as a wall of terminal output. I had proof the bug existed, but reading the bug was still too expensive.",
@@ -85,37 +88,39 @@ export const site = {
           text: "Reading the logs starts taking longer than fixing the bug.",
         },
       ],
-      bridge: "So I built the UI because the logs made me guess again.",
+    },
+    testingIdea: {
+      step: "06",
+      eyebrow: "The idea",
+      line: "So I built the UI because the logs made me guess again.",
     },
     testing: {
-      step: "04",
+      step: "07",
       eyebrow: "The solution",
       title: "The Testing view put the failure path back in one place.",
       body:
-        "Instead of replaying the whole story from scratch, I can open the run, keep the history, and find the failing path fast enough to actually act on it.",
+        "The run stopped being a wall of output. I can reopen the failure, keep the history, and find the broken path fast enough to act on it.",
       screenshot: {
         src: "/images/dashboard-view.png",
         alt: "Goose testing history view",
       },
       notes: [
         {
-          title: "History stays visible",
-          text: "I can reopen the failing run instead of rebuilding context from zero every time something drifts.",
+          title: "Open the failing run",
+          text: "I do not rebuild context from zero every time something drifts.",
         },
         {
-          title: "The trace stays attached",
-          text: "Expectations, tool calls, and outputs stay on the same screen instead of being stitched together from logs.",
+          title: "Read the path in one screen",
+          text: "Expectations, tool calls, and outputs stay attached.",
         },
       ],
-      bridge:
-        "Seeing the failing path faster exposed a different absurdity: I was still running the whole agent just to debug one tool.",
     },
     toolingProblem: {
-      step: "05",
-      eyebrow: "The next problem",
-      title: "Readable failures still left one absurd workflow in place.",
+      step: "08",
+      eyebrow: "The problem",
+      title: "Readable failures still left one absurd debugging path.",
       body:
-        "Even after the UI made failures readable, debugging a single tool still meant booting the whole agent and walking through the whole path just to reach one function.",
+        "The trace was finally clear, but touching one tool still meant booting the entire agent and walking through a full conversation just to reach one function.",
       points: [
         {
           label: "Overkill",
@@ -130,25 +135,28 @@ export const site = {
           text: "The real problem was one tool, but the whole stack kept getting in the way.",
         },
       ],
-      bridge: "That is why Tooling had to exist as its own surface.",
+    },
+    toolingIdea: {
+      step: "09",
+      eyebrow: "The idea",
+      line: "So I gave the tool its own surface.",
     },
     tooling: {
-      step: "06",
+      step: "10",
       eyebrow: "The solution",
-      title: "Then I got tired of booting the whole agent for one tool.",
+      title: "Tooling let me debug one tool without booting the whole agent.",
       body:
-        "Once the failing path was visible, a different absurdity showed up: I still had to run the entire agent to debug one tool. Tooling cuts straight to the tool, with real arguments and immediate output.",
+        "Now I can run the tool with real arguments, inspect the output immediately, and fix the exact layer that broke. The agent no longer has to be part of the setup.",
       toolName: "get_weather",
       argsLabel: "Arguments",
       args: `{\n  \"location\": \"San Francisco\",\n  \"unit\": \"fahrenheit\"\n}`,
       outputLabel: "Result",
       output: `{\n  \"location\": \"San Francisco\",\n  \"temperature\": \"75°F\",\n  \"condition\": \"sunny\"\n}`,
-      supportingLine: "Arguments in. Result out. No full-agent setup in between.",
-      bridge: "Tooling fixed isolation, but not the moment a real user arrives with a request I never put in the suite.",
+      supportingLine: "Real args. Real output. No full-agent detour.",
     },
     chatProblem: {
-      step: "07",
-      eyebrow: "The next problem",
+      step: "11",
+      eyebrow: "The problem",
       title: "Real user bugs do not show up as prewritten test cases.",
       body:
         "When someone reports a request outside the suite, I do not want to write the formal test in the dark. I want to replay the request first and watch what the agent actually does.",
@@ -166,10 +174,14 @@ export const site = {
           text: "Formalizing the case too early means guessing before I understand it.",
         },
       ],
-      bridge: "So the last missing piece was a live replay surface with tool visibility.",
+    },
+    chatIdea: {
+      step: "12",
+      eyebrow: "The idea",
+      line: "So I needed a live replay before I wrote the formal test.",
     },
     chat: {
-      step: "08",
+      step: "13",
       eyebrow: "The solution",
       title: "Chat lets me replay the request before I freeze it into coverage.",
       body:
@@ -201,10 +213,9 @@ export const site = {
         "Inspect the tool arguments and output.",
         "Decide whether the edge case belongs in the suite.",
       ],
-      bridge: "First I understand the live request. Then I decide what deserves to become coverage.",
     },
     close: {
-      step: "09",
+      step: "14",
       eyebrow: "Closed loop",
       title: "The point was never three tabs. It was one closed loop.",
       body:

@@ -1,0 +1,25 @@
+---
+interface SectionData {
+  step: string;
+  eyebrow: string;
+  line: string;
+}
+
+interface Props {
+  id: string;
+  section: SectionData;
+}
+
+const { id, section } = Astro.props;
+---
+
+<section id={id} class="presentation-slide">
+  <div class="container-shell">
+    <div class="mx-auto max-w-4xl text-center">
+      <p class="presentation-kicker">{section.step} / {section.eyebrow}</p>
+      <h2 class="mt-8 text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+        {section.line}
+      </h2>
+    </div>
+  </div>
+</section>

@@ -1,6 +1,7 @@
 ---
 interface Point {
   label: string;
+  title?: string;
   text: string;
 }
 
@@ -10,7 +11,6 @@ interface SectionData {
   title: string;
   body: string;
   points: readonly Point[];
-  bridge: string;
 }
 
 interface Props {
@@ -19,6 +19,7 @@ interface Props {
 }
 
 const { id, section } = Astro.props;
+const pointsGridClass = section.points.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3";
 ---
 
 <section id={id} class="presentation-slide">
@@ -29,13 +30,13 @@ const { id, section } = Astro.props;
         {section.title}
       </h2>
       <p class="section-copy mt-6 max-w-2xl">{section.body}</p>
-      <p class="presentation-quote mt-8 max-w-xl">{section.bridge}</p>
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+    <div class={`grid gap-4 ${pointsGridClass}`}>
       {section.points.map((point) => (
         <div class="presentation-note">
           <div class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300/80">{point.label}</div>
+          {point.title && <h3 class="mt-3 text-xl font-semibold tracking-tight text-foreground">{point.title}</h3>}
           <p class="mt-3 text-sm leading-relaxed text-slate-200">{point.text}</p>
         </div>
       ))}
