@@ -7,11 +7,13 @@ import { withBase } from "../lib/paths.ts";
 interface Props {
   title?: string;
   description?: string;
+  includeFaqJsonLd?: boolean;
 }
 
 const {
   title = site.metadata.title,
   description = site.metadata.description,
+  includeFaqJsonLd = false,
 } = Astro.props;
 
 const canonicalUrl = new URL(Astro.url.pathname, SITE_URL).href;
@@ -41,18 +43,20 @@ const jsonLd = {
   },
 };
 
-const faqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: site.faq.items.map((item) => ({
-    "@type": "Question",
-    name: item.q,
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: item.a,
-    },
-  })),
-};
+const faqJsonLd = includeFaqJsonLd
+  ? {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: site.faq.items.map((item) => ({
+        "@type": "Question",
+        name: item.q,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: item.a,
+        },
+      })),
+    }
+  : null;
 ---
 
 <!doctype html>
@@ -82,7 +86,7 @@ const faqJsonLd = {
     <meta name="twitter:image" content={gooseImageUrl} />
 
     <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-    <script is:inline type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+    {faqJsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />}
   </head>
   <body>
     <div class="page-shell">

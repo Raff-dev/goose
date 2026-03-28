@@ -1,0 +1,56 @@
+---
+import { site } from "../../data/site.ts";
+
+const section = site.presentation.chat;
+const eventClasses = {
+  user: "ml-auto border-cyan-400/30 bg-cyan-400/10 text-cyan-50",
+  tool_call: "border-amber-300/25 bg-amber-300/10 text-amber-50",
+  tool_output: "border-emerald-400/25 bg-emerald-400/10 text-emerald-50",
+  assistant: "border-white/10 bg-white/[0.04] text-slate-100",
+} as const;
+---
+
+<section id="chat" class="presentation-slide">
+  <div class="container-shell grid gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
+    <div>
+      <p class="presentation-kicker">{section.step} / {section.eyebrow}</p>
+      <h2 class="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+        {section.title}
+      </h2>
+      <p class="section-copy mt-6 max-w-2xl">{section.body}</p>
+
+      <div class="presentation-note mt-8 max-w-2xl">
+        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">What happens next</p>
+        <div class="mt-4 space-y-3">
+          {section.nextSteps.map((item, index) => (
+            <div class="flex gap-3">
+              <span class="presentation-chip shrink-0">{String(index + 1).padStart(2, "0")}</span>
+              <p class="text-sm leading-relaxed text-slate-200">{item}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <p class="presentation-quote mt-8 max-w-xl">{section.bridge}</p>
+    </div>
+
+    <div class="surface-panel p-5 sm:p-6">
+      <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-4">
+        <div>
+          <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Live replay</p>
+          <h3 class="mt-2 text-2xl font-semibold text-foreground">Chat with tool visibility</h3>
+        </div>
+        <span class="presentation-chip">Chat</span>
+      </div>
+
+      <div class="mt-6 space-y-4">
+        {section.events.map((event) => (
+          <div class={`max-w-[90%] rounded-[1.35rem] border px-4 py-4 shadow-soft ${eventClasses[event.kind]}`}>
+            <div class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] opacity-80">{event.label}</div>
+            <p class="mt-3 text-sm leading-relaxed">{event.text}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
