@@ -6,7 +6,7 @@ const section = site.presentation.testing;
 ---
 
 <section id="testing" class="presentation-slide">
-  <div class="container-shell grid gap-10 lg:grid-cols-[0.54fr_0.46fr] lg:items-center">
+  <div class="container-shell grid gap-10 lg:grid-cols-[0.6fr_0.4fr] lg:items-center">
     <div class="presentation-visual">
       <img src={withBase(section.screenshot.src)} alt={section.screenshot.alt} class="presentation-image" />
     </div>
@@ -18,16 +18,14 @@ const section = site.presentation.testing;
       </h2>
       <p class="section-copy mt-6 max-w-2xl">{section.body}</p>
 
-      <div class="mt-8 space-y-4">
+      <div class="mt-8 space-y-4 border-l border-white/10 pl-4">
         {section.notes.map((item) => (
-          <div class="presentation-note">
-            <h3 class="text-lg font-semibold text-foreground">{item.title}</h3>
+          <div>
+            <h3 class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-300">{item.title}</h3>
             <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
           </div>
         ))}
       </div>
-
-      <p class="presentation-quote mt-8 max-w-2xl">{section.bridge}</p>
     </div>
   </div>
 </section>
