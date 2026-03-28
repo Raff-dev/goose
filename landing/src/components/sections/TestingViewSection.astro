@@ -1,0 +1,39 @@
+---
+import { site } from "../../data/site.ts";
+import { withBase } from "../../lib/paths.ts";
+
+const section = site.presentation.testing;
+---
+
+<section id="testing" class="presentation-slide">
+  <div class="container-shell grid gap-10 lg:grid-cols-[1.06fr_0.94fr] lg:items-center">
+    <div class="grid gap-4 lg:grid-cols-[1fr_0.62fr] lg:items-end">
+      <div class="presentation-visual">
+        <img src={withBase(section.screenshot.src)} alt={section.screenshot.alt} class="presentation-image" />
+      </div>
+
+      <div class="presentation-visual">
+        <img src={withBase(section.detail.src)} alt={section.detail.alt} class="h-full max-h-52 w-full rounded-[1rem] object-cover object-top" />
+      </div>
+    </div>
+
+    <div class="lg:pl-4">
+      <p class="presentation-kicker">{section.step} / {section.eyebrow}</p>
+      <h2 class="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+        {section.title}
+      </h2>
+      <p class="section-copy mt-6 max-w-2xl">{section.body}</p>
+
+      <div class="mt-8 space-y-4">
+        {section.callouts.map((item) => (
+          <div class="presentation-note">
+            <h3 class="text-lg font-semibold text-foreground">{item.title}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+          </div>
+        ))}
+      </div>
+
+      <p class="presentation-quote mt-8 max-w-2xl">{section.bridge}</p>
+    </div>
+  </div>
+</section>

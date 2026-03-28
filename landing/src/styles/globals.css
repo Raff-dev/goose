@@ -33,6 +33,7 @@
 
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
@@ -43,6 +44,7 @@
       radial-gradient(circle at 80% 20%, rgba(13, 148, 136, 0.12), transparent 26%),
       linear-gradient(180deg, rgba(15, 23, 42, 1) 0%, rgba(2, 6, 23, 1) 100%);
     min-height: 100vh;
+    overflow-x: hidden;
   }
 
   ::selection {
@@ -53,7 +55,7 @@
 
 @layer utilities {
   .page-shell {
-    @apply relative overflow-hidden;
+    @apply relative overflow-x-hidden;
   }
 
   .container-shell {
@@ -86,5 +88,37 @@
 
   .text-link {
     @apply font-semibold text-cyan-300 underline decoration-white/20 underline-offset-4 transition hover:text-cyan-200 hover:decoration-cyan-300;
+  }
+
+  .presentation-main {
+    @apply relative;
+  }
+
+  .presentation-slide {
+    @apply relative flex items-center py-20 sm:py-24 lg:min-h-[calc(100svh-1rem)] lg:py-12;
+  }
+
+  .presentation-kicker {
+    @apply text-sm font-semibold uppercase tracking-[0.22em] text-cyan-200/80;
+  }
+
+  .presentation-quote {
+    @apply border-l-2 border-cyan-300/60 pl-4 text-base leading-relaxed text-slate-200 sm:text-lg;
+  }
+
+  .presentation-note {
+    @apply rounded-[1.5rem] border border-white/10 bg-slate-950/70 p-5 shadow-soft;
+  }
+
+  .presentation-visual {
+    @apply rounded-[1.75rem] border border-white/10 bg-slate-950/70 p-3 shadow-glow backdrop-blur-sm;
+  }
+
+  .presentation-image {
+    @apply h-full max-h-[20rem] w-full rounded-[1.15rem] object-cover object-top sm:max-h-[24rem] lg:max-h-[30rem];
+  }
+
+  .presentation-chip {
+    @apply inline-flex items-center rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-cyan-100;
   }
 }

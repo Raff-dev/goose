@@ -2,9 +2,9 @@ import { NPM_URL, PYPI_URL, README_URL, REPO_URL } from "../config.ts";
 
 export const site = {
   metadata: {
-    title: "Goose — test, trace, and debug LLM agents",
+    title: "Goose — from manual checks to repeatable agent testing",
     description:
-      "Open-source Python library, CLI, and dashboard for validating agent behavior with natural-language expectations, tool-call assertions, and full execution traces.",
+      "Goose is the open-source CLI and dashboard I built when manual testing stopped scaling: repeatable cases, readable traces, direct tool debugging, and live chat replay for LLM agents.",
     keywords: [
       "LLM testing",
       "agent testing",
@@ -13,6 +13,210 @@ export const site = {
       "execution traces",
       "tool call assertions",
       "open-source dashboard",
+    ],
+  },
+  presentation: {
+    chrome: {
+      brand: "Goose",
+      kicker: "01-06 live walkthrough",
+      appendixHref: "/appendix",
+      appendixLabel: "Open appendix",
+      primaryCta: { label: "View on GitHub", href: REPO_URL },
+    },
+    opening: {
+      step: "01",
+      eyebrow: "Builder scar",
+      title: "Goose started when manual testing stopped being a method.",
+      body:
+        "I was fine while the system had one or two tools. Then the tool count, prompt routing, and side effects grew past what memory could honestly verify, and a plausible answer stopped meaning the agent had actually behaved correctly.",
+      narration:
+        "At first I changed the prompt, asked a few questions, and trusted that the chat sounding right meant the system was still right. That stopped working long before the agent stopped sounding confident.",
+      comparison: [
+        {
+          label: "1-2 tools",
+          title: "Manual chats still feel honest",
+          description:
+            "You tweak the prompt, ask a few questions, and the answer sounds fine enough to move on.",
+        },
+        {
+          label: "15-20 tools",
+          title: "Plausible output stops meaning correct behavior",
+          description:
+            "One small prompt change can silently skip a tool, change a branch, or write the wrong file while the answer still sounds plausible.",
+        },
+      ],
+      loopLabel: "What broke first",
+      loopSteps: [
+        "Change the system prompt.",
+        "Ask a few manual questions.",
+        "Get a plausible answer.",
+        "Miss the broken tool path.",
+      ],
+      bridge: "So the first thing I needed was a rerunnable case, not another manual check.",
+    },
+    cli: {
+      step: "02",
+      eyebrow: "Repeatability",
+      title: "The first fix was a case I could rerun.",
+      body:
+        "When prompt edits could quietly break half the tool stack, I stopped trusting memory. Goose cases keep the query, the expectation in plain English, and the exact tools the agent should call.",
+      codeLabel: "behavior_case.py",
+      code: `from goose.testing import Goose\nfrom my_agent import get_weather\n\n\ndef test_weather_query(weather_goose: Goose) -> None:\n    weather_goose.case(\n        query=\"What's the weather like in San Francisco?\",\n        expectations=[\n            \"Agent provides weather information for San Francisco\",\n            \"Response mentions sunny weather and 75°F\",\n        ],\n        expected_tool_calls=[get_weather],\n    )`,
+      callouts: [
+        {
+          label: "Query",
+          title: "Start with the real request",
+          description:
+            "Lock the scenario once, then rerun the same behavior after every prompt, tool, or workflow change.",
+        },
+        {
+          label: "Expectations",
+          title: "Keep the assertion human-readable",
+          description:
+            "Natural-language expectations survive wording drift much better than brittle regex rules.",
+        },
+        {
+          label: "Tool calls",
+          title: "Verify the path, not just the answer",
+          description:
+            "If the tool path matters, Goose checks that too instead of trusting a polished final response.",
+        },
+      ],
+      bridge: "The CLI gave me repeatability. Then the logs became the next bottleneck.",
+    },
+    testing: {
+      step: "03",
+      eyebrow: "Readability",
+      title: "The CLI gave me repeatability. The UI gave me orientation.",
+      body:
+        "Once I could rerun cases, the next bottleneck was finding the failing path fast enough. The Testing view keeps run history, expectations, tool calls, and trace detail in one place.",
+      screenshot: {
+        src: "/images/dashboard-view.png",
+        alt: "Goose testing history view",
+      },
+      detail: {
+        src: "/images/detail-view.png",
+        alt: "Goose failing trace detail",
+      },
+      callouts: [
+        {
+          title: "History stays visible",
+          description:
+            "Open the failing run instead of replaying the whole story from scratch every time something drifts.",
+        },
+        {
+          title: "Trace detail stays attached",
+          description:
+            "See expectations, tool calls, and outputs in the same path instead of stitching clues together from logs.",
+        },
+      ],
+      bridge:
+        "Seeing the failing path faster exposed a different absurdity: I was still running the whole agent just to debug one tool.",
+    },
+    tooling: {
+      step: "04",
+      eyebrow: "Isolation",
+      title: "Then I got tired of booting the whole agent for one tool.",
+      body:
+        "Once the failing path was visible, a different absurdity showed up: I still had to run the entire agent to debug one tool. Tooling cuts straight to the tool, with real arguments and immediate output.",
+      toolName: "get_weather",
+      argsLabel: "Arguments",
+      args: `{\n  \"location\": \"San Francisco\",\n  \"unit\": \"fahrenheit\"\n}`,
+      outputLabel: "Result",
+      output: `{\n  \"location\": \"San Francisco\",\n  \"temperature\": \"75°F\",\n  \"condition\": \"sunny\"\n}`,
+      proofPoints: [
+        {
+          title: "No full-agent overkill",
+          description:
+            "Debug the tool directly instead of recreating the whole conversation just to reach it.",
+        },
+        {
+          title: "Inputs and outputs stay explicit",
+          description:
+            "Arguments, results, and failures sit side by side instead of hiding behind the final answer.",
+        },
+      ],
+      bridge: "Tooling fixed isolation, but real user bugs do not arrive as prewritten test cases.",
+    },
+    chat: {
+      step: "05",
+      eyebrow: "Real requests",
+      title: "Real bugs do not arrive as prewritten test cases.",
+      body:
+        "When someone reports a request outside the suite, I want to replay it live first, see the tool calls and outputs, and only then decide whether it belongs in coverage.",
+      events: [
+        {
+          kind: "user",
+          label: "User request",
+          text: "Compare today's weather in San Francisco with tomorrow and tell me if I should bike.",
+        },
+        {
+          kind: "tool_call",
+          label: "Tool call",
+          text: "get_weather({\"location\": \"San Francisco\", \"unit\": \"fahrenheit\"})",
+        },
+        {
+          kind: "tool_output",
+          label: "Tool output",
+          text: "today: 75°F and sunny, tomorrow: 68°F with light wind",
+        },
+        {
+          kind: "assistant",
+          label: "Assistant",
+          text: "Bike today. Tomorrow is still fine, but it will be cooler and windier.",
+        },
+      ],
+      nextSteps: [
+        "Replay the live request.",
+        "Inspect the tool arguments and output.",
+        "Decide whether the edge case belongs in the suite.",
+      ],
+      bridge: "First I understand the live request. Then I decide what deserves to become coverage.",
+    },
+    close: {
+      step: "06",
+      eyebrow: "Closed loop",
+      title: "The point was never three tabs. It was one closed loop.",
+      body:
+        "Once I could replay a real request, read the failing path, isolate one tool, and save the result as a case, Goose finally felt like a system instead of a pile of workarounds.",
+      loop: [
+        {
+          label: "01",
+          title: "Replay the request",
+          description: "Start from the real input instead of guessing what the user probably meant.",
+        },
+        {
+          label: "02",
+          title: "Read the path",
+          description: "Open the failing trace and see expectations, tool calls, and outputs together.",
+        },
+        {
+          label: "03",
+          title: "Isolate one tool",
+          description: "Cut out the full-agent overhead when the bug is lower in the stack.",
+        },
+        {
+          label: "04",
+          title: "Save and rerun",
+          description: "Turn the discovered behavior into coverage you can keep running on every change.",
+        },
+      ],
+      contribution:
+        "Goose only started feeling complete when I could move from a real request to saved coverage without guessing in between. If you have an edge case it does not cover yet, open an issue or send a PR.",
+      primaryCta: { label: "Explore Goose on GitHub", href: REPO_URL },
+      secondaryCta: { label: "Open issues", href: `${REPO_URL}/issues` },
+      appendixCta: { label: "Open appendix", href: "/appendix" },
+    },
+  },
+  appendix: {
+    eyebrow: "After the talk",
+    title: "Appendix: install, FAQ, and the original redacted prompt",
+    intro:
+      "The main route stays lean on purpose. Everything denser lives here: install commands, deeper questions, and the prompt that started the page.",
+    primaryCta: { label: "Back to the presentation", href: "/" },
+    secondaryCtas: [
+      { label: "View on GitHub", href: REPO_URL },
+      { label: "Install from PyPI", href: PYPI_URL },
     ],
   },
   nav: {

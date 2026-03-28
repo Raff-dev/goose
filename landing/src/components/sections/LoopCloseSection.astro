@@ -1,0 +1,43 @@
+---
+import ButtonLink from "../ui/ButtonLink.astro";
+import { site } from "../../data/site.ts";
+import { withBase } from "../../lib/paths.ts";
+
+const section = site.presentation.close;
+---
+
+<section id="closed-loop" class="presentation-slide">
+  <div class="container-shell">
+    <div class="mx-auto max-w-5xl rounded-[2rem] border border-cyan-400/15 bg-slate-950/80 px-6 py-10 shadow-glow sm:px-10 sm:py-12">
+      <p class="presentation-kicker text-center">{section.step} / {section.eyebrow}</p>
+      <h2 class="mt-4 text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+        {section.title}
+      </h2>
+      <p class="section-copy mx-auto mt-5 max-w-3xl text-center">{section.body}</p>
+
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
+        {section.loop.map((item, index) => (
+          <>
+            <div class="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-4 py-3">
+              <span class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300/80">{item.label}</span>
+              <span class="text-sm font-semibold text-foreground">{item.title}</span>
+            </div>
+            {index < section.loop.length - 1 && <span class="text-lg text-muted-foreground">→</span>}
+          </>
+        ))}
+      </div>
+
+      <p class="mx-auto mt-8 max-w-3xl text-center text-lg leading-relaxed text-slate-200">{section.contribution}</p>
+
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <ButtonLink href={section.primaryCta.href} external>{section.primaryCta.label}</ButtonLink>
+        <a
+          href={withBase(section.appendixCta.href)}
+          class="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3.5 text-base font-semibold text-foreground transition hover:border-cyan-300/40 hover:text-cyan-100"
+        >
+          {section.appendixCta.label}
+        </a>
+      </div>
+    </div>
+  </div>
+</section>

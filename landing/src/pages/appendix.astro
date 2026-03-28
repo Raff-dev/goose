@@ -1,0 +1,42 @@
+---
+import FAQSection from "../components/sections/FAQSection.astro";
+import PromptOriginSection from "../components/sections/PromptOriginSection.astro";
+import QuickstartSection from "../components/sections/QuickstartSection.astro";
+import SiteFooter from "../components/sections/SiteFooter.astro";
+import ButtonLink from "../components/ui/ButtonLink.astro";
+import { site } from "../data/site.ts";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { withBase } from "../lib/paths.ts";
+
+const appendix = site.appendix;
+---
+
+<BaseLayout title={`${appendix.title} — Goose`} description={appendix.intro} includeFaqJsonLd={true}>
+  <main class="pb-8 pt-24 sm:pt-28">
+    <section class="py-8 sm:py-10">
+      <div class="container-shell">
+        <div class="rounded-[2rem] border border-white/10 bg-slate-950/75 px-6 py-10 shadow-soft sm:px-10 sm:py-12">
+          <a href={withBase(appendix.primaryCta.href)} class="anchor-link">
+            ← {appendix.primaryCta.label}
+          </a>
+
+          <p class="eyebrow mt-6">{appendix.eyebrow}</p>
+          <h1 class="section-title mt-4 max-w-4xl">{appendix.title}</h1>
+          <p class="section-copy mt-5 max-w-3xl">{appendix.intro}</p>
+
+          <div class="mt-8 flex flex-wrap gap-4">
+            <ButtonLink href={withBase(appendix.primaryCta.href)}>{appendix.primaryCta.label}</ButtonLink>
+            {appendix.secondaryCtas.map((cta) => (
+              <ButtonLink href={cta.href} variant="secondary" external>{cta.label}</ButtonLink>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <QuickstartSection />
+    <FAQSection />
+    <PromptOriginSection />
+  </main>
+  <SiteFooter />
+</BaseLayout>
