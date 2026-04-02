@@ -1,22 +1,34 @@
 """CLI output helpers for displaying test results.
 
 This module provides formatting and display utilities for rendering
-test results in the terminal.
+test results in the terminal. Results are persisted to the same store
+used by the dashboard so history is shared between CLI and UI.
 """
 
 from __future__ import annotations
 
 import json
+import uuid
 from typing import Any
 
 from typer import colors, echo, style
 
+from goose.testing.api.persistence import TestRunStore
+from goose.testing.api.schema import TestResultModel
 from goose.testing.models.tests import TestResult
 from goose.testing.runner import execute_test
 
 
-def run_tests(definitions: list, verbose: bool) -> tuple[int, int, float]:
-    """Execute tests and return (passed, failures, total_duration)."""
+def run_tests(definitions: list, verbose: bool, *, store: TestRunStore | None = None) -> tuple[int, int, float]:
+    """Execute tests and return (passed, failures, total_duration).
+
+    Args:
+        definitions: Test definitions to execute.
+        verbose: Whether to display conversational transcripts.
+        store: Optional persistence store. When provided, each result
+               is saved so the dashboard can display CLI-initiated runs.
+    """
+    job_id = str(uuid.uuid4())
     failures = 0
     total = 0
     total_duration = 0.0
@@ -25,6 +37,10 @@ def run_tests(definitions: list, verbose: bool) -> tuple[int, int, float]:
         total += 1
         total_duration += result.duration
         failures += display_result(result, verbose=verbose)
+
+        if store is not None:
+            store.add_run(job_id, TestResultModel.from_result(result))
+
     return total - failures, failures, total_duration
 
 
