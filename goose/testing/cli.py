@@ -6,14 +6,24 @@ and listing Goose tests from the command line.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 from typer import colors
 
 from goose.core.config import GooseConfig
+from goose.testing.api.persistence import TestRunStore
 from goose.testing.discovery import load_from_qualified_name
 from goose.testing.output import run_tests
 
 app = typer.Typer(help="Run and manage Goose tests")
+
+
+def _get_store() -> TestRunStore:
+    """Return a TestRunStore using the standard gooseapp/data/ path."""
+    config = GooseConfig()
+    data_path = config.gooseapp_dir / "data"
+    return TestRunStore(data_path)
 
 
 @app.command()
@@ -42,7 +52,8 @@ def run(
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
 
-    passed_count, failures, total_duration = run_tests(definitions, verbose)
+    store = _get_store()
+    passed_count, failures, total_duration = run_tests(definitions, verbose, store=store)
 
     passed_text = typer.style(str(passed_count), fg=colors.GREEN)
     failed_text = typer.style(str(failures), fg=colors.RED)
