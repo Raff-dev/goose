@@ -16,9 +16,9 @@ The goose.case() method:
         Natural language descriptions of what the response should contain.
         An LLM validator checks if the agent's response meets these.
 
-    expected_tool_calls: list[BaseTool] | None
-        Optional list of LangChain tools the agent should have called.
-        Pass the actual tool functions, not strings.
+    expected_tool_calls: list | None
+        Optional list of expected tools the agent should have called.
+        Pass tool functions/objects or plain tool names as strings.
 
 Example:
     def test_weather_query(goose: Goose) -> None:

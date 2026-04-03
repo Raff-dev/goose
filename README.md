@@ -199,6 +199,9 @@ you expect the agent to call. This example is adapted from
 `example_tests/agent_behaviour_test.py` and shows an analytical workflow where the agent both
 retrieves data and creates records:
 
+`expected_tool_calls` accepts backward-compatible LangChain tool objects, plain callable tool functions,
+tool name strings, and OpenAI-style tool definitions with `function.name`.
+
 
 ```python
 def test_sale_then_inventory_update(goose_fixture: Goose) -> None:
