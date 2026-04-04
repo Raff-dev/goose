@@ -21,7 +21,7 @@ interface Props {
 
 const { id, section } = Astro.props as Props;
 const isPair = section.layout === "pair";
-const isToolingShowcase = id === "tooling-dashboard";
+const usesWiderSingleLayout = id === "tooling-dashboard" || id === "chat-dashboard";
 ---
 
 <section id={id} class="presentation-slide overflow-hidden" data-dashboard-lightbox-root>
@@ -30,12 +30,12 @@ const isToolingShowcase = id === "tooling-dashboard";
       "container-shell grid gap-8 lg:items-center",
       isPair
         ? "lg:grid-cols-[0.28fr_0.72fr]"
-        : isToolingShowcase
+        : usesWiderSingleLayout
           ? "lg:grid-cols-[minmax(0,0.38fr)_minmax(0,0.62fr)] xl:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]"
           : "lg:grid-cols-[0.26fr_0.74fr]",
     ]}
   >
-    <div class:list={["relative z-10", isToolingShowcase ? "max-w-2xl" : "max-w-xl"]}>
+    <div class:list={["relative z-10", usesWiderSingleLayout ? "max-w-2xl" : "max-w-xl"]}>
       <p class="presentation-kicker">{section.eyebrow}</p>
       <h2 class="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
         {section.title}
