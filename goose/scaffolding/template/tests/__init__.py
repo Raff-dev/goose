@@ -1,12 +1,12 @@
 """Goose test package.
 
 This package contains your behavioral tests for your LLM agent.
-Tests are defined using the @test decorator and use the Goose fixture
-for interacting with your agent.
+Tests are ordinary `test_*` functions that use the Goose fixture to
+interact with your agent.
 
 Test discovery:
-    - Files must be named test_*.py or *_test.py
-    - Test functions must be decorated with @test
+    - Files must be named test_*.py or tests_*.py
+    - Test functions must be named test_*
     - Tests use the `goose` fixture defined in conftest.py
 
 Running tests:
@@ -15,6 +15,7 @@ Running tests:
     goose test run gooseapp.tests.test_example  # Run specific module
     goose test list                   # List all discovered tests
 
-Dashboard:
-    goose api                         # Start the web dashboard
+Development loop:
+    goose api                         # Start the Goose backend API
+    goose-dashboard                   # Start the dashboard UI
 """

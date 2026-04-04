@@ -2,6 +2,7 @@
 
 This file shows how to write behavioral tests for your LLM agent.
 Delete or modify these examples once you understand the patterns.
+For the full guide, see https://github.com/Raff-dev/goose/blob/main/docs/testing.md
 
 Test structure:
     1. Define a function starting with `test_`
@@ -65,6 +66,8 @@ def test_agent_uses_correct_tool(goose: Goose) -> None:
 
     Use expected_tool_calls to verify the agent used specific tools.
     Import your actual tool functions and pass them in the list.
+    Keep expectations focused on observable outcomes; the testing guide
+    has more examples of what that looks like in practice.
 
     Example with tools:
         from my_agent.tools import search_products, get_inventory
