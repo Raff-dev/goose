@@ -1,4 +1,4 @@
-import { BrowserRouter, NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { GlobalError } from './components/GlobalError';
 import { ChattingViewStateProvider } from './context/ChattingViewStateContext';
 import { GlobalErrorProvider, useGlobalError } from './context/GlobalErrorContext';
@@ -42,6 +42,7 @@ function AppContent() {
       <main className="max-w-7xl mx-auto py-6 px-4">
         <GlobalError error={error} errorKey={errorKey} />
         <Routes>
+          <Route path="/tests/*" element={<LegacyTestsRedirect />} />
           <Route path="/testing/*" element={<TestingView />} />
           <Route path="/tooling" element={<ToolingView />} />
           <Route path="/chat" element={<ChattingView />} />
@@ -50,6 +51,18 @@ function AppContent() {
       </main>
     </div>
   );
+}
+
+function LegacyTestsRedirect() {
+  const location = useLocation();
+  const suffix = location.pathname.replace(/^\/tests/, '');
+
+  let pathname = '/testing';
+  if (suffix && suffix !== '/') {
+    pathname = `/testing/tests${suffix}`;
+  }
+
+  return <Navigate to={{ pathname, search: location.search, hash: location.hash }} replace />;
 }
 
 function App() {
