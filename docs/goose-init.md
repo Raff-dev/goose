@@ -89,6 +89,9 @@ def goose_fixture() -> Goose:
     )
 ```
 
+That `query` callable receives the exact user message from `goose.case(query=...)` and must return
+`AgentResponse`. See [`testing.md`](testing.md) for a concrete example of the contract.
+
 If your app needs setup or teardown, attach lifecycle hooks here too.
 
 ### 3. `gooseapp/tests/`

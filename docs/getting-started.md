@@ -91,6 +91,9 @@ def goose_fixture() -> Goose:
     )
 ```
 
+That `query` callable receives the exact user message from `goose.case(query=...)` and must return
+`AgentResponse`. See [`testing.md`](testing.md) for the concrete input and output shape.
+
 If your tests need database resets or other setup around each case, extend this file with hooks as shown in
 [`testing.md`](testing.md).
 

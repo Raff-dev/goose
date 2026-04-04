@@ -58,6 +58,61 @@ The three fields do different jobs:
 - `expectations` - natural-language assertions validated against the response
 - `expected_tool_calls` - an optional tool audit using the actual tool callables
 
+## The query function contract behind `goose.case(...)`
+
+`goose.case(...)` only defines the test. When the case executes, Goose takes the `query=` string and passes it into
+the callable you registered as `agent_query_func` in `gooseapp/conftest.py`.
+
+Example:
+
+```python
+from goose.testing.models.messages import AgentResponse, Message, ToolCall
+
+
+def query(message: str) -> AgentResponse:
+    result = run_my_agent(message)
+
+    return AgentResponse(
+        messages=[
+            Message(
+                type="ai",
+                content=result.text,
+                tool_calls=[
+                    ToolCall(
+                        name="get_product_details",
+                        args={"product_name": "Hiking Boots"},
+                    )
+                ],
+            )
+        ]
+    )
+```
+
+What Goose passes in:
+
+- `message: str` - the exact user prompt from `goose.case(query=...)`
+
+What Goose expects back:
+
+- `AgentResponse(messages=[...])`
+- at least one final `Message(type="ai", content="...")`
+- `tool_calls=[...]` on AI messages if you want `expected_tool_calls=[...]` to work
+- optional `Message(type="tool", ...)` entries if you want richer transcripts
+
+The human message is optional in the return value because Goose already knows the test input. The most important pieces
+are the final AI message and any tool calls you want audited.
+
+If your app already returns a LangChain-style payload, normalize it instead of rebuilding the structure manually:
+
+```python
+from goose.testing.models.messages import AgentResponse
+
+
+def query(message: str) -> AgentResponse:
+    raw_response = my_langchain_agent.invoke({"messages": [{"role": "user", "content": message}]})
+    return AgentResponse.from_langchain(raw_response)
+```
+
 ## Writing good expectations
 
 Good expectations are flexible enough for LLM variation, but still specific enough to fail for the right reason.

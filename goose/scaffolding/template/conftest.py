@@ -27,15 +27,23 @@ from goose.testing import Goose, fixture
 # =============================================================================
 # Import your agent's query function
 # =============================================================================
-# Your query function should have this signature:
+# Your query function should have this contract:
+#
+#     from goose.testing.models.messages import AgentResponse, Message
 #
 #     def query(message: str) -> AgentResponse:
-#         ...
+#         result = run_my_agent(message)
+#         return AgentResponse(
+#             messages=[
+#                 Message(type="ai", content=result.text),
+#             ]
+#         )
 #
-# It should invoke your app's agent workflow and return an AgentResponse.
-# If you already use LangChain responses, normalize them with
-# AgentResponse.from_langchain(...).
-# See goose.testing.models.messages.AgentResponse for the expected format.
+# Goose passes the exact `query=` string from goose.case(...) into this
+# function. Return at least one final AI message. If you already use
+# LangChain responses, normalize them with AgentResponse.from_langchain(...).
+# See goose.testing.models.messages.AgentResponse for the full shape,
+# including tool call support for expected_tool_calls=[...].
 #
 # Example:
 #     from my_agent import query_weather_agent
