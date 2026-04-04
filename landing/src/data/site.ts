@@ -36,7 +36,7 @@ export const site = {
       step: "02",
       eyebrow: "Who is this for?",
       line:
-        "For developers and teams building LLM agents who need a repeatable way to test and debug tool-using workflows.",
+        "For teams running agent systems in production that need reliable behavior validation.",
     },
     manualProblem: {
       step: "03",
