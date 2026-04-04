@@ -101,7 +101,7 @@ export const site = {
       body:
         "The run stopped being a wall of output. I can reopen the failure, keep the history, and find the broken path fast enough to act on it.",
       screenshot: {
-        src: "/images/dashboard-view.png",
+        src: "/images/dashboard_testing.png",
         alt: "Goose testing history view",
       },
       notes: [
@@ -360,27 +360,39 @@ export const site = {
   },
   views: {
     eyebrow: "Testing + tooling + debugging",
-    title: "One toolkit, three ways to work",
+    title: "Three dashboard views, one debugging loop",
     intro:
-      "Use the same system from the terminal, in the browser, or while debugging a single tool path. Goose keeps those modes connected instead of forcing separate workflows.",
+      "The dashboard is not a decorative layer on top of Goose. Each view helps with a different part of the same debugging loop: run the suite, isolate one tool, then drop into the failing path with the context still attached.",
     items: [
       {
         name: "Testing",
-        label: "Run suites with intent",
+        label: "Run suites with history intact",
         description:
-          "Define cases with a query, expectations, and expected tools. Re-run them after prompt, tool, or code changes without rebuilding your whole environment.",
+          "Re-run cases, reopen failures, and keep the surrounding context close enough to act on instead of reconstructing it from logs.",
+        screenshot: {
+          src: "/images/dashboard_testing.png",
+          alt: "Goose dashboard testing view",
+        },
       },
       {
         name: "Tooling",
-        label: "Debug the sharp edges",
+        label: "Debug one tool directly",
         description:
-          "Inspect available tools, validate tool behavior directly, and isolate failures before they get hidden behind agent wording.",
+          "Send real arguments to one tool, inspect the output immediately, and fix the exact layer that broke before the agent gets in the way.",
+        screenshot: {
+          src: "/images/dashboard_tooling.png",
+          alt: "Goose dashboard tooling view",
+        },
       },
       {
-        name: "Chat",
-        label: "Probe behavior live",
+        name: "Detail",
+        label: "Inspect the failing path",
         description:
-          "Use an interactive chat surface to explore what changed, then compare that behavior against repeatable tests and trace history.",
+          "Open the selected run and read expectations, tool calls, and outputs in one concentrated view instead of jumping between traces.",
+        screenshot: {
+          src: "/images/dashboard_testing_detail.png",
+          alt: "Goose dashboard testing detail view",
+        },
       },
     ],
   },
