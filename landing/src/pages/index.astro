@@ -1,6 +1,7 @@
 ---
 import ChatSection from "../components/sections/ChatSection.astro";
 import CliCaseSection from "../components/sections/CliCaseSection.astro";
+import DashboardShowcaseSection from "../components/sections/DashboardShowcaseSection.astro";
 import LoopCloseSection from "../components/sections/LoopCloseSection.astro";
 import OpeningScarSection from "../components/sections/OpeningScarSection.astro";
 import ProblemBeatSection from "../components/sections/ProblemBeatSection.astro";
@@ -23,12 +24,15 @@ import { site } from "../data/site.ts";
     <ProblemBeatSection id="logs-problem" section={site.presentation.logsProblem} />
     <TransitionSlide id="testing-idea" section={site.presentation.testingIdea} />
     <TestingViewSection />
+    <DashboardShowcaseSection id="testing-dashboard" section={site.presentation.testingShowcase} />
     <ProblemBeatSection id="tooling-problem" section={site.presentation.toolingProblem} />
     <TransitionSlide id="tooling-idea" section={site.presentation.toolingIdea} />
     <ToolingSection />
+    <DashboardShowcaseSection id="tooling-dashboard" section={site.presentation.toolingShowcase} />
     <ProblemBeatSection id="chat-problem" section={site.presentation.chatProblem} />
     <TransitionSlide id="chat-idea" section={site.presentation.chatIdea} />
     <ChatSection />
+    <DashboardShowcaseSection id="chat-dashboard" section={site.presentation.chatShowcase} />
     <ViewsSection />
     <LoopCloseSection />
   </main>

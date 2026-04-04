@@ -100,10 +100,6 @@ export const site = {
       title: "The Testing view put the failure path back in one place.",
       body:
         "The run stopped being a wall of output. I can reopen the failure, keep the history, and find the broken path fast enough to act on it.",
-      screenshot: {
-        src: "/images/dashboard_testing.png",
-        alt: "Goose testing history view",
-      },
       notes: [
         {
           title: "Open the failing run",
@@ -112,6 +108,27 @@ export const site = {
         {
           title: "Read the path in one screen",
           text: "Expectations, tool calls, and outputs stay attached.",
+        },
+      ],
+    },
+    testingShowcase: {
+      eyebrow: "Testing / dashboard",
+      title: "First the overview, then the exact trace.",
+      body:
+        "The dashboard keeps the rerunnable history in view and lets me open the failing path without losing the surrounding case.",
+      layout: "pair",
+      screenshots: [
+        {
+          src: "/images/dashboard_testing.png",
+          alt: "Goose dashboard testing history view",
+          label: "Testing overview",
+          caption: "Reopen the run, rerun the case, and keep the failure history attached.",
+        },
+        {
+          src: "/images/dashboard_testing_detail.png",
+          alt: "Goose dashboard testing trace detail view",
+          label: "Trace detail",
+          caption: "Drop into the exact path once the failing run is on screen.",
         },
       ],
     },
@@ -212,6 +229,36 @@ export const site = {
         "Replay the live request.",
         "Inspect the tool arguments and output.",
         "Decide whether the edge case belongs in the suite.",
+      ],
+    },
+    toolingShowcase: {
+      eyebrow: "Tooling / dashboard",
+      title: "Tooling keeps the one-tool debugging loop close.",
+      body:
+        "Once the trace tells me where to look, I can jump into one tool, send real arguments, and inspect the output without booting the whole agent again.",
+      layout: "single",
+      screenshots: [
+        {
+          src: "/images/dashboard_tooling.png",
+          alt: "Goose dashboard tooling view",
+          label: "Tooling overview",
+          caption: "Real arguments in, real output out, without the full-agent detour.",
+        },
+      ],
+    },
+    chatShowcase: {
+      eyebrow: "Chat / dashboard",
+      title: "Chat keeps the live replay visible before I formalize the case.",
+      body:
+        "I can watch the request, the tool path, and the answer in one place first, then decide what deserves to become a formal regression test.",
+      layout: "single",
+      screenshots: [
+        {
+          src: "/images/dashboard_chat.png",
+          alt: "Goose dashboard chat replay view",
+          label: "Chat replay",
+          caption: "See the request, the tool activity, and the response before you lock it into coverage.",
+        },
       ],
     },
     close: {
@@ -360,39 +407,30 @@ export const site = {
   },
   views: {
     eyebrow: "Inside the dashboard",
-    title: "After chat, the debugging path stays open",
+    title: "The dashboard keeps every part of the debugging loop open",
     intro:
-      "Once Goose has shown the failing behavior, the dashboard lets you reopen the suite, isolate one tool, and drill into the exact trace without restarting the investigation.",
+      "After the replay, the dashboard still gives each next move its own clear surface instead of collapsing the whole investigation into one crowded screen.",
     items: [
       {
         name: "Testing",
+        chip: "Testing",
         label: "Reopen the failing run",
         description:
           "Re-run cases, reopen failures, and keep the surrounding context close enough to act on instead of reconstructing it from logs.",
-        screenshot: {
-          src: "/images/dashboard_testing.png",
-          alt: "Goose dashboard testing view",
-        },
       },
       {
         name: "Tooling",
+        chip: "Tooling",
         label: "Inspect one tool in isolation",
         description:
           "Send real arguments to one tool, inspect the output immediately, and fix the exact layer that broke before the agent gets in the way.",
-        screenshot: {
-          src: "/images/dashboard_tooling.png",
-          alt: "Goose dashboard tooling view",
-        },
       },
       {
-        name: "Trace detail",
-        label: "Read the exact path",
+        name: "Chat",
+        chip: "Chat",
+        label: "Replay the live request",
         description:
-          "Open the selected run and inspect expectations, tool calls, and outputs in one concentrated detail view instead of jumping between traces.",
-        screenshot: {
-          src: "/images/dashboard_testing_detail.png",
-          alt: "Goose dashboard trace detail view",
-        },
+          "Replay what the user actually asked, inspect the tool path in context, and only then decide whether the edge case deserves a permanent case.",
       },
     ],
   },
