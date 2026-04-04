@@ -137,7 +137,7 @@ def load_from_qualified_name(qualified_name: str) -> list[TestDefinition]:
 
     Assumptions:
         - The target package/module is importable (cwd is in sys.path).
-        - Test functions are top-level, named ``test_*`` or ``tests_*``.
+        - Test functions are top-level and named ``test_*``.
 
     Side effects (every call):
         - Reloads configured source targets (agent, tools, etc.)

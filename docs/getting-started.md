@@ -1,78 +1,127 @@
 # Getting started
 
-This is the default Goose onboarding path.
+This is the **canonical first-run path** for Goose.
 
-Use this guide when you are starting fresh or want Goose's native chat protocol as your app contract. If you already have a LangChain or LangGraph agent, use [`docs/integrations/langchain.md`](integrations/langchain.md) instead.
+Start here when you want Goose's native scaffold and chat contract. The entrypoint is **`goose init`**. If you
+already have a LangChain or LangGraph agent, keep this page as context and use the optional
+[`LangChain integration guide`](integrations/langchain.md) for the adapter path.
 
-## 1. Install and scaffold
+## 1. Install
 
 ```bash
 pip install llm-goose
 npm install -g @llm-goose/dashboard-cli
+```
+
+## 2. Run `goose init`
+
+```bash
 goose init
 ```
 
-That gives you a `gooseapp/` directory. The main file to edit is `gooseapp/app.py`.
+That creates the fixed `gooseapp/` layout Goose expects:
 
-## 2. Register a Goose-native chat agent
+```text
+gooseapp/
+├── app.py
+├── conftest.py
+└── tests/
+    └── test_example.py
+```
+
+For the full scaffold contract, overwrite behavior, and file-by-file breakdown, see
+[`goose-init.md`](goose-init.md).
+
+## 3. Edit `gooseapp/app.py` first
+
+`gooseapp/app.py` is where you tell Goose what exists in your app:
+
+- `agents=[...]` for live chat
+- `tools=[...]` or `tool_groups={...}` for the Tooling view
+- `reload_targets=[...]` for packages you want reloaded during development
+- `reload_exclude=[...]` for modules that should stay stable
+
+Minimal Goose-native example:
 
 ```python
-from collections.abc import AsyncIterator
-
 from goose import GooseApp
 from goose.chatting.agent_protocol import GooseAgentEvent
-from goose.chatting.api.schema import Conversation
-from goose.testing.models.messages import Message
 
 
 class EchoAgent:
     name = "Echo Agent"
 
-    async def astream_goose(
-        self,
-        *,
-        conversation: Conversation,
-        messages: list[Message],
-    ) -> AsyncIterator[GooseAgentEvent]:
-        latest_user_message = messages[-1].content if messages else ""
-
-        yield GooseAgentEvent(
-            type="conversation_meta",
-            data={"source": "getting-started"},
-        )
-        yield GooseAgentEvent(type="token", data={"content": "Echo: "})
-        yield GooseAgentEvent(type="token", data={"content": latest_user_message})
+    async def astream_goose(self, *, conversation, messages):
+        content = messages[-1].content if messages else ""
+        yield GooseAgentEvent(type="token", data={"content": f"Echo: {content}"})
         yield GooseAgentEvent(type="message_end")
 
 
-app = GooseApp(agents=[EchoAgent()])
+app = GooseApp(
+    agents=[EchoAgent()],
+    reload_targets=["my_agent_package"],
+)
 ```
 
-What matters:
+You do not need to solve every config option on day one. For a first run, it is enough to register one agent and the
+packages you expect to edit often.
 
-- A chat agent is any object with a unique `name`.
-- Goose calls `astream_goose(conversation=..., messages=...)` for each assistant turn.
-- Yield `GooseAgentEvent` objects to stream tokens, emit tool activity, attach conversation metadata, or finish the turn.
+## 4. Edit `gooseapp/conftest.py` next
 
-For most agents, these event types are enough:
+`gooseapp/conftest.py` wires your tests to the real agent entrypoint.
 
-- `token` – stream assistant text incrementally
-- `message` – send a fully-formed `Message` in one event
-- `tool_call` / `tool_output` – show tool usage in chat and traces
-- `conversation_meta` – persist extra metadata on the conversation
-- `message_end` – end the assistant turn
+What to change first:
 
-## 3. Run Goose
+- import your real `query(...)` function
+- return a configured `Goose(...)` fixture
+- add lifecycle hooks only if your app needs setup/teardown
+
+Typical starting point:
+
+```python
+from goose.testing import Goose, fixture
+from my_agent import query
+
+
+@fixture(name="goose")
+def goose_fixture() -> Goose:
+    return Goose(
+        agent_query_func=query,
+        validator_model="gpt-4o-mini",
+    )
+```
+
+If your tests need database resets or other setup around each case, extend this file with hooks as shown in
+[`testing.md`](testing.md).
+
+## 5. Run the first Goose loop
 
 ```bash
+goose test list
+goose test run -v gooseapp.tests
 goose api
 goose-dashboard
 ```
 
-Open the dashboard, pick your agent, and start chatting.
+What each command gives you:
 
-## 4. What to do next
+- `goose test list` - confirm Goose discovers your cases
+- `goose test run -v gooseapp.tests` - run them with transcript and tool activity in the terminal
+- `goose api` - start the Python backend on `127.0.0.1:8730`
+- `goose-dashboard` - open the UI on `http://localhost:8729`
 
-- Add tools to `GooseApp(tools=[...])` when you want them visible in the dashboard.
-- Add tests in `gooseapp/tests/` when you want expectation-based validation.
-- If you are integrating an existing LangChain stack instead of building Goose-native, switch to [`docs/integrations/langchain.md`](integrations/langchain.md).
+From there:
+
+- use the **Testing** view to rerun cases and inspect traces
+- use the **Tooling** view to debug one tool in isolation
+- use the **Chat** view to replay a live flow before turning it into a test
+
+See [`running-goose.md`](running-goose.md) for runtime details and [`dashboard.md`](dashboard.md) for the UI workflow.
+
+## 6. Where to branch out
+
+- Need deeper scaffold guidance? [`goose-init.md`](goose-init.md)
+- Ready to write better cases? [`testing.md`](testing.md)
+- Need the runtime model and ports? [`running-goose.md`](running-goose.md)
+- Want the dashboard tour? [`dashboard.md`](dashboard.md)
+- Already on LangChain or LangGraph? [`integrations/langchain.md`](integrations/langchain.md)

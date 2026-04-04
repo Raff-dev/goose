@@ -3,7 +3,7 @@
 This module provides the unified `goose` command with subcommands:
 
     goose init                          # Create gooseapp/ folder
-    goose api                           # Start dashboard server (auto-discovers gooseapp/)
+    goose api                           # Start Goose backend API (auto-discovers gooseapp/)
     goose test run gooseapp.tests       # Run tests
     goose test list gooseapp.tests      # List tests
 """
@@ -37,7 +37,7 @@ def api(
     host: str = typer.Option("127.0.0.1", "--host", help="Host interface to bind"),
     port: int = typer.Option(8730, "--port", help="Port to bind"),
 ) -> None:
-    """Start the Goose dashboard server.
+    """Start the Goose backend API.
 
     Auto-discovers gooseapp/ in the current directory with the fixed structure:
 
@@ -74,7 +74,7 @@ def api(
     # Set reload targets from app + always include gooseapp
     config.reload_targets = config.compute_reload_targets()
 
-    typer.echo("Starting Goose dashboard")
+    typer.echo("Starting Goose API")
     typer.echo(f"  Tests: {config.TESTS_MODULE}")
     typer.echo(f"  Reload targets: {config.reload_targets}")
 

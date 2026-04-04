@@ -74,7 +74,9 @@ def goose() -> Goose:
                 validator_model="gpt-4o-mini",
             )
     """
-    # TODO: Replace with your agent's query function
+    # TODO: Replace with your agent's query function.
+    # See https://github.com/Raff-dev/goose/blob/main/docs/goose-init.md
+    # for the recommended init-first setup flow.
     # return Goose(
     #     agent_query_func=query_my_agent,
     #     validator_model="gpt-4o-mini",
