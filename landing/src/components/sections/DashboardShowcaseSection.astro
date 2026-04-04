@@ -21,16 +21,21 @@ interface Props {
 
 const { id, section } = Astro.props as Props;
 const isPair = section.layout === "pair";
+const isToolingShowcase = id === "tooling-dashboard";
 ---
 
-<section id={id} class="presentation-slide overflow-hidden">
+<section id={id} class="presentation-slide overflow-hidden" data-dashboard-lightbox-root>
   <div
     class:list={[
       "container-shell grid gap-8 lg:items-center",
-      isPair ? "lg:grid-cols-[0.28fr_0.72fr]" : "lg:grid-cols-[0.26fr_0.74fr]",
+      isPair
+        ? "lg:grid-cols-[0.28fr_0.72fr]"
+        : isToolingShowcase
+          ? "lg:grid-cols-[minmax(0,0.38fr)_minmax(0,0.62fr)] xl:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]"
+          : "lg:grid-cols-[0.26fr_0.74fr]",
     ]}
   >
-    <div class="relative z-10 max-w-xl">
+    <div class:list={["relative z-10", isToolingShowcase ? "max-w-2xl" : "max-w-xl"]}>
       <p class="presentation-kicker">{section.eyebrow}</p>
       <h2 class="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
         {section.title}
@@ -43,22 +48,135 @@ const isPair = section.layout === "pair";
       <div class:list={["relative z-10 grid gap-4 sm:gap-5", isPair ? "lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:items-end" : "grid-cols-1"]}>
         {section.screenshots.map((screenshot, index) => (
           <figure class:list={["dashboard-showcase-shot", isPair && index === 1 ? "lg:pb-5 xl:pb-8" : ""]}>
-            <span class="dashboard-showcase-label">{screenshot.label}</span>
-            <img
-              src={withBase(screenshot.src)}
-              alt={screenshot.alt}
-              class:list={[
-                "dashboard-showcase-image",
-                isPair
-                  ? index === 0
-                    ? "max-h-[20rem] sm:max-h-[27rem] lg:max-h-[min(62svh,40rem)]"
-                    : "max-h-[18rem] sm:max-h-[24rem] lg:max-h-[min(56svh,35rem)]"
-                  : "max-h-[24rem] sm:max-h-[31rem] lg:max-h-[min(74svh,48rem)]",
-              ]}
-            />
+            <button
+              type="button"
+              class="dashboard-showcase-trigger group"
+              aria-label={`Open fullscreen preview for ${screenshot.label}`}
+              data-lightbox-trigger
+              data-lightbox-src={withBase(screenshot.src)}
+              data-lightbox-alt={screenshot.alt}
+              data-lightbox-label={screenshot.label}
+              data-lightbox-caption={screenshot.caption ?? ""}
+            >
+              <span class="dashboard-showcase-label">{screenshot.label}</span>
+              <img
+                src={withBase(screenshot.src)}
+                alt={screenshot.alt}
+                class:list={[
+                  "dashboard-showcase-image transition duration-300 ease-out group-hover:scale-[1.01]",
+                  isPair
+                    ? index === 0
+                      ? "max-h-[20rem] sm:max-h-[27rem] lg:max-h-[min(62svh,40rem)]"
+                      : "max-h-[18rem] sm:max-h-[24rem] lg:max-h-[min(56svh,35rem)]"
+                    : "max-h-[24rem] sm:max-h-[31rem] lg:max-h-[min(74svh,48rem)]",
+                ]}
+              />
+            </button>
           </figure>
         ))}
       </div>
     </div>
   </div>
+
+  <dialog class="dashboard-lightbox" aria-label="Fullscreen screenshot preview" data-lightbox-dialog>
+    <div aria-hidden="true" class="dashboard-lightbox-backdrop" data-lightbox-close></div>
+
+    <div class="dashboard-lightbox-panel">
+      <button type="button" class="dashboard-lightbox-dismiss" aria-label="Close fullscreen preview" data-lightbox-close>
+        <span aria-hidden="true" class="text-2xl leading-none">&times;</span>
+      </button>
+
+      <div class="dashboard-lightbox-content">
+        <div class="dashboard-lightbox-meta">
+          <div>
+            <p class="dashboard-lightbox-label" data-lightbox-active-label></p>
+            <p class="dashboard-lightbox-caption" data-lightbox-active-caption></p>
+          </div>
+        </div>
+
+        <div class="dashboard-lightbox-frame">
+          <img class="dashboard-lightbox-image" data-lightbox-image alt="" />
+        </div>
+      </div>
+    </div>
+  </dialog>
 </section>
+
+<script>
+  const initDashboardLightboxes = () => {
+    document.querySelectorAll("[data-dashboard-lightbox-root]").forEach((root) => {
+      if (!(root instanceof HTMLElement) || root.dataset.lightboxReady === "true") {
+        return;
+      }
+
+      const dialog = root.querySelector("[data-lightbox-dialog]");
+      const image = root.querySelector("[data-lightbox-image]");
+      const label = root.querySelector("[data-lightbox-active-label]");
+      const caption = root.querySelector("[data-lightbox-active-caption]");
+
+      if (
+        !(dialog instanceof HTMLDialogElement) ||
+        !(image instanceof HTMLImageElement) ||
+        !(label instanceof HTMLElement) ||
+        !(caption instanceof HTMLElement)
+      ) {
+        return;
+      }
+
+      root.dataset.lightboxReady = "true";
+
+      const closeDialog = () => {
+        if (dialog.open) {
+          dialog.close();
+        }
+      };
+
+      root.querySelectorAll("[data-lightbox-trigger]").forEach((trigger) => {
+        if (!(trigger instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        trigger.addEventListener("click", () => {
+          const src = trigger.dataset.lightboxSrc;
+
+          if (!src) {
+            return;
+          }
+
+          image.src = src;
+          image.alt = trigger.dataset.lightboxAlt ?? "";
+          label.textContent = trigger.dataset.lightboxLabel ?? "";
+
+          const captionText = trigger.dataset.lightboxCaption ?? "";
+          caption.textContent = captionText;
+          caption.hidden = captionText.length === 0;
+
+          document.documentElement.classList.add("lightbox-open");
+          dialog.showModal();
+        });
+      });
+
+      root.querySelectorAll("[data-lightbox-close]").forEach((closeControl) => {
+        closeControl.addEventListener("click", closeDialog);
+      });
+
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) {
+          closeDialog();
+        }
+      });
+
+      dialog.addEventListener("close", () => {
+        image.removeAttribute("src");
+        image.alt = "";
+        document.documentElement.classList.remove("lightbox-open");
+      });
+    });
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initDashboardLightboxes, { once: true });
+  } else {
+    initDashboardLightboxes();
+  }
+</script>

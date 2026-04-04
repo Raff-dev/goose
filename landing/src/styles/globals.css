@@ -36,6 +36,11 @@
     overflow-x: hidden;
   }
 
+  html.lightbox-open,
+  html.lightbox-open body {
+    overflow: hidden;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
@@ -134,11 +139,70 @@
     @apply relative flex min-h-0 items-start justify-center;
   }
 
+  .dashboard-showcase-trigger {
+    @apply relative block w-full cursor-zoom-in rounded-[1.35rem] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950;
+  }
+
   .dashboard-showcase-label {
     @apply absolute left-3 top-3 z-10 inline-flex items-center rounded-full border border-white/15 bg-slate-950/65 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-100 shadow-soft backdrop-blur-sm sm:left-4 sm:top-4;
   }
 
   .dashboard-showcase-image {
     @apply w-full rounded-[1.35rem] object-contain object-top shadow-[0_24px_80px_rgba(2,6,23,0.55)];
+  }
+
+  .dashboard-lightbox {
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    max-height: none;
+    max-width: none;
+    border: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  .dashboard-lightbox::backdrop {
+    background: rgba(2, 6, 23, 0.88);
+    backdrop-filter: blur(16px);
+  }
+
+  .dashboard-lightbox-backdrop {
+    @apply absolute inset-0 cursor-zoom-out;
+  }
+
+  .dashboard-lightbox-panel {
+    @apply relative z-10 flex h-full w-full items-center justify-center px-4 py-6 sm:px-8 sm:py-8;
+    pointer-events: none;
+  }
+
+  .dashboard-lightbox-content {
+    @apply relative flex w-full max-w-[min(96vw,112rem)] flex-col justify-center gap-5;
+    pointer-events: auto;
+  }
+
+  .dashboard-lightbox-dismiss {
+    @apply absolute right-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 text-slate-100 shadow-soft transition hover:bg-slate-900/95 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70;
+    pointer-events: auto;
+  }
+
+  .dashboard-lightbox-meta {
+    @apply w-full pr-14;
+  }
+
+  .dashboard-lightbox-label {
+    @apply text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/85;
+  }
+
+  .dashboard-lightbox-caption {
+    @apply mt-2 max-w-3xl text-sm leading-relaxed text-slate-300 sm:text-base;
+  }
+
+  .dashboard-lightbox-frame {
+    @apply flex w-full items-center justify-center;
+  }
+
+  .dashboard-lightbox-image {
+    @apply max-h-[calc(100svh-8rem)] w-auto max-w-full rounded-[1.6rem] border border-white/10 shadow-[0_32px_120px_rgba(2,6,23,0.72)];
   }
 }
