@@ -359,14 +359,14 @@ export const site = {
     ],
   },
   views: {
-    eyebrow: "Testing + tooling + debugging",
-    title: "Three dashboard views, one debugging loop",
+    eyebrow: "Inside the dashboard",
+    title: "After chat, the debugging path stays open",
     intro:
-      "The dashboard is not a decorative layer on top of Goose. Each view helps with a different part of the same debugging loop: run the suite, isolate one tool, then drop into the failing path with the context still attached.",
+      "Once Goose has shown the failing behavior, the dashboard lets you reopen the suite, isolate one tool, and drill into the exact trace without restarting the investigation.",
     items: [
       {
         name: "Testing",
-        label: "Run suites with history intact",
+        label: "Reopen the failing run",
         description:
           "Re-run cases, reopen failures, and keep the surrounding context close enough to act on instead of reconstructing it from logs.",
         screenshot: {
@@ -376,7 +376,7 @@ export const site = {
       },
       {
         name: "Tooling",
-        label: "Debug one tool directly",
+        label: "Inspect one tool in isolation",
         description:
           "Send real arguments to one tool, inspect the output immediately, and fix the exact layer that broke before the agent gets in the way.",
         screenshot: {
@@ -385,13 +385,13 @@ export const site = {
         },
       },
       {
-        name: "Detail",
-        label: "Inspect the failing path",
+        name: "Trace detail",
+        label: "Read the exact path",
         description:
-          "Open the selected run and read expectations, tool calls, and outputs in one concentrated view instead of jumping between traces.",
+          "Open the selected run and inspect expectations, tool calls, and outputs in one concentrated detail view instead of jumping between traces.",
         screenshot: {
           src: "/images/dashboard_testing_detail.png",
-          alt: "Goose dashboard testing detail view",
+          alt: "Goose dashboard trace detail view",
         },
       },
     ],
