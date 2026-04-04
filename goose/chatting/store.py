@@ -42,6 +42,7 @@ class ConversationStore:
             "agent_name": agent_name,
             "title": title or "New conversation",
             "messages": [],
+            "metadata": {},
             "created_at": now,
             "updated_at": now,
         }
@@ -139,6 +140,28 @@ class ConversationStore:
             return False
 
         data["title"] = title
+        data["updated_at"] = datetime.now(timezone.utc)
+        return True
+
+    def update_metadata(
+        self,
+        conversation_id: str,
+        metadata: dict[str, Any],
+        *,
+        replace: bool = False,
+    ) -> bool:
+        """Merge or replace metadata for a conversation."""
+
+        data = self._conversations.get(conversation_id)
+        if data is None:
+            return False
+
+        if replace:
+            data["metadata"] = dict(metadata)
+        else:
+            existing = data.setdefault("metadata", {})
+            existing.update(metadata)
+
         data["updated_at"] = datetime.now(timezone.utc)
         return True
 

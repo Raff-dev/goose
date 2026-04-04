@@ -54,8 +54,10 @@ class GooseApp:
         Args:
             tools: List of LangChain @tool decorated functions. Cannot be used with tool_groups.
             tool_groups: Dict mapping group names to lists of tools. Cannot be used with tools.
-            agents: List of pre-built LangChain agents. Each agent must have a `name`
-                   attribute set (e.g., `agent.name = "My Agent"`).
+            agents: List of chat agents. Each agent must have a `name`
+                   attribute set (e.g., `agent.name = "My Agent"`). Live chat
+                   supports Goose-native agents with `astream_goose(...)` and
+                   legacy LangChain-compatible agents with `astream(...)`.
             reload_targets: List of module names to reload when files change.
                            The gooseapp module is always included automatically.
             reload_exclude: List of module name prefixes to exclude from reloading.

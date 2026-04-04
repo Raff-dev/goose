@@ -176,6 +176,7 @@ class TestGetConversation:
         data = response.json()
         assert data["id"] == conversation_id
         assert data["messages"] == []
+        assert data["metadata"] == {}
 
     def test_returns_404_for_unknown(self, client: TestClient) -> None:
         """Returns 404 for unknown conversation."""
