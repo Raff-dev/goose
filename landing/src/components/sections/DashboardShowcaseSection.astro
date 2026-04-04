@@ -1,0 +1,57 @@
+---
+import { withBase } from "../../lib/paths.ts";
+
+interface ScreenshotItem {
+  src: string;
+  alt: string;
+  label: string;
+  caption?: string;
+}
+
+interface Props {
+  id: string;
+  section: {
+    eyebrow: string;
+    title: string;
+    body: string;
+    layout: "single" | "pair";
+    screenshots: readonly ScreenshotItem[];
+  };
+}
+
+const { id, section } = Astro.props as Props;
+const isPair = section.layout === "pair";
+---
+
+<section id={id} class="presentation-slide">
+  <div class:list={["container-shell grid gap-10 lg:items-center", isPair ? "lg:grid-cols-[0.36fr_0.64fr]" : "lg:grid-cols-[0.34fr_0.66fr]"]}>
+    <div class="max-w-2xl">
+      <p class="presentation-kicker">{section.eyebrow}</p>
+      <h2 class="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+        {section.title}
+      </h2>
+      <p class="section-copy mt-6">{section.body}</p>
+    </div>
+
+    <div class="presentation-visual">
+      <div class:list={["grid gap-4", isPair ? "xl:grid-cols-[1.05fr_0.95fr]" : "grid-cols-1"]}>
+        {section.screenshots.map((screenshot) => (
+          <figure class="overflow-hidden rounded-[1.15rem] border border-white/10 bg-slate-950/75">
+            <img
+              src={withBase(screenshot.src)}
+              alt={screenshot.alt}
+              class:list={[
+                "w-full object-contain object-top",
+                isPair ? "max-h-[17rem] sm:max-h-[22rem] xl:max-h-[25rem]" : "max-h-[24rem] sm:max-h-[28rem] lg:max-h-[33rem]",
+              ]}
+            />
+            <figcaption class="border-t border-white/10 px-4 py-4 sm:px-5">
+              <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/80">{screenshot.label}</p>
+              {screenshot.caption && <p class="mt-2 text-sm leading-relaxed text-slate-300">{screenshot.caption}</p>}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

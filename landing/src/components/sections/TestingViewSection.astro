@@ -1,24 +1,22 @@
 ---
 import { site } from "../../data/site.ts";
-import { withBase } from "../../lib/paths.ts";
 
 const section = site.presentation.testing;
 ---
 
 <section id="testing" class="presentation-slide">
-  <div class="container-shell grid gap-10 lg:grid-cols-[0.6fr_0.4fr] lg:items-center">
-    <div class="presentation-visual">
-      <img src={withBase(section.screenshot.src)} alt={section.screenshot.alt} class="presentation-image" />
-    </div>
-
-    <div class="lg:pl-4">
+  <div class="container-shell grid gap-10 lg:grid-cols-[0.5fr_0.5fr] lg:items-center">
+    <div class="max-w-2xl">
       <p class="presentation-kicker">{section.step} / {section.eyebrow}</p>
       <h2 class="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
         {section.title}
       </h2>
       <p class="section-copy mt-6 max-w-2xl">{section.body}</p>
+    </div>
 
-      <div class="mt-8 space-y-4 border-l border-white/10 pl-4">
+    <div class="presentation-note lg:ml-auto lg:max-w-xl">
+      <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">What changed</p>
+      <div class="mt-5 space-y-4 border-l border-white/10 pl-4">
         {section.notes.map((item) => (
           <div>
             <h3 class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-300">{item.title}</h3>
