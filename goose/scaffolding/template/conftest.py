@@ -32,7 +32,9 @@ from goose.testing import Goose, fixture
 #     def query(message: str) -> AgentResponse:
 #         ...
 #
-# It should invoke your LangChain agent and return an AgentResponse.
+# It should invoke your app's agent workflow and return an AgentResponse.
+# If you already use LangChain responses, normalize them with
+# AgentResponse.from_langchain(...).
 # See goose.testing.models.messages.AgentResponse for the expected format.
 #
 # Example:

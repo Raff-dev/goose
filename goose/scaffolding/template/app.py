@@ -12,9 +12,9 @@ from goose import GooseApp
 
 app = GooseApp(
     # -------------------------------------------------------------------------
-    # tools: List of LangChain @tool decorated functions
+    # tools: List of tool callables to show in the dashboard
     # -------------------------------------------------------------------------
-    # Register your agent's tools here. Goose will display them in the dashboard.
+    # Register your app's tools here. Goose will display them in the dashboard.
     #
     # Example:
     #     tools=[search_products, get_product_details, get_order_status],
@@ -26,19 +26,19 @@ app = GooseApp(
     #     },
     tools=[],
     # -------------------------------------------------------------------------
-    # agents: List of agent configurations for chatting
+    # agents: List of agent objects for live chat
     # -------------------------------------------------------------------------
-    # Register your agents here to enable interactive chat in the dashboard.
-    # Each agent config needs: name (str), get_agent (callable), models (list).
-    # The get_agent callable receives a model name and returns a LangChain agent.
+    # Register agent objects here to enable interactive chat in the dashboard.
+    # Each agent must have a unique `name`.
+    #
+    # Goose live chat supports:
+    #   - Goose-native agents with `astream_goose(conversation=..., messages=...)`
+    #   - legacy LangChain-compatible agents with `astream(...)`
     #
     # Example:
     #     agents=[
-    #         {
-    #             "name": "Customer Support Agent",
-    #             "get_agent": get_agent,  # def get_agent(model: str) -> Agent
-    #             "models": ["gpt-4o-mini", "gpt-4o"],
-    #         },
+    #         support_agent,
+    #         billing_agent,
     #     ],
     agents=[],
     # -------------------------------------------------------------------------
