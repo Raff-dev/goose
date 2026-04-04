@@ -107,20 +107,22 @@ export function ChattingView() {
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
         <h3 className="text-lg font-medium text-yellow-800 mb-2">No Agents Configured</h3>
         <p className="text-yellow-700">
-          Add agents to your GooseApp configuration to start chatting:
+          Add a Goose-native agent to your GooseApp to start chatting. If you already have a
+          LangChain agent, follow <code>docs/integrations/langchain.md</code>.
         </p>
         <pre className="mt-4 bg-yellow-100 rounded p-3 text-left text-sm overflow-x-auto">
 {`from goose import GooseApp
-from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import create_react_agent
+from goose.chatting.agent_protocol import GooseAgentEvent
 
-agent = create_react_agent(
-    ChatOpenAI(model="gpt-4o-mini"),
-    tools=[...],
-)
-agent.name = "My Agent"
+class MyAgent:
+    name = "My Agent"
 
-app = GooseApp(agents=[agent])`}
+    async def astream_goose(self, *, conversation, messages):
+        content = messages[-1].content if messages else ""
+        yield GooseAgentEvent(type="token", data={"content": content})
+        yield GooseAgentEvent(type="message_end")
+
+app = GooseApp(agents=[MyAgent()])`}
         </pre>
       </div>
     );

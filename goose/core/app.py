@@ -14,12 +14,12 @@ class GooseApp:
 
     Example:
         from goose import GooseApp
+        from langchain.agents import create_agent
         from langchain_openai import ChatOpenAI
-        from langgraph.prebuilt import create_react_agent
         from my_agent.tools import get_products, create_order
 
-        agent = create_react_agent(
-            ChatOpenAI(model="gpt-4o-mini"),
+        agent = create_agent(
+            model=ChatOpenAI(model="gpt-4o-mini"),
             tools=[get_products, create_order],
         )
         agent.name = "My Agent"
