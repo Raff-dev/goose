@@ -167,16 +167,27 @@
     backdrop-filter: blur(16px);
   }
 
+  .dashboard-lightbox-backdrop {
+    @apply absolute inset-0 cursor-zoom-out;
+  }
+
   .dashboard-lightbox-panel {
-    @apply relative flex h-full w-full flex-col justify-center gap-5 px-4 py-6 sm:px-8 sm:py-8;
+    @apply relative z-10 flex h-full w-full items-center justify-center px-4 py-6 sm:px-8 sm:py-8;
+    pointer-events: none;
+  }
+
+  .dashboard-lightbox-content {
+    @apply relative flex w-full max-w-[min(96vw,112rem)] flex-col justify-center gap-5;
+    pointer-events: auto;
   }
 
   .dashboard-lightbox-dismiss {
     @apply absolute right-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-slate-950/80 text-slate-100 shadow-soft transition hover:bg-slate-900/95 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70;
+    pointer-events: auto;
   }
 
   .dashboard-lightbox-meta {
-    @apply mx-auto w-full max-w-6xl pr-14;
+    @apply w-full pr-14;
   }
 
   .dashboard-lightbox-label {
@@ -188,7 +199,7 @@
   }
 
   .dashboard-lightbox-frame {
-    @apply mx-auto flex w-full max-w-[min(96vw,112rem)] flex-1 items-center justify-center;
+    @apply flex w-full items-center justify-center;
   }
 
   .dashboard-lightbox-image {

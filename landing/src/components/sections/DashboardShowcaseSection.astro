@@ -79,20 +79,24 @@ const isToolingShowcase = id === "tooling-dashboard";
   </div>
 
   <dialog class="dashboard-lightbox" aria-label="Fullscreen screenshot preview" data-lightbox-dialog>
+    <div aria-hidden="true" class="dashboard-lightbox-backdrop" data-lightbox-close></div>
+
     <div class="dashboard-lightbox-panel">
       <button type="button" class="dashboard-lightbox-dismiss" aria-label="Close fullscreen preview" data-lightbox-close>
         <span aria-hidden="true" class="text-2xl leading-none">&times;</span>
       </button>
 
-      <div class="dashboard-lightbox-meta">
-        <div>
-          <p class="dashboard-lightbox-label" data-lightbox-active-label></p>
-          <p class="dashboard-lightbox-caption" data-lightbox-active-caption></p>
+      <div class="dashboard-lightbox-content">
+        <div class="dashboard-lightbox-meta">
+          <div>
+            <p class="dashboard-lightbox-label" data-lightbox-active-label></p>
+            <p class="dashboard-lightbox-caption" data-lightbox-active-caption></p>
+          </div>
         </div>
-      </div>
 
-      <div class="dashboard-lightbox-frame">
-        <img class="dashboard-lightbox-image" data-lightbox-image alt="" />
+        <div class="dashboard-lightbox-frame">
+          <img class="dashboard-lightbox-image" data-lightbox-image alt="" />
+        </div>
       </div>
     </div>
   </dialog>
@@ -122,7 +126,9 @@ const isToolingShowcase = id === "tooling-dashboard";
       root.dataset.lightboxReady = "true";
 
       const closeDialog = () => {
-        dialog.close();
+        if (dialog.open) {
+          dialog.close();
+        }
       };
 
       root.querySelectorAll("[data-lightbox-trigger]").forEach((trigger) => {
