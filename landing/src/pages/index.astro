@@ -8,6 +8,7 @@ import PresentationChrome from "../components/sections/PresentationChrome.astro"
 import TestingViewSection from "../components/sections/TestingViewSection.astro";
 import TransitionSlide from "../components/sections/TransitionSlide.astro";
 import ToolingSection from "../components/sections/ToolingSection.astro";
+import ViewsSection from "../components/sections/ViewsSection.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { site } from "../data/site.ts";
 ---
@@ -28,6 +29,7 @@ import { site } from "../data/site.ts";
     <ProblemBeatSection id="chat-problem" section={site.presentation.chatProblem} />
     <TransitionSlide id="chat-idea" section={site.presentation.chatIdea} />
     <ChatSection />
+    <ViewsSection />
     <LoopCloseSection />
   </main>
 </BaseLayout>
