@@ -18,7 +18,7 @@ export const site = {
   presentation: {
     chrome: {
       brand: "Goose",
-      kicker: "01-14 live walkthrough",
+      kicker: "01-15 live walkthrough",
       appendixHref: "/appendix",
       appendixLabel: "Open appendix",
       primaryCta: { label: "View on GitHub", href: REPO_URL },
@@ -32,8 +32,14 @@ export const site = {
       narration:
         "Then the answers kept sounding right long after I stopped knowing whether the agent had actually behaved correctly.",
     },
-    manualProblem: {
+    whoIsThisFor: {
       step: "02",
+      eyebrow: "Who is this for?",
+      line:
+        "For developers and teams building LLM agents who need a repeatable way to test and debug tool-using workflows.",
+    },
+    manualProblem: {
+      step: "03",
       eyebrow: "The problem",
       title: "The real break was when plausible output became a false positive.",
       body:
@@ -54,12 +60,12 @@ export const site = {
       ],
     },
     cliIdea: {
-      step: "03",
+      step: "04",
       eyebrow: "The idea",
       line: "So I needed a rerunnable case, not another manual check.",
     },
     cli: {
-      step: "04",
+      step: "05",
       eyebrow: "The solution",
       title: "The first fix was a case I could rerun on every prompt change.",
       body:
@@ -69,7 +75,7 @@ export const site = {
       anatomy: ["query", "expectations", "expected_tool_calls"],
     },
     logsProblem: {
-      step: "05",
+      step: "06",
       eyebrow: "The problem",
       title: "Repeatability solved one problem and exposed the next.",
       body:
@@ -90,12 +96,12 @@ export const site = {
       ],
     },
     testingIdea: {
-      step: "06",
+      step: "07",
       eyebrow: "The idea",
       line: "So I built the UI because the logs made me guess again.",
     },
     testing: {
-      step: "07",
+      step: "08",
       eyebrow: "The solution",
       title: "The Testing view put the failure path back in one place.",
       body:
@@ -133,7 +139,7 @@ export const site = {
       ],
     },
     toolingProblem: {
-      step: "08",
+      step: "09",
       eyebrow: "The problem",
       title: "Readable failures still left one absurd debugging path.",
       body:
@@ -154,12 +160,12 @@ export const site = {
       ],
     },
     toolingIdea: {
-      step: "09",
+      step: "10",
       eyebrow: "The idea",
       line: "So I gave the tool its own surface.",
     },
     tooling: {
-      step: "10",
+      step: "11",
       eyebrow: "The solution",
       title: "Tooling let me debug one tool without booting the whole agent.",
       body:
@@ -172,7 +178,7 @@ export const site = {
       supportingLine: "Real args. Real output. No full-agent detour.",
     },
     chatProblem: {
-      step: "11",
+      step: "12",
       eyebrow: "The problem",
       title: "Real user bugs do not show up as prewritten test cases.",
       body:
@@ -193,12 +199,12 @@ export const site = {
       ],
     },
     chatIdea: {
-      step: "12",
+      step: "13",
       eyebrow: "The idea",
       line: "So I needed a live replay before I wrote the formal test.",
     },
     chat: {
-      step: "13",
+      step: "14",
       eyebrow: "The solution",
       title: "Chat lets me replay the request before I freeze it into coverage.",
       body:
@@ -262,7 +268,7 @@ export const site = {
       ],
     },
     close: {
-      step: "14",
+      step: "15",
       eyebrow: "Closed loop",
       title: "The point was never three tabs. It was one closed loop.",
       body:
