@@ -16,12 +16,16 @@
 ---
 
 <p align="center">
-Goose is a <strong>Python library, CLI, and web dashboard</strong> that helps developers build and iterate on LLM agents faster.<br>
-Write tests in Python, run them from the terminal or dashboard, and instantly see what went wrong when things break.
+  Goose is a <strong>Python library, CLI, and web dashboard</strong> for testing and debugging LLM agents and tool-using workflows.<br>
+  Write tests in Python, run them from the terminal or dashboard, and quickly inspect what happened when behavior changes.
 </p>
 
 <p align="center">
-Currently designed for LangChain-based agents, with plans for framework-agnostic support.
+  <a href="https://raff-dev.github.io/goose"><strong>Visit the landing page</strong></a>
+</p>
+
+<p align="center">
+  Goose works well with LangChain-based setups today and is evolving toward a more framework-agnostic workflow built around traces, tool assertions, and dashboard-driven iteration.
 </p>
 
 ## Why Goose?
@@ -37,11 +41,15 @@ Think of Goose as **pytest for LLM agents**:
 ---
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Raff-dev/goose/main/images/dashboard_view.png" alt="Dashboard screenshot" width="80%">
+  <img src="https://raw.githubusercontent.com/Raff-dev/goose/main/images/dashboard_testing.png" alt="Dashboard testing screenshot" width="80%">
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Raff-dev/goose/main/images/detail_view.png" alt="Detail screenshot" width="80%">
+  <img src="https://raw.githubusercontent.com/Raff-dev/goose/main/images/dashboard_tooling.png" alt="Dashboard tooling screenshot" width="80%">
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Raff-dev/goose/main/images/dashboard_testing_detail.png" alt="Dashboard testing detail screenshot" width="80%">
 </p>
 
 ## Install 🚀
