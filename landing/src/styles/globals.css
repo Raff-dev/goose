@@ -121,4 +121,24 @@
   .presentation-chip {
     @apply inline-flex items-center rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-cyan-100;
   }
+
+  .dashboard-showcase-stage {
+    @apply relative isolate;
+  }
+
+  .dashboard-showcase-atmosphere {
+    @apply absolute inset-x-[4%] inset-y-[10%] rounded-[3rem] bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.18),rgba(15,23,42,0.04)_58%,transparent_76%)] blur-3xl;
+  }
+
+  .dashboard-showcase-shot {
+    @apply relative flex min-h-0 items-start justify-center;
+  }
+
+  .dashboard-showcase-label {
+    @apply absolute left-3 top-3 z-10 inline-flex items-center rounded-full border border-white/15 bg-slate-950/65 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-100 shadow-soft backdrop-blur-sm sm:left-4 sm:top-4;
+  }
+
+  .dashboard-showcase-image {
+    @apply w-full rounded-[1.35rem] object-contain object-top shadow-[0_24px_80px_rgba(2,6,23,0.55)];
+  }
 }
