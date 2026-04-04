@@ -112,7 +112,7 @@ export function TestGrid({ tests, resultsMap, statusMap, onlyFailures, onViewDet
                           result={result}
                           onViewDetails={() => onViewDetails(test.qualified_name)}
                           onRunTest={() => onRunTest(test.qualified_name)}
-                          detailsHref={`/tests/${encodeURIComponent(test.qualified_name)}`}
+                          detailsHref={`/testing/tests/${encodeURIComponent(test.qualified_name)}`}
                         />
                       );
                     })}

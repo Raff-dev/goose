@@ -6,8 +6,6 @@ and listing Goose tests from the command line.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 from typer import colors
 
