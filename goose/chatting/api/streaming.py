@@ -10,6 +10,7 @@ from fastapi import WebSocket  # type: ignore[import-not-found]
 from langchain_core.messages import AIMessageChunk, ToolMessage
 from starlette.websockets import WebSocketDisconnect, WebSocketState
 
+from goose.chatting.agent_protocol import GooseAgentEvent, supports_goose_chat_protocol
 from goose.chatting.api.schema import Conversation
 from goose.chatting.store import get_store
 from goose.core.config import GooseConfig
@@ -78,6 +79,72 @@ def _build_tool_call_from_chunk(acc_tc: dict[str, Any]) -> ToolCall:
     )
 
 
+def _build_tool_call_from_event(data: dict[str, Any]) -> ToolCall:
+    """Build a ToolCall from a Goose-native event payload."""
+    raw_name = str(data.get("name") or "").strip()
+    if not raw_name:
+        raise ValueError("Goose-native tool_call event must include a tool name")
+
+    raw_args = data.get("args")
+    args = raw_args if isinstance(raw_args, dict) else {}
+
+    raw_id = data.get("id")
+    tool_call_id = str(raw_id) if raw_id is not None else None
+
+    return ToolCall(name=raw_name, args=args, id=tool_call_id)
+
+
+def _coerce_goose_event(raw_event: GooseAgentEvent | dict[str, Any]) -> GooseAgentEvent:
+    """Normalize a Goose-native event from model or plain dict input."""
+    if isinstance(raw_event, GooseAgentEvent):
+        return raw_event
+    if isinstance(raw_event, dict):
+        return GooseAgentEvent.model_validate(raw_event)
+    raise TypeError(f"Unsupported Goose-native event type: {type(raw_event).__name__}")
+
+
+async def _emit_in_band_error(
+    websocket: WebSocket,
+    *,
+    conversation_id: str,
+    store: Any,
+    message: str,
+) -> None:
+    """Persist and emit a terminal in-band error message."""
+    error_message = Message(type="error", content=message)
+    store.add_message(conversation_id, error_message)
+    await send_event(websocket, "message", error_message.model_dump())
+    await send_event(websocket, "message_end", {})
+
+
+async def _emit_tool_output(
+    websocket: WebSocket,
+    *,
+    conversation_id: str,
+    store: Any,
+    data: dict[str, Any],
+) -> bool:
+    """Persist and emit a Goose-native tool output event."""
+    tool_name = str(data.get("tool_name") or data.get("name") or "unknown")
+    tool_call_id = data.get("tool_call_id") or data.get("id")
+    tool_message = Message(
+        type="tool",
+        content=str(data.get("content") or ""),
+        tool_name=tool_name,
+        tool_call_id=str(tool_call_id) if tool_call_id is not None else None,
+    )
+    store.add_message(conversation_id, tool_message)
+    return await send_event(
+        websocket,
+        "tool_output",
+        {
+            "tool_name": tool_message.tool_name,
+            "tool_call_id": tool_message.tool_call_id,
+            "content": tool_message.content,
+        },
+    )
+
+
 async def stream_agent_response(
     websocket: WebSocket,
     conversation: Conversation,
@@ -135,7 +202,7 @@ async def stream_agent_response(
         await send_event(websocket, "error", {"message": "Conversation not found"})
         return
 
-    messages = [msg.to_langchain() for msg in updated_conversation.messages]
+    messages = list(updated_conversation.messages)
 
     # Get the pre-built agent from config
     agent = agent_config["agent"]
@@ -152,6 +219,119 @@ async def stream_agent_response(
 
 
 async def _stream_response(
+    websocket: WebSocket,
+    agent: Any,
+    messages: list[Message],
+    conversation_id: str,
+    store: Any,
+) -> None:
+    """Dispatch streaming to Goose-native or legacy LangChain agents."""
+    if supports_goose_chat_protocol(agent):
+        conversation = store.get(conversation_id)
+        if conversation is None:
+            raise ValueError("Conversation not found")
+        await _stream_goose_response(
+            websocket=websocket,
+            agent=agent,
+            messages=messages,
+            conversation=conversation,
+            conversation_id=conversation_id,
+            store=store,
+        )
+        return
+
+    langchain_messages = [msg.to_langchain() for msg in messages]
+    await _stream_langchain_response(websocket, agent, langchain_messages, conversation_id, store)
+
+
+async def _stream_goose_response(
+    *,
+    websocket: WebSocket,
+    agent: Any,
+    messages: list[Message],
+    conversation: Conversation,
+    conversation_id: str,
+    store: Any,
+) -> None:
+    """Stream a response from a Goose-native chat agent."""
+    accumulated_content = ""
+
+    try:
+        async for raw_event in agent.astream_goose(conversation=conversation, messages=messages):
+            event = _coerce_goose_event(raw_event)
+            data = dict(event.data)
+
+            if event.type == "conversation_meta":
+                store.update_metadata(conversation_id, data)
+                continue
+
+            if event.type == "message":
+                message = Message.model_validate(data)
+                store.add_message(conversation_id, message)
+                if not await send_event(websocket, "message", message.model_dump()):
+                    return
+                continue
+
+            if event.type == "token":
+                content = str(data.get("content") or "")
+                if not content:
+                    continue
+                accumulated_content += content
+                if not await send_event(websocket, "token", {"content": content}):
+                    return
+                continue
+
+            if event.type == "tool_call":
+                tool_call = _build_tool_call_from_event(data)
+                store.add_message(
+                    conversation_id,
+                    Message(type="ai", content=accumulated_content, tool_calls=[tool_call]),
+                )
+                accumulated_content = ""
+                if not await send_event(websocket, "tool_call", tool_call.model_dump()):
+                    return
+                continue
+
+            if event.type == "tool_output":
+                accumulated_content = ""
+                if not await _emit_tool_output(
+                    websocket,
+                    conversation_id=conversation_id,
+                    store=store,
+                    data=data,
+                ):
+                    return
+                continue
+
+            if event.type == "error":
+                await _emit_in_band_error(
+                    websocket,
+                    conversation_id=conversation_id,
+                    store=store,
+                    message=str(data.get("message") or "Unknown error"),
+                )
+                return
+
+            if event.type == "message_end":
+                break
+    except Exception as exc:
+        logger.exception("Goose-native streaming failed")
+        await _emit_in_band_error(
+            websocket,
+            conversation_id=conversation_id,
+            store=store,
+            message=str(exc),
+        )
+        return
+
+    if accumulated_content:
+        ai_message = Message(type="ai", content=accumulated_content, tool_calls=[])
+        store.add_message(conversation_id, ai_message)
+
+    await send_event(websocket, "message_end", {})
+
+
+async def _stream_langchain_response(
     websocket: WebSocket,
     agent: Any,
     messages: list[Any],

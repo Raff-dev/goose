@@ -37,6 +37,7 @@ class Conversation(BaseModel):
     agent_name: str
     title: str
     messages: list[Message] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
     updated_at: datetime
 
