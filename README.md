@@ -105,6 +105,9 @@ def test_price_lookup_hiking_boots(goose: Goose) -> None:
 That is the core Goose idea: a natural-language case, optional tool assertions, and a trace you can inspect when it
 fails.
 
+`expected_tool_calls` accepts backward-compatible LangChain tool objects, plain callable tool functions,
+tool name strings, and OpenAI-style tool definitions with `function.name`.
+
 ## Key commands
 
 ```bash

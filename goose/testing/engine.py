@@ -5,11 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.tools import BaseTool
 
 from goose.testing.hooks import TestLifecycleHooks
 from goose.testing.models.messages import AgentResponse
-from goose.testing.test_case import TestCase
+from goose.testing.test_case import ExpectedToolCall, TestCase
 from goose.testing.validator import AgentValidator
 
 
@@ -33,7 +32,7 @@ class Goose:
         query: str,
         expectations: list[str],
         *,
-        expected_tool_calls: list[BaseTool] | None = None,
+        expected_tool_calls: list[ExpectedToolCall] | None = None,
     ) -> None:
         """Build a test case and execute it immediately."""
 

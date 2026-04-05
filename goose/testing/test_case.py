@@ -2,15 +2,75 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from langchain_core.tools import BaseTool
+import inspect
+from collections.abc import Callable, Mapping
+from typing import Any, NoReturn, Protocol
 
 from goose.testing.errors import ExpectationValidationError, ToolCallValidationError
+from goose.testing.models.messages import AgentResponse
 from goose.testing.validator import ExpectationsEvaluationResponse
 
-if TYPE_CHECKING:
-    from goose.testing.models.messages import AgentResponse
+
+class SupportsToolName(Protocol):
+    """Protocol for objects exposing a stable tool name."""
+
+    name: str
+
+
+ExpectedToolCall = str | Mapping[str, Any] | SupportsToolName | Callable[..., Any]
+
+
+def _raise_invalid_expected_tool_call(item: object) -> NoReturn:
+    item_type = type(item).__name__
+    raise TypeError(
+        "expected_tool_calls items must be a tool name string, an object with a non-empty "
+        ".name attribute, a callable tool function, or an OpenAI-style tool dict with "
+        "'name' or 'function.name'. "
+        f"Got {item_type}: {item!r}."
+    )
+
+
+def _extract_expected_tool_call_name(item: ExpectedToolCall) -> str:
+    if isinstance(item, str):
+        name = item.strip()
+        if name:
+            return name
+        _raise_invalid_expected_tool_call(item)
+
+    if isinstance(item, Mapping):
+        direct_name = item.get("name")
+        if isinstance(direct_name, str):
+            direct_name = direct_name.strip()
+            if direct_name:
+                return direct_name
+
+        function_payload = item.get("function")
+        if isinstance(function_payload, Mapping):
+            nested_name = function_payload.get("name")
+            if isinstance(nested_name, str):
+                nested_name = nested_name.strip()
+                if nested_name:
+                    return nested_name
+
+        _raise_invalid_expected_tool_call(item)
+
+    raw_name = getattr(item, "name", None)
+    if isinstance(raw_name, str):
+        normalized_name = raw_name.strip()
+        if normalized_name:
+            return normalized_name
+
+    if inspect.ismodule(item):
+        _raise_invalid_expected_tool_call(item)
+
+    if callable(item):
+        callable_name = getattr(item, "__name__", None)
+        if isinstance(callable_name, str):
+            callable_name = callable_name.strip()
+            if callable_name:
+                return callable_name
+
+    _raise_invalid_expected_tool_call(item)
 
 
 class TestCase:
@@ -23,7 +83,7 @@ class TestCase:
         query_message: str,
         expectations: list[str],
         *,
-        expected_tool_calls: list[BaseTool] | None = None,
+        expected_tool_calls: list[ExpectedToolCall] | None = None,
     ):
         self.query_message = query_message
         self.expectations = expectations
@@ -33,19 +93,14 @@ class TestCase:
         # Validate expected_tool_calls contains actual tools
         if expected_tool_calls:
             for item in expected_tool_calls:
-                if not isinstance(item, BaseTool):
-                    item_type = type(item).__name__
-                    raise TypeError(
-                        f"expected_tool_calls must contain BaseTool instances, got {item_type}: {item!r}. "
-                        f"Make sure you're passing the tool function decorated with @tool, not a module."
-                    )
+                _extract_expected_tool_call_name(item)
 
     @property
     def expected_tool_call_names(self) -> list[str]:
         """Return the names of the expected tool calls."""
         if not self.expected_tool_calls:
             return []
-        return [tool.name for tool in self.expected_tool_calls]
+        return [_extract_expected_tool_call_name(tool) for tool in self.expected_tool_calls]
 
     def validate_tool_calls(self, actual_tool_call_names: list[str]) -> None:
         """Ensure that expected tool calls were made.
