@@ -170,8 +170,8 @@ app = GooseApp(
 Important details:
 
 - `agent.name` is required and must be unique
-- `GooseApp(agents=[...])` accepts LangChain-compatible agents for live chat
-- Goose uses the agent's `astream(...)` path for this integration mode
+- `GooseApp(agents=[...])` expects an agent exposing `astream({"messages": messages}, stream_mode="messages")`
+- Goose currently consumes streamed `AIMessageChunk` and `ToolMessage` values from that `astream(...)` output
 - if you want the Tooling view too, separately register `tools=[...]` or `tool_groups={...}`
 
 If you only care about tests at first, you can postpone `agents=[...]` until later.

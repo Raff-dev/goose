@@ -42,7 +42,8 @@ app = GooseApp(
     #
     # Goose live chat supports:
     #   - Goose-native agents with `astream_goose(conversation=..., messages=...)`
-    #   - legacy LangChain-compatible agents with `astream(...)`
+    #   - legacy LangChain-style agents exposing:
+    #       astream({"messages": messages}, stream_mode="messages")
     #
     # If you want the Goose-native protocol explicitly, see:
     #     goose.chatting.agent_protocol.GooseChatAgent

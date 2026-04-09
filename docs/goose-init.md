@@ -37,12 +37,11 @@ What each file is for:
 
 ## What Goose expects from the scaffold
 
-`goose api` validates the same fixed structure described in `goose/core/config.py`:
+`goose api` validates the startup structure described in `goose/core/config.py`:
 
 ```text
 gooseapp/
 ├── app.py
-├── conftest.py
 └── tests/
 ```
 
@@ -53,7 +52,10 @@ More specifically:
 - `gooseapp/tests/` must exist
 - the exported `app` must be a valid `GooseApp`
 
-If that structure is broken, `goose api` exits with an error and tells you to run `goose init`.
+The scaffold also creates `gooseapp/conftest.py`, but that file is not part of the startup validation step. You
+normally need it later for fixture-backed test discovery and execution.
+
+If that startup structure is broken, `goose api` exits with an error and tells you to run `goose init`.
 
 ## Recommended edit order
 

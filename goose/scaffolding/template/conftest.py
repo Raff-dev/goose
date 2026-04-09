@@ -10,7 +10,7 @@ Example:
     from goose.testing import Goose, fixture
     from my_agent import query_my_agent
 
-    @fixture
+    @fixture()
     def goose() -> Goose:
         return Goose(
             agent_query_func=query_my_agent,

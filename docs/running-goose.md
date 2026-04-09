@@ -21,14 +21,14 @@ By default this starts on `127.0.0.1:8730`.
 
 `goose api` does three important things before serving:
 
-- validates the fixed `gooseapp/` structure
+- validates the startup structure (`gooseapp/`, `gooseapp/app.py`, `gooseapp/tests/`)
 - loads `gooseapp.app:app`
 - computes reload targets from `GooseApp.reload_targets` plus `gooseapp`
 
 On startup it prints:
 
 ```text
-Starting Goose dashboard
+Starting Goose API
   Tests: gooseapp.tests
   Reload targets: [...]
 ```
@@ -146,6 +146,9 @@ Common failures:
 - `Error loading gooseapp/app.py: ...`
 
 The last case covers import errors, a missing exported `app`, or invalid `GooseApp` configuration.
+
+`gooseapp/conftest.py` is not part of that startup validation. It becomes important later for fixture-backed discovery
+and test execution.
 
 ## CLI test loop
 

@@ -308,7 +308,7 @@ app = GooseApp(
 `name` up front, then the live chat runtime expects one of these protocols:
 
 - Goose-native agents with `astream_goose(...)`
-- LangChain-compatible agents with `astream(...)`
+- LangChain-style agents exposing `astream({"messages": messages}, stream_mode="messages")`
 
 If you are on the framework-agnostic path, the clearest contract is the Goose-native protocol from
 `goose.chatting.agent_protocol`:
@@ -343,8 +343,10 @@ That is the Goose-native protocol in plain words:
 - `name: str`
 - `astream_goose(*, conversation, messages) -> AsyncIterator[GooseAgentEvent]`
 
-If you already have a LangChain or LangGraph agent exposing `astream(...)`, you can register that object in
-`agents=[...]` too. The LangChain-specific shape is covered in [`integrations/langchain.md`](integrations/langchain.md).
+If you already have a LangChain or LangGraph agent exposing
+`astream({"messages": messages}, stream_mode="messages")`, you can register that object in `agents=[...]` too. Goose
+currently consumes `AIMessageChunk` and `ToolMessage` items from that stream. The LangChain-specific shape is covered
+in [`integrations/langchain.md`](integrations/langchain.md).
 
 ### Configure hot reload
 
