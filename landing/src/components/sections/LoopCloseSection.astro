@@ -30,7 +30,7 @@ const section = site.presentation.close;
       <p class="mx-auto mt-8 max-w-3xl text-center text-lg leading-relaxed text-slate-200">{section.contribution}</p>
 
       <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
-        <ButtonLink href={section.primaryCta.href} external>{section.primaryCta.label}</ButtonLink>
+        {!section.primaryCta.hidden && <ButtonLink href={section.primaryCta.href} external>{section.primaryCta.label}</ButtonLink>}
         <a
           href={withBase(section.appendixCta.href)}
           class="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3.5 text-base font-semibold text-foreground transition hover:border-cyan-300/40 hover:text-cyan-100"

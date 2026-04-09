@@ -32,14 +32,16 @@ const chrome = site.presentation.chrome;
       >
         {chrome.appendixLabel}
       </a>
-      <a
-        href={chrome.primaryCta.href}
-        target="_blank"
-        rel="noreferrer noopener"
-        class="inline-flex items-center justify-center rounded-full bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-glow transition hover:bg-cyan-300"
-      >
-        {chrome.primaryCta.label}
-      </a>
+      {!chrome.primaryCta.hidden && (
+        <a
+          href={chrome.primaryCta.href}
+          target="_blank"
+          rel="noreferrer noopener"
+          class="inline-flex items-center justify-center rounded-full bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-glow transition hover:bg-cyan-300"
+        >
+          {chrome.primaryCta.label}
+        </a>
+      )}
     </div>
   </div>
 </div>

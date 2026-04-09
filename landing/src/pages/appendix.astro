@@ -8,6 +8,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import { withBase } from "../lib/paths.ts";
 
 const appendix = site.appendix;
+const appendixSecondaryCtas = appendix.secondaryCtas.filter((cta) => !("hidden" in cta && cta.hidden));
 ---
 
 <BaseLayout title={`${appendix.title} — Goose`} description={appendix.intro} includeFaqJsonLd={true}>
@@ -25,7 +26,7 @@ const appendix = site.appendix;
 
           <div class="mt-8 flex flex-wrap gap-4">
             <ButtonLink href={withBase(appendix.primaryCta.href)}>{appendix.primaryCta.label}</ButtonLink>
-            {appendix.secondaryCtas.map((cta) => (
+            {appendixSecondaryCtas.map((cta) => (
               <ButtonLink href={cta.href} variant="secondary" external>{cta.label}</ButtonLink>
             ))}
           </div>

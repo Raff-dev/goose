@@ -2,6 +2,8 @@
 import ButtonLink from "../ui/ButtonLink.astro";
 import { site } from "../../data/site.ts";
 import { withBase } from "../../lib/paths.ts";
+
+const navPrimaryCta = site.nav.primaryCta;
 ---
 
 <nav class="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
@@ -20,9 +22,11 @@ import { withBase } from "../../lib/paths.ts";
       ))}
     </div>
 
-    <div class="hidden md:block">
-      <ButtonLink href={site.nav.primaryCta.href} external>{site.nav.primaryCta.label}</ButtonLink>
-    </div>
+    {!navPrimaryCta.hidden && (
+      <div class="hidden md:block">
+        <ButtonLink href={navPrimaryCta.href} external>{navPrimaryCta.label}</ButtonLink>
+      </div>
+    )}
 
     <button
       id="menu-toggle"
@@ -44,9 +48,11 @@ import { withBase } from "../../lib/paths.ts";
       {site.nav.links.map((link) => (
         <a href={withBase(link.href)} class="anchor-link py-1.5">{link.label}</a>
       ))}
-      <ButtonLink href={site.nav.primaryCta.href} external class="w-full justify-center">
-        {site.nav.primaryCta.label}
-      </ButtonLink>
+      {!navPrimaryCta.hidden && (
+        <ButtonLink href={navPrimaryCta.href} external class="w-full justify-center">
+          {navPrimaryCta.label}
+        </ButtonLink>
+      )}
     </div>
   </div>
 </nav>
