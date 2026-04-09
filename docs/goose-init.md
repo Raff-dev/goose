@@ -8,15 +8,7 @@ goose init path/to/project
 goose init --force
 ```
 
-Under the hood, Goose copies `goose/scaffolding/template/` into `<path>/gooseapp` and then prints the next
-steps from the CLI:
-
-1. edit `gooseapp/app.py`
-2. edit `gooseapp/conftest.py`
-3. add tests in `gooseapp/tests/`
-4. run `goose test list gooseapp.tests`
-5. run `goose test run gooseapp.tests`
-6. run `goose api`
+Under the hood, Goose copies `goose/scaffolding/template/` into `<path>/gooseapp`.
 
 ## What gets generated
 
@@ -45,12 +37,11 @@ What each file is for:
 
 ## What Goose expects from the scaffold
 
-`goose api` validates the same fixed structure described in `goose/core/config.py`:
+`goose api` validates the startup structure described in `goose/core/config.py`:
 
 ```text
 gooseapp/
 ├── app.py
-├── conftest.py
 └── tests/
 ```
 
@@ -61,38 +52,36 @@ More specifically:
 - `gooseapp/tests/` must exist
 - the exported `app` must be a valid `GooseApp`
 
-If that structure is broken, `goose api` exits with an error and tells you to run `goose init`.
+The scaffold also creates `gooseapp/conftest.py`, but that file is not part of the startup validation step. You
+normally need it later for fixture-backed test discovery and execution.
+
+If that startup structure is broken, `goose api` exits with an error and tells you to run `goose init`.
 
 ## Recommended edit order
 
-Follow the order the scaffold CLI prints:
+For the shortest path to a first passing test, follow [`getting-started.md`](getting-started.md). In practice, the
+first useful sequence is:
 
-### 1. `gooseapp/app.py`
+### 1. your real `query(...)` function
 
-Start here. Register the surface area Goose should know about:
-
-- `tools=[...]` or `tool_groups={...}` for the Tooling view
-- `agents=[...]` for live chat
-- `reload_targets=[...]` for source packages you want reloaded
-- `reload_exclude=[...]` for packages that should stay untouched during reload
+This usually lives in your app code, not in `gooseapp/`. Goose passes the exact `query=` string from `goose.case(...)`
+into that function and expects `AgentResponse` back.
 
 ### 2. `gooseapp/conftest.py`
 
-Wire the `goose` fixture to the real agent entrypoint:
+Wire the Goose fixture to that real query entrypoint:
 
 ```python
-@fixture(name="goose")
-def goose_fixture() -> Goose:
+@fixture()
+def goose() -> Goose:
     return Goose(
         agent_query_func=query,
         validator_model="gpt-4o-mini",
     )
 ```
 
-That `query` callable receives the exact user message from `goose.case(query=...)` and must return
-`AgentResponse`. See [`testing.md`](testing.md) for a concrete example of the contract.
-
-If your app needs setup or teardown, attach lifecycle hooks here too.
+If your app needs setup or teardown, attach lifecycle hooks here too. See [`testing.md`](testing.md) for the exact
+fixture matching rule and multi-fixture examples.
 
 ### 3. `gooseapp/tests/`
 
@@ -102,6 +91,15 @@ Replace `test_example.py` with real cases. Goose discovers:
 - functions named `test_*`
 
 See [`testing.md`](testing.md) for the full authoring guide.
+
+### 4. `gooseapp/app.py`
+
+Once tests are wired, expand the rest of the Goose surface area:
+
+- `tools=[...]` or `tool_groups={...}` for the Tooling view
+- `agents=[...]` for live chat
+- `reload_targets=[...]` for source packages you want reloaded
+- `reload_exclude=[...]` for packages that should stay untouched during reload
 
 ## Next steps after init
 

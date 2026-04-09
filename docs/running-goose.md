@@ -6,6 +6,11 @@ Goose has a simple runtime loop:
 2. the dashboard serves the browser UI
 3. tests can run either from the CLI or through the Testing view
 
+The config that drives this lives in two places:
+
+- `gooseapp/app.py` - tools, chat agents, `reload_targets`, `reload_exclude`
+- `gooseapp/conftest.py` - the Goose fixture and your `query(...) -> AgentResponse` adapter
+
 ## 1. Start the API
 
 ```bash
@@ -16,14 +21,14 @@ By default this starts on `127.0.0.1:8730`.
 
 `goose api` does three important things before serving:
 
-- validates the fixed `gooseapp/` structure
+- validates the startup structure (`gooseapp/`, `gooseapp/app.py`, `gooseapp/tests/`)
 - loads `gooseapp.app:app`
 - computes reload targets from `GooseApp.reload_targets` plus `gooseapp`
 
 On startup it prints:
 
 ```text
-Starting Goose dashboard
+Starting Goose API
   Tests: gooseapp.tests
   Reload targets: [...]
 ```
@@ -86,6 +91,9 @@ So the mental model is still **Testing / Tooling / Chatting**, even though the b
 - **Tooling** - invoke registered tools directly without running the whole agent
 - **Chatting** - create conversations against configured agents and watch live tool activity
 
+If you only need a first passing test, you can stop at `goose test list` / `goose test run` and leave the browser loop
+for later.
+
 The browser is just the UI. The Python side does the real work:
 
 - test discovery and execution
@@ -138,6 +146,9 @@ Common failures:
 - `Error loading gooseapp/app.py: ...`
 
 The last case covers import errors, a missing exported `app`, or invalid `GooseApp` configuration.
+
+`gooseapp/conftest.py` is not part of that startup validation. It becomes important later for fixture-backed discovery
+and test execution.
 
 ## CLI test loop
 

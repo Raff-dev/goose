@@ -1,8 +1,11 @@
 # Testing
 
-Goose is built around behavior tests written as ordinary Python functions plus `goose.case(...)`.
+Goose is built around ordinary Python test functions plus `goose.case(...)`.
 
 Use the scaffold README's mental model: **think of Goose as pytest for LLM agents.**
+
+If you want the shortest integration path, start with [`getting-started.md`](getting-started.md) first and come back to
+this page as reference.
 
 ## Test discovery
 
@@ -31,8 +34,6 @@ That means these all work:
 
 ## Anatomy of `goose.case(...)`
 
-This is the core shape, using a real example from `gooseapp/tests/test_agent_behaviour_basic.py`:
-
 ```python
 from example_system.models import Product
 from example_system.tools import get_product_details
@@ -56,7 +57,7 @@ The three fields do different jobs:
 
 - `query` - the user message sent to your agent
 - `expectations` - natural-language assertions validated against the response
-- `expected_tool_calls` - an optional tool audit using the actual tool callables
+- `expected_tool_calls` - an optional tool audit using tool names
 
 ## The query function contract behind `goose.case(...)`
 
@@ -113,6 +114,97 @@ def query(message: str) -> AgentResponse:
     return AgentResponse.from_langchain(raw_response)
 ```
 
+## Fixtures and `conftest.py`
+
+Fixtures are registered with `@fixture(...)` in `gooseapp/conftest.py`.
+
+Simple example:
+
+```python
+from goose.testing import Goose, fixture
+
+
+@fixture()
+def goose() -> Goose:
+    return Goose(
+        agent_query_func=query,
+        validator_model="gpt-4o-mini",
+    )
+```
+
+### Exact matching rule
+
+This is the actual behavior from `goose/testing/fixtures.py`:
+
+- fixture injection resolves by **parameter name**
+- `@fixture(name="...")` overrides the registered name
+- if `name=` is omitted, Goose uses the fixture function name
+- the type annotation is helpful for readers, but matching does **not** happen by type
+
+So this:
+
+```python
+@fixture(name="goose")
+def goose_fixture() -> Goose:
+    ...
+
+
+def test_price_lookup(goose: Goose) -> None:
+    ...
+```
+
+works because the test parameter is named `goose`.
+
+### Multiple Goose fixtures
+
+You can register multiple Goose fixtures for different agents or environments:
+
+```python
+@fixture(name="sales_goose")
+def sales_goose_fixture() -> Goose:
+    return Goose(agent_query_func=query_sales_agent)
+
+
+@fixture(name="staging_goose")
+def staging_goose_fixture() -> Goose:
+    return Goose(agent_query_func=query_staging_agent)
+```
+
+Then opt into the right fixture by parameter name:
+
+```python
+def test_sales_quote_flow(sales_goose: Goose) -> None:
+    sales_goose.case(
+        query="Prepare a quote for hiking boots",
+        expectations=["Agent prepares a quote for hiking boots"],
+    )
+```
+
+Goose also supports:
+
+- `autouse=True` setup fixtures
+- dependency injection between fixtures by argument name
+
+Example:
+
+```python
+@fixture(autouse=True)
+def setup_data() -> None:
+    ...
+
+
+@fixture()
+def goose() -> Goose:
+    return Goose(
+        agent_query_func=query,
+        hooks=DjangoTestHooks(),
+        validator_model="gpt-4o-mini",
+    )
+```
+
+Every discovery pass clears and rebuilds the fixture registry, then re-imports `gooseapp.conftest`. Keep your test
+fixtures there so reloads behave predictably.
+
 ## Writing good expectations
 
 Good expectations are flexible enough for LLM variation, but still specific enough to fail for the right reason.
@@ -156,57 +248,30 @@ expectations=[
 
 Use `expected_tool_calls` when the tool path matters.
 
-Rules that match the current implementation and example suite:
+What the current implementation validates:
 
-- pass the actual tool functions, not strings
-- keep the list in execution order
-- do not repeat tool assertions in `expectations`
-- omit it when the exact tool path is not important
+- expected tool calls are compared by **tool name**
+- order is **not** validated
+- extra actual tool calls are allowed
+- the test only fails when expected tools are missing
 
-Real examples:
+Accepted input shapes include:
+
+- actual tool callables
+- plain tool name strings
+- objects with a non-empty `.name`
+- OpenAI-style tool dicts with `name` or `function.name`
+
+Examples:
 
 ```python
 expected_tool_calls=[get_product_details]
+expected_tool_calls=["check_inventory"]
 expected_tool_calls=[find_products_by_category, check_inventory]
-expected_tool_calls=[get_sales_history, calculate_revenue]
 ```
 
-The failure suite in `gooseapp/tests/test_agent_behaviour_failures.py` is worth studying because it shows what
-breaks:
-
-- missing expected tools
-- extra expected tools
-- extra actual tool calls
-
-## Fixtures and `conftest.py`
-
-Fixtures are registered with `@fixture(...)` in `gooseapp/conftest.py`.
-
-Real example:
-
-```python
-@fixture(autouse=True)
-def setup_data() -> None:
-    ...
-
-
-@fixture(name="goose")
-def goose_fixture() -> Goose:
-    return Goose(
-        agent_query_func=query,
-        hooks=DjangoTestHooks(),
-        validator_model="gpt-4o-mini",
-    )
-```
-
-What this gives you:
-
-- a named `goose` fixture injected by parameter name
-- optional `autouse=True` setup fixtures
-- dependency injection between fixtures by argument name
-
-Every discovery pass clears and rebuilds the fixture registry, then re-imports `gooseapp.conftest`. Keep your test
-fixtures there so reloads behave predictably.
+When the exact tool path is not important, omit `expected_tool_calls` and keep expectations focused on the user-visible
+outcome.
 
 ## Lifecycle hooks
 
@@ -240,7 +305,7 @@ Use `-v` when you need the transcript, agent reply, and tool activity in the ter
 The example suite intentionally demonstrates several failure classes:
 
 - expectation mismatch
-- tool audit mismatch
+- missing expected tools
 - assertion failure after a passing case
 - runtime error after a passing case
 - tool exception before the agent can finish cleanly

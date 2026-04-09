@@ -10,7 +10,7 @@ Example:
     from goose.testing import Goose, fixture
     from my_agent import query_my_agent
 
-    @fixture
+    @fixture()
     def goose() -> Goose:
         return Goose(
             agent_query_func=query_my_agent,
@@ -83,8 +83,8 @@ def goose() -> Goose:
             )
     """
     # TODO: Replace with your agent's query function.
-    # See https://github.com/Raff-dev/goose/blob/main/docs/goose-init.md
-    # for the recommended init-first setup flow.
+    # See https://github.com/Raff-dev/goose/blob/main/docs/getting-started.md
+    # for the canonical query -> fixture -> test setup flow.
     # return Goose(
     #     agent_query_func=query_my_agent,
     #     validator_model="gpt-4o-mini",

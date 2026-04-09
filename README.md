@@ -17,27 +17,13 @@
 
 <p align="center">
   Goose is a <strong>Python library, CLI, and web dashboard</strong> for testing and debugging LLM agents.<br>
-  Start with Goose-native chat agents, inspect traces in the dashboard, and keep LangChain integration available when you already have it.
+  Scaffold a <code>gooseapp/</code>, point Goose at your real query function, write
+  <code>goose.case(...)</code> tests, then expose tools and live chat when you want the full dashboard loop.
 </p>
 
 <p align="center">
   <a href="https://raff-dev.github.io/goose"><strong>Visit the landing page</strong></a>
 </p>
-
-## What Goose is
-
-Goose is a **Python library, CLI, and web dashboard for LLM agents**. Think of it like **pytest for agent
-workflows**: you scaffold a `gooseapp/`, register your agent and tools, write `goose.case(...)` tests in Python,
-then debug failures in the dashboard.
-
-Goose is **Goose-native first**: the default path is `goose init` plus a Goose-native agent contract. If you already
-have LangChain or LangGraph in place, that path stays available as an optional integration.
-
-## What it looks like
-
-![Goose dashboard overview](images/dashboard_view.png)
-
-![Goose testing detail](images/dashboard_testing_detail.png)
 
 ## Why Goose?
 
@@ -47,18 +33,34 @@ have LangChain or LangGraph in place, that path stays available as an optional i
 - **Live chat for iteration** – Try agents in the dashboard while you develop.
 - **Hot reload** – Re-run against updated code without restarting the app.
 
+## Choose your path
+
+- **Framework-agnostic quickstart** – integrate Goose into an existing Python app, regardless of framework:
+  [`docs/getting-started.md`](docs/getting-started.md)
+- **LangChain / LangGraph integration** – keep your existing LangChain-style agent and add Goose around it:
+  [`docs/integrations/langchain.md`](docs/integrations/langchain.md)
+
+If you are starting from zero, the framework-agnostic quickstart is the default path.
+
 ## Core workflow
 
 1. **Scaffold the app** with `goose init`
-2. **Edit `gooseapp/app.py`** to register agents, tools, and reload targets
-3. **Edit `gooseapp/conftest.py`** to wire the `goose` fixture to your real query function
-4. **Write cases in `gooseapp/tests/`** with `goose.case(...)`
-5. **Run the loop** with `goose test run`, `goose api`, and `goose-dashboard`
+2. **Point Goose at `query(...) -> AgentResponse`** in `gooseapp/conftest.py`
+3. **Write cases in `gooseapp/tests/`** with `goose.case(...)`
+4. **Run the first loop** with `goose test list` and `goose test run`
+5. **Expand into tools, chat, and hot reload** through `gooseapp/app.py`
 
 ## Install
 
+Required for the first test run:
+
 ```bash
 pip install llm-goose
+```
+
+Optional for the browser UI:
+
+```bash
 npm install -g @llm-goose/dashboard-cli
 ```
 
@@ -70,48 +72,45 @@ goose init
 
 ```text
 gooseapp/
+├── README.md
+├── __init__.py
 ├── app.py
 ├── conftest.py
 └── tests/
+    ├── __init__.py
     └── test_example.py
 ```
 
-- `app.py` configures the Goose surface area
-- `conftest.py` wires your test fixture
-- `tests/` holds the cases you run from CLI or dashboard
+- `app.py` configures tools, live chat agents, and hot reload
+- `conftest.py` wires the Goose fixture to your real query function
+- `tests/` holds the cases you run from the CLI or dashboard
 
 See [`docs/goose-init.md`](docs/goose-init.md) for the full scaffold contract.
 
-## A real Goose case
+## Minimal first test
 
 ```python
-from example_system.models import Product
-from example_system.tools import get_product_details
 from goose.testing import Goose
 
 
-def test_price_lookup_hiking_boots(goose: Goose) -> None:
-    hiking_boots = Product.objects.get(name="Hiking Boots")
+def test_agent_responds(goose: Goose) -> None:
     goose.case(
-        query="What's the price of Hiking Boots?",
+        query="Hello, what can you help me with?",
         expectations=[
-            f"Agent provided the correct price (${hiking_boots.price_usd:.2f})",
-            "Agent identified the product correctly as 'Hiking Boots'",
+            "Agent responds with a greeting or acknowledgment",
+            "Agent describes its capabilities or offers assistance",
         ],
-        expected_tool_calls=[get_product_details],
     )
 ```
 
-That is the core Goose idea: a natural-language case, optional tool assertions, and a trace you can inspect when it
-fails.
-
-`expected_tool_calls` accepts backward-compatible LangChain tool objects, plain callable tool functions,
-tool name strings, and OpenAI-style tool definitions with `function.name`.
+`goose` is injected from the fixture you register in `gooseapp/conftest.py`. The full query -> fixture -> test path is
+documented in [`docs/getting-started.md`](docs/getting-started.md).
 
 ## Key commands
 
 ```bash
 goose init                  # scaffold gooseapp/
+goose test list gooseapp.tests
 goose test run gooseapp.tests
 goose api
 goose-dashboard
@@ -119,12 +118,12 @@ goose-dashboard
 
 ## Where to go next
 
-- **Canonical first run**: [`docs/getting-started.md`](docs/getting-started.md)
+- **Framework-agnostic quickstart**: [`docs/getting-started.md`](docs/getting-started.md)
+- **LangChain / LangGraph integration**: [`docs/integrations/langchain.md`](docs/integrations/langchain.md)
 - **Scaffold details**: [`docs/goose-init.md`](docs/goose-init.md)
 - **Writing tests**: [`docs/testing.md`](docs/testing.md)
 - **Running the API and CLI loop**: [`docs/running-goose.md`](docs/running-goose.md)
 - **Using the dashboard**: [`docs/dashboard.md`](docs/dashboard.md)
-- **Optional LangChain path**: [`docs/integrations/langchain.md`](docs/integrations/langchain.md)
 
 ## License
 

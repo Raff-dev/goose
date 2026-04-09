@@ -97,7 +97,7 @@ def test_multi_step_workflow(goose: Goose) -> None:
     """Test a workflow that involves multiple steps.
 
     Expectations can describe the full workflow, including:
-    - What tools should be called and in what order
+    - What tools should be called
     - What information should be in the response
     - What side effects should occur (check with assertions after)
 
