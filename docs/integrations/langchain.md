@@ -1,31 +1,146 @@
-# LangChain integration
+# LangChain / LangGraph integration
 
-Use this guide when you already have a LangChain or LangGraph-style agent and want to plug it into Goose without rewriting your app around the Goose-native protocol.
+Use this guide when you already have a LangChain or LangGraph-style agent and want Goose around it without rewriting
+your whole app around a different agent contract.
 
-If you are starting greenfield, prefer [`docs/getting-started.md`](../getting-started.md). That path is simpler and gives you direct control over Goose chat events.
+If you are starting from zero, or you do not need LangChain-specific adapters yet, use the framework-agnostic guide:
+[`../getting-started.md`](../getting-started.md).
 
-## When to use this path
+## What stays the same
 
-Choose **LangChain integration** when:
+Even on the LangChain path, Goose still expects the same scaffold and the same test authoring model:
 
-- your agent already exposes LangChain-compatible streaming via `astream(...)`
-- you want Goose chat and traces around an existing agent
-- you are not ready to introduce a Goose-native event layer yet
+```bash
+goose init
+```
 
-Choose **Goose-native** when:
+```text
+gooseapp/
+├── README.md
+├── __init__.py
+├── app.py
+├── conftest.py
+└── tests/
+    ├── __init__.py
+    └── test_example.py
+```
 
-- you are building a new chat path
-- you want explicit control over tokens, tool events, and conversation metadata
-- you want the default Goose docs path
+The parts that do **not** change:
 
-If you are starting from zero, the usual Goose-native flow is:
+- tests still use `goose.case(...)`
+- fixtures still live in `gooseapp/conftest.py`
+- fixture injection still matches by **test parameter name**
+- `gooseapp/app.py` still owns tools, chat agents, and reload settings
 
-1. [`goose-init.md`](../goose-init.md)
-2. [`testing.md`](../testing.md)
-3. [`running-goose.md`](../running-goose.md)
-4. [`dashboard.md`](../dashboard.md)
+The main difference is your `query(...)` function: instead of building `AgentResponse` manually, you usually adapt a
+LangChain payload into `AgentResponse.from_langchain(...)`.
 
-## Minimal example
+## 1. Install and scaffold
+
+Required for the first test run:
+
+```bash
+pip install llm-goose
+```
+
+Optional for the browser UI:
+
+```bash
+npm install -g @llm-goose/dashboard-cli
+```
+
+Then scaffold the local Goose workspace:
+
+```bash
+goose init
+```
+
+## 2. Create a LangChain-backed `query(...) -> AgentResponse`
+
+Minimal adapter:
+
+```python
+from goose.testing.models.messages import AgentResponse
+
+
+def query(message: str) -> AgentResponse:
+    raw_response = my_langchain_agent.invoke(
+        {
+            "messages": [
+                {"role": "user", "content": message},
+            ]
+        }
+    )
+    return AgentResponse.from_langchain(raw_response)
+```
+
+That is the key LangChain delta:
+
+- Goose still passes the exact `query=` string from `goose.case(...)`
+- your adapter still returns `AgentResponse`
+- the easiest bridge is `AgentResponse.from_langchain(...)`
+
+If your LangChain app wraps the agent call in another service function, put the adapter there. `gooseapp/conftest.py`
+only needs to import the final `query(...)` entrypoint.
+
+## 3. Register the Goose fixture
+
+```python
+from goose.testing import Goose, fixture
+from my_agent.query_adapter import query
+
+
+@fixture()
+def goose() -> Goose:
+    return Goose(
+        agent_query_func=query,
+        validator_model="gpt-4o-mini",
+    )
+```
+
+Exact injection rule:
+
+- Goose injects fixtures by **test parameter name**
+- if you use `@fixture()`, the fixture name defaults to the Python function name
+- if you use `@fixture(name="goose")`, Goose injects that fixture into `def test_x(goose: Goose)`
+
+You can also register multiple Goose fixtures for different LangChain agents or environments:
+
+```python
+@fixture(name="support_goose")
+def support_goose_fixture() -> Goose:
+    return Goose(agent_query_func=query_support_agent)
+
+
+@fixture(name="staging_goose")
+def staging_goose_fixture() -> Goose:
+    return Goose(agent_query_func=query_staging_agent)
+```
+
+## 4. Write the first Goose case
+
+```python
+from goose.testing import Goose
+from my_agent.tools import get_weather
+
+
+def test_weather_lookup(goose: Goose) -> None:
+    goose.case(
+        query="What is the weather in San Francisco?",
+        expectations=[
+            "Agent provides weather information for San Francisco",
+            "Response includes the current conditions",
+        ],
+        expected_tool_calls=[get_weather],
+    )
+```
+
+That test works exactly like the framework-agnostic version. The only LangChain-specific part is the adapter behind
+`agent_query_func=query`.
+
+## 5. Expose the agent in Goose live chat
+
+If you want in-app chat in the dashboard, register the agent in `gooseapp/app.py`:
 
 ```python
 from goose import GooseApp
@@ -35,7 +150,6 @@ from langchain_core.tools import tool
 
 @tool
 def get_weather(city: str) -> str:
-    """Return the current weather for a city."""
     return f"It is sunny in {city}."
 
 
@@ -46,47 +160,45 @@ agent = create_agent(
 )
 agent.name = "Weather Agent"
 
-app = GooseApp(agents=[agent])
+app = GooseApp(
+    agents=[agent],
+    tools=[get_weather],
+    reload_targets=["my_agent"],
+)
 ```
 
-Notes:
+Important details:
 
-- `agent.name` is required. Goose uses it in the UI and requires names to be unique.
-- `GooseApp(agents=[...])` accepts LangChain-compatible agents for live chat.
-- Goose uses the agent's `astream(...)` path for this integration mode.
-- If you also want Tooling view support, separately register tools in `GooseApp(tools=[...])` or `tool_groups={...}`.
+- `agent.name` is required and must be unique
+- `GooseApp(agents=[...])` accepts LangChain-compatible agents for live chat
+- Goose uses the agent's `astream(...)` path for this integration mode
+- if you want the Tooling view too, separately register `tools=[...]` or `tool_groups={...}`
 
-## When this path is the right fit
+If you only care about tests at first, you can postpone `agents=[...]` until later.
 
-Choose this integration when:
+## 6. Hot reload for LangChain apps
 
-- you already have a working LangChain or LangGraph agent
-- you want Goose's dashboard and traces without rebuilding your agent contract first
-- live chat is the first thing you want to unlock
+Use `reload_targets` for the packages you edit frequently and `reload_exclude` for modules that should stay stable:
 
-Do **not** choose it just because you want tests. Goose test authoring still happens through `gooseapp/conftest.py`,
-fixtures, and `goose.case(...)` either way.
-
-## Minimal scaffold shape
-
-Even on the LangChain path, Goose still expects the same scaffold:
-
-```text
-gooseapp/
-├── app.py
-├── conftest.py
-└── tests/
+```python
+app = GooseApp(
+    agents=[agent],
+    tools=[get_weather],
+    reload_targets=["my_agent", "shared_utils"],
+    reload_exclude=["my_agent.models"],
+)
 ```
 
-- `gooseapp/app.py` is where you expose the LangChain agent to Goose via `GooseApp(agents=[agent])`
-- `gooseapp/conftest.py` is where you wire your test fixture to the agent's query function
-- `gooseapp/tests/` is where your Goose cases live
+Goose always includes `gooseapp` automatically. Before test discovery and execution it reloads source modules, then
+re-imports `gooseapp.conftest`.
 
-See [`goose-init.md`](../goose-init.md) for the generated scaffold in detail.
+See [`../running-goose.md`](../running-goose.md) for the full runtime model.
 
-## Running it
+## 7. Run the loop
 
 ```bash
+goose test list gooseapp.tests
+goose test run -v gooseapp.tests
 goose api
 goose-dashboard
 ```
@@ -103,20 +215,12 @@ goose-dashboard --api-url http://localhost:9000
 GOOSE_API_URL=http://localhost:9000 goose-dashboard
 ```
 
-See [`running-goose.md`](../running-goose.md) for the full runtime loop.
+## Where to go next
 
-## Testing a LangChain-backed app
+- Want the framework-agnostic base mental model? [`../getting-started.md`](../getting-started.md)
+- Need the test reference? [`../testing.md`](../testing.md)
+- Need runtime and reload details? [`../running-goose.md`](../running-goose.md)
+- Want the dashboard tour? [`../dashboard.md`](../dashboard.md)
 
-LangChain support gets your agent into Goose chat, but your tests should still follow the normal Goose patterns:
-
-- create a Goose fixture in `gooseapp/conftest.py`
-- send queries with `goose.case(...)`
-- use `expected_tool_calls=[...]` when tool routing matters
-- inspect failures in the dashboard Testing view
-
-See:
-
-- [`testing.md`](../testing.md)
-- [`dashboard.md`](../dashboard.md)
-
-If you later want a framework-agnostic contract or more control over streamed events, move to the Goose-native path in [`docs/getting-started.md`](../getting-started.md).
+If you later want finer control over streamed chat events, move from the LangChain adapter path to a Goose-native chat
+agent that implements `astream_goose(...)`.

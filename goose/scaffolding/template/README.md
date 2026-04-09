@@ -4,13 +4,14 @@ This `gooseapp/` package is your local Goose workspace.
 
 ## What to edit first
 
-- `app.py` - register the tools and agents Goose should expose, plus any `reload_targets`
-- `conftest.py` - wire the `goose` fixture to your real agent query function
+- your real `query(...) -> AgentResponse` function in your app code
+- `conftest.py` - wire the `goose` fixture to that real query function
 - `tests/` - keep your Goose cases here; start by replacing `test_example.py`
+- `app.py` - register tools, chat agents, and any `reload_targets` when you want the full dashboard loop
 
 ## First run
 
-Run these from the project root after you wire `app.py` and `conftest.py`:
+Run these from the project root after you wire `conftest.py` and add your first test:
 
 ```bash
 goose test list gooseapp.tests
@@ -30,7 +31,9 @@ Use them in this order:
 
 For the full workflow, use the main Goose docs:
 
-- init flow: <https://github.com/Raff-dev/goose/blob/main/docs/goose-init.md>
+- framework-agnostic quickstart: <https://github.com/Raff-dev/goose/blob/main/docs/getting-started.md>
+- LangChain / LangGraph path: <https://github.com/Raff-dev/goose/blob/main/docs/integrations/langchain.md>
+- scaffold contract: <https://github.com/Raff-dev/goose/blob/main/docs/goose-init.md>
 - writing tests: <https://github.com/Raff-dev/goose/blob/main/docs/testing.md>
 - running the backend and CLI loop: <https://github.com/Raff-dev/goose/blob/main/docs/running-goose.md>
 - using the dashboard: <https://github.com/Raff-dev/goose/blob/main/docs/dashboard.md>

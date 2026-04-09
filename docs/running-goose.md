@@ -6,6 +6,11 @@ Goose has a simple runtime loop:
 2. the dashboard serves the browser UI
 3. tests can run either from the CLI or through the Testing view
 
+The config that drives this lives in two places:
+
+- `gooseapp/app.py` - tools, chat agents, `reload_targets`, `reload_exclude`
+- `gooseapp/conftest.py` - the Goose fixture and your `query(...) -> AgentResponse` adapter
+
 ## 1. Start the API
 
 ```bash
@@ -85,6 +90,9 @@ So the mental model is still **Testing / Tooling / Chatting**, even though the b
 - **Testing** - discover tests, run them, inspect results and traces
 - **Tooling** - invoke registered tools directly without running the whole agent
 - **Chatting** - create conversations against configured agents and watch live tool activity
+
+If you only need a first passing test, you can stop at `goose test list` / `goose test run` and leave the browser loop
+for later.
 
 The browser is just the UI. The Python side does the real work:
 
