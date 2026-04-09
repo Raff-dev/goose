@@ -244,6 +244,43 @@ app = GooseApp(
 )
 ```
 
+Those imports come from **your app code**, not from Goose. `GooseApp.tools` expects a list of tool callables
+(`Sequence[Callable[..., Any]]`), so there is no Goose-specific `Tool` base class to inherit from.
+
+The best-supported shape is a LangChain-style tool object or `@tool`-decorated function because Goose can read:
+
+- `name`
+- `description`
+- optional `args_schema`
+- `invoke(...)` / `ainvoke(...)` when available
+
+In practice, the easiest way to define them is in your own module, for example `my_agent/tools.py`:
+
+```python
+from langchain_core.tools import tool
+
+
+@tool
+def search_products(query: str) -> str:
+    """Search the product catalog by free-text query."""
+    ...
+
+
+@tool
+def get_product_details(product_id: str) -> str:
+    """Return detailed information for one product."""
+    ...
+```
+
+Then import those tools into `gooseapp/app.py`:
+
+```python
+from my_agent.tools import get_product_details, search_products
+```
+
+Plain Python callables also work, but the Tooling view gets the richest metadata when the tool exposes LangChain-style
+attributes such as `name`, `description`, and `args_schema`.
+
 Or group them in the UI:
 
 ```python
@@ -259,17 +296,55 @@ app = GooseApp(
 Add agents when you want live chat in the dashboard:
 
 ```python
+from my_agent.chat import support_agent
+
+
 app = GooseApp(
     agents=[support_agent],
 )
 ```
 
-Each agent needs a unique `name`. Goose live chat supports:
+`support_agent` also comes from **your app code**. `GooseApp.agents` accepts agent objects. Goose validates a unique
+`name` up front, then the live chat runtime expects one of these protocols:
 
 - Goose-native agents with `astream_goose(...)`
 - LangChain-compatible agents with `astream(...)`
 
-If you already have LangChain or LangGraph chat, continue with [`integrations/langchain.md`](integrations/langchain.md).
+If you are on the framework-agnostic path, the clearest contract is the Goose-native protocol from
+`goose.chatting.agent_protocol`:
+
+```python
+from collections.abc import AsyncIterator
+
+from goose.chatting.agent_protocol import GooseAgentEvent, GooseChatAgent
+from goose.chatting.api.schema import Conversation
+from goose.testing.models.messages import Message
+
+
+class SupportAgent:
+    name = "Support Agent"
+
+    async def astream_goose(
+        self,
+        *,
+        conversation: Conversation,
+        messages: list[Message],
+    ) -> AsyncIterator[GooseAgentEvent]:
+        latest = messages[-1].content if messages else ""
+        yield GooseAgentEvent(type="token", data={"content": f"Support heard: {latest}"})
+        yield GooseAgentEvent(type="message_end")
+
+
+support_agent: GooseChatAgent = SupportAgent()
+```
+
+That is the Goose-native protocol in plain words:
+
+- `name: str`
+- `astream_goose(*, conversation, messages) -> AsyncIterator[GooseAgentEvent]`
+
+If you already have a LangChain or LangGraph agent exposing `astream(...)`, you can register that object in
+`agents=[...]` too. The LangChain-specific shape is covered in [`integrations/langchain.md`](integrations/langchain.md).
 
 ### Configure hot reload
 

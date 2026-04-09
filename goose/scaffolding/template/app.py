@@ -15,6 +15,12 @@ app = GooseApp(
     # tools: List of tool callables to show in the dashboard
     # -------------------------------------------------------------------------
     # Register your app's tools here. Goose will display them in the dashboard.
+    # Import them from your own code, e.g.:
+    #     from my_agent.tools import search_products, get_product_details
+    #
+    # Best results come from LangChain-style tools (`@tool`, StructuredTool,
+    # etc.) that expose `name`, `description`, and optionally `args_schema`.
+    # Plain callables also work, but with thinner metadata in the Tooling view.
     #
     # Example:
     #     tools=[search_products, get_product_details, get_order_status],
@@ -29,11 +35,18 @@ app = GooseApp(
     # agents: List of agent objects for live chat
     # -------------------------------------------------------------------------
     # Register agent objects here to enable interactive chat in the dashboard.
+    # Import them from your own code, e.g.:
+    #     from my_agent.chat import support_agent
+    #
     # Each agent must have a unique `name`.
     #
     # Goose live chat supports:
     #   - Goose-native agents with `astream_goose(conversation=..., messages=...)`
     #   - legacy LangChain-compatible agents with `astream(...)`
+    #
+    # If you want the Goose-native protocol explicitly, see:
+    #     goose.chatting.agent_protocol.GooseChatAgent
+    #     goose.chatting.agent_protocol.GooseAgentEvent
     #
     # Example:
     #     agents=[
