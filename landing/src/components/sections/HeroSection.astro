@@ -26,8 +26,8 @@ import { withBase } from "../../lib/paths.ts";
       </p>
 
       <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-        <ButtonLink href={site.hero.primaryCta.href} external>{site.hero.primaryCta.label}</ButtonLink>
-        {site.hero.secondaryCtas.slice(0, 1).map((cta) => (
+        {!site.hero.primaryCta.hidden && <ButtonLink href={site.hero.primaryCta.href} external>{site.hero.primaryCta.label}</ButtonLink>}
+        {site.hero.secondaryCtas.filter((cta) => !("hidden" in cta && cta.hidden)).slice(0, 1).map((cta) => (
           <ButtonLink href={cta.href} variant="secondary" external>{cta.label}</ButtonLink>
         ))}
       </div>

@@ -21,7 +21,7 @@ export const site = {
       kicker: "01-15 live walkthrough",
       appendixHref: "/appendix",
       appendixLabel: "Open appendix",
-      primaryCta: { label: "View on GitHub", href: REPO_URL },
+      primaryCta: { label: "View on GitHub", href: REPO_URL, hidden: true },
     },
     opening: {
       step: "01",
@@ -297,8 +297,8 @@ export const site = {
       ],
       contribution:
         "Goose only started feeling complete when I could move from a real request to saved coverage without guessing in between. If you have an edge case it does not cover yet, open an issue or send a PR.",
-      primaryCta: { label: "Explore Goose on GitHub", href: REPO_URL },
-      secondaryCta: { label: "Open issues", href: `${REPO_URL}/issues` },
+      primaryCta: { label: "Explore Goose on GitHub", href: REPO_URL, hidden: true },
+      secondaryCta: { label: "Open issues", href: `${REPO_URL}/issues`, hidden: true },
       appendixCta: { label: "Open appendix", href: "/appendix" },
     },
   },
@@ -309,7 +309,7 @@ export const site = {
       "The main route stays lean on purpose. The practical setup details and deeper questions live here instead.",
     primaryCta: { label: "Back to the presentation", href: "/" },
     secondaryCtas: [
-      { label: "View on GitHub", href: REPO_URL },
+      { label: "View on GitHub", href: REPO_URL, hidden: true },
       { label: "Install from PyPI", href: PYPI_URL },
     ],
   },
@@ -322,7 +322,7 @@ export const site = {
       { label: "Quickstart", href: "#quickstart" },
       { label: "FAQ", href: "#faq" },
     ],
-    primaryCta: { label: "View on GitHub", href: REPO_URL },
+    primaryCta: { label: "View on GitHub", href: REPO_URL, hidden: true },
   },
   hero: {
     eyebrow: "Open-source testing for LLM agents",
@@ -335,11 +335,11 @@ export const site = {
       "Keep file-based results and persistent history that developers and agents can inspect, diff, and rerun.",
     ],
     badgeItems: ["Python 3.13+", "MIT", "CLI + dashboard"],
-    primaryCta: { label: "Explore the repo", href: REPO_URL },
+    primaryCta: { label: "Explore the repo", href: REPO_URL, hidden: true },
     secondaryCtas: [
       { label: "Install from PyPI", href: PYPI_URL },
       { label: "npm dashboard", href: NPM_URL },
-      { label: "Read the docs", href: README_URL },
+      { label: "Read the docs", href: README_URL, hidden: true },
     ],
     stats: [
       { value: "3", label: "modes in one toolkit: Testing, Tooling, Chat" },
@@ -508,10 +508,10 @@ export const site = {
     title: "Build the agent. Keep the regressions visible.",
     body:
       "Goose gives you a repeatable way to test agent behavior, inspect failures, and keep tool-heavy systems from drifting silently as prompts and code evolve.",
-    primaryCta: { label: "Explore Goose on GitHub", href: REPO_URL },
+    primaryCta: { label: "Explore Goose on GitHub", href: REPO_URL, hidden: true },
     secondaryCtas: [
       { label: "Install from PyPI", href: PYPI_URL },
-      { label: "Open the README", href: README_URL },
+      { label: "Open the README", href: README_URL, hidden: true },
     ],
   },
   promptOrigin: {
