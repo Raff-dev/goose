@@ -25,6 +25,12 @@
   <a href="https://raff-dev.github.io/goose"><strong>Visit the landing page</strong></a>
 </p>
 
+## What it looks like
+
+![Goose dashboard overview](images/dashboard_view.png)
+
+![Goose testing detail](images/dashboard_testing_detail.png)
+
 ## Why Goose?
 
 - **Natural-language expectations** – Describe the behavior you want and let Goose validate it.
