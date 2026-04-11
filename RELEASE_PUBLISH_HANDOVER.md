@@ -25,6 +25,8 @@ These checks already passed during release preflight on a different machine:
    - Result: `197 passed`
    - Important: this required `OPENAI_API_KEY` to be present
 
+There is no known code-level test failure to fix here. The earlier failing tests on the preflight machine were caused only by missing `OPENAI_API_KEY`.
+
 ## Why publish did not happen yet
 
 The preflight machine did not have publish auth:
@@ -94,6 +96,8 @@ set +a
 Adjust the env file path if your machine keeps Goose secrets elsewhere.
 
 ### 3. Re-run the exact release preflight locally
+
+Do not start by changing tests. First provide the local env/auth inputs listed above and rerun the preflight as-is.
 
 ```bash
 make test
