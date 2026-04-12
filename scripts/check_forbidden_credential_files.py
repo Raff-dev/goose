@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys
 from pathlib import PurePath
 
-
 FORBIDDEN_FILENAMES = {".env", ".npmrc", ".pypirc"}
 FORBIDDEN_ENV_PREFIX = ".env."
 ALLOWED_ENV_EXAMPLES = {".env.example"}
