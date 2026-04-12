@@ -16,16 +16,21 @@ These checks already passed during release preflight on a different machine:
    - `uv build`
    - `uv run twine check dist/*`
 2. Frontend package prepublish flow:
-   - `cd web && npm install`
+   - `cd web && npm ci`
    - `cd web && npm run build`
    - `cd web && npm run build:cli`
-   - `cd web && npm publish --dry-run`
+   - package contents/build path verified
 3. Full test suite:
    - `make test`
-   - Result: `197 passed`
-   - Important: this required `OPENAI_API_KEY` to be present
+   - Result at handover time: `197 passed`
 
-There is no known code-level test failure to fix here. The earlier failing tests on the preflight machine were caused only by missing `OPENAI_API_KEY`.
+At handover time there was no remaining product-code failure blocking release work; the only failing preflight issue was the old test-harness coupling to `OPENAI_API_KEY`, and that is now fixed.
+
+Update after the handover branch audit on the current machine:
+
+- Goose test harness was fixed to lazily initialize `AgentValidator`
+- current suite now passes without `OPENAI_API_KEY`
+- current result: `199 passed`
 
 ## Why publish did not happen yet
 
@@ -38,22 +43,38 @@ This branch contains no secrets.
 
 ## Important repo behavior
 
-`make pub` is the real publish command and will do both publishes immediately:
+Goose now has a safer release flow:
+
+- `make release-preflight`
+  - runs tests
+  - rebuilds the Python package and runs `twine check`
+  - installs frontend deps with `npm ci`
+  - builds the frontend/CLI bundle
+  - runs `npm pack --dry-run` so package contents are validated without failing on already-published npm versions
+- `make pub`
+  - publishes both packages immediately
+  - defaults to `VERSION_BUMP=patch`
+- `make pub-minor`
+  - publishes both packages with a minor bump
+- `make pub VERSION_BUMP=minor`
+  - equivalent explicit form of `make pub-minor`
+
+For the planned next release, use:
 
 ```bash
-make pub
+make pub-minor
 ```
 
 From `Makefile`:
 
 - `pub-back`
-  - bumps backend patch version with `uv version --bump patch`
+  - bumps backend version with `uv version --bump $(VERSION_BUMP)`
   - rebuilds package
   - runs `twine check`
   - uploads via `.pypirc`
 - `pub-front`
-  - bumps frontend patch version with `npm version patch --no-git-tag-version`
-  - installs deps
+  - bumps frontend version with `npm version $(VERSION_BUMP) --no-git-tag-version`
+  - installs deps with `npm ci`
   - builds frontend and CLI bundle
   - publishes to npm
 
@@ -65,64 +86,47 @@ Run everything from the repo root unless noted otherwise.
 
 Expected local inputs:
 
-- `OPENAI_API_KEY` available in env before tests
 - `.pypirc` present in repo root for `twine upload`
 - npm auth available via `~/.npmrc` or repo-local `.npmrc`
 
 Notes:
 
-- `.pypirc` and `.npmrc` are already ignored by `.gitignore`
+- `.pypirc`, `.npmrc`, `.env`, and `.env.*` are ignored by `.gitignore`; `.env.example` remains the only tracked env template
 - do not commit credentials
+- `OPENAI_API_KEY` is no longer required for the current Goose test suite
+- pre-commit + CI now enforce `detect-private-key`, `detect-secrets`, and a guard that rejects tracked `.env*`, `.pypirc`, and `.npmrc` files
 
 ### 2. Sanity-check auth before any publish attempt
 
 ```bash
 test -f .pypirc
 npm whoami
-python3 - <<'PY'
-import os
-print("OPENAI_API_KEY present:", bool(os.environ.get("OPENAI_API_KEY")))
-PY
 ```
-
-If `OPENAI_API_KEY` is stored in a local env file, export it first, for example:
-
-```bash
-set -a
-. ./.env
-set +a
-```
-
-Adjust the env file path if your machine keeps Goose secrets elsewhere.
 
 ### 3. Re-run the exact release preflight locally
 
-Do not start by changing tests. First provide the local env/auth inputs listed above and rerun the preflight as-is.
+First provide the local auth inputs listed above and rerun the preflight.
 
 ```bash
-make test
-rm -rf dist *.egg-info
-uv build
-uv run twine check dist/*
-cd web && npm install && npm run build && npm run build:cli && npm publish --dry-run
+make release-preflight
 ```
 
 Expected result:
 
 - tests pass
 - backend build passes
-- frontend dry-run passes
+- frontend package dry-run passes
 - `npm whoami` succeeds
 
 ### 4. Run the real publish only after the preflight is green
 
 ```bash
-make pub
+make pub-minor
 ```
 
 ## Expected file changes after publish
 
-After a successful `make pub`, expect version bumps at least in:
+After a successful `make pub-minor`, expect version bumps at least in:
 
 - `pyproject.toml`
 - `web/package.json`
@@ -141,16 +145,9 @@ Review the diff before committing.
 ```bash
 git checkout chore/release-publish-handover
 
-# export local secrets here
-
 test -f .pypirc
 npm whoami
-make test
-rm -rf dist *.egg-info
-uv build
-uv run twine check dist/*
-cd web && npm install && npm run build && npm run build:cli && npm publish --dry-run
-cd ..
-make pub
+make release-preflight
+make pub-minor
 git status --short
 ```

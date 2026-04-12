@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from unittest import mock
+
 import pytest
 
 from goose.testing.engine import Goose
@@ -95,3 +97,13 @@ def test_extract_goose_fixture_pulls_instance():
 
     with pytest.raises(AssertionError):
         extract_goose_fixture({})
+
+
+def test_goose_construction_does_not_initialize_validator(monkeypatch):
+    validator_cls = mock.Mock()
+    monkeypatch.setattr("goose.testing.engine.AgentValidator", validator_cls)
+
+    goose = Goose(agent_query_func=lambda query: None, validator_model="gpt-4o-mini")
+
+    assert isinstance(goose, Goose)
+    validator_cls.assert_not_called()

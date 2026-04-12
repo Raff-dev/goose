@@ -23,9 +23,16 @@ class Goose:
         validator_model: BaseChatModel | str = "gpt-4o-mini",
     ) -> None:
         self._agent_query_func = agent_query_func
-        self._validation_agent = AgentValidator(chat_model=validator_model)
+        self._validator_model = validator_model
+        self._validation_agent: AgentValidator | None = None
         self.hooks = hooks or TestLifecycleHooks()
         self._test_case: TestCase | None = None
+
+    def _get_validation_agent(self) -> AgentValidator:
+        """Build the validator only when expectation evaluation is needed."""
+        if self._validation_agent is None:
+            self._validation_agent = AgentValidator(chat_model=self._validator_model)
+        return self._validation_agent
 
     def case(
         self,
@@ -55,7 +62,9 @@ class Goose:
         self._test_case.last_response = response
         self._test_case.validate_tool_calls(actual_tool_call_names=response.tool_call_names)
 
-        evaluation = self._validation_agent.evaluate(agent_output=response, expectations=self._test_case.expectations)
+        evaluation = self._get_validation_agent().evaluate(
+            agent_output=response, expectations=self._test_case.expectations
+        )
         self._test_case.validate_expectations(evaluation=evaluation)
 
     def consume_test_case(self) -> TestCase | None:

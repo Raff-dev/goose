@@ -1,10 +1,11 @@
 
-.PHONY: up down migrations migrate web pub-front pub-back pub test
+.PHONY: up down migrations migrate web release-preflight pub pub-patch pub-minor pub-front pub-back test
 
 export TWINE_CONFIG_FILE := $(abspath .pypirc)
 
 COMPOSE_FILE := example_system/docker-compose.yaml
 STREAMLIT_PORT ?= 8501
+VERSION_BUMP ?= patch
 
 up:
 	docker compose -f $(COMPOSE_FILE) up -d postgres
@@ -43,23 +44,41 @@ migrate:
 web:
 	cd web && npm run dev
 
-# Publish both backend and frontend packages
-pub:
-	$(MAKE) pub-back
-	$(MAKE) pub-front
-
-#  Publish backend package to PyPI
-pub-back:
-	uv version --bump patch
+# Run publish preflight without mutating package versions
+release-preflight: test
 	rm -rf dist *.egg-info
 	uv build
 	uv run twine check dist/*
-	uv run twine upload dist/* --config-file .pypirc
+	cd web && npm ci
+	cd web && npm run build
+	cd web && npm run build:cli
+	cd web && npm pack --dry-run
 
-#  Publish frontend package to npm
+# Publish both backend and frontend packages (defaults to patch)
+pub:
+	$(MAKE) pub-back VERSION_BUMP=$(VERSION_BUMP)
+	$(MAKE) pub-front VERSION_BUMP=$(VERSION_BUMP)
+
+# Publish both packages with an explicit patch bump
+pub-patch:
+	$(MAKE) pub VERSION_BUMP=patch
+
+# Publish both packages with an explicit minor bump
+pub-minor:
+	$(MAKE) pub VERSION_BUMP=minor
+
+# Publish backend package to PyPI
+pub-back:
+	uv version --bump $(VERSION_BUMP)
+	rm -rf dist *.egg-info
+	uv build
+	uv run twine check dist/*
+	uv run twine upload dist/* --config-file $(TWINE_CONFIG_FILE)
+
+# Publish frontend package to npm
 pub-front:
-	cd web && npm version patch --no-git-tag-version
-	cd web && npm install
+	cd web && npm version $(VERSION_BUMP) --no-git-tag-version
+	cd web && npm ci
 	cd web && npm run build
 	cd web && npm run build:cli
 	cd web && npm publish --access public
