@@ -8,6 +8,7 @@ repos:
       - id: check-added-large-files
         exclude: ^images/
       - id: check-merge-conflict
+      - id: detect-private-key
 
   - repo: https://github.com/psf/black
     rev: 25.9.0
@@ -37,6 +38,13 @@ repos:
 
   - repo: local
     hooks:
+      - id: forbid-credential-files
+        name: forbid credential files
+        entry: python scripts/check_forbidden_credential_files.py
+        language: python
+        pass_filenames: true
+        files: '(^|/)(\.env($|\..+)|\.pypirc|\.npmrc)$'
+        exclude: '(^|/)\.env\.example$'
       - id: pylint
         name: pylint
         entry: uv run pylint
@@ -63,3 +71,10 @@ repos:
     hooks:
       - id: bandit
         args: [--configfile, pyproject.toml]
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: '(^|/)(landing|web)/package-lock\.json$|(^|/)\.secrets\.baseline$'

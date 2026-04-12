@@ -4,6 +4,7 @@ from unittest import mock
 
 from goose.testing.engine import Goose
 from goose.testing.hooks import TestLifecycleHooks
+from goose.testing.models.messages import AgentResponse, Message
 from goose.testing.models.tests import TestDefinition, TestResult
 from goose.testing.runner import execute_test
 
@@ -76,3 +77,24 @@ def test_execute_test_captures_exceptions(monkeypatch):
 
     assert result.exception is not None
     assert result.error_type is not None
+
+
+def test_goose_case_initializes_validator_only_during_evaluation(monkeypatch):
+    validator_instance = mock.Mock()
+    validator_instance.evaluate.return_value = mock.Mock(
+        unmet_expectation_numbers=[],
+        failure_reasons={},
+        reasoning="All expectations met.",
+    )
+    validator_cls = mock.Mock(return_value=validator_instance)
+    monkeypatch.setattr("goose.testing.engine.AgentValidator", validator_cls)
+
+    response = AgentResponse(messages=[Message(type="ai", content="hello")])
+    goose = Goose(agent_query_func=lambda query: response)
+
+    validator_cls.assert_not_called()
+
+    goose.case(query="hi", expectations=["Responded"], expected_tool_calls=None)
+
+    validator_cls.assert_called_once_with(chat_model="gpt-4o-mini")
+    validator_instance.evaluate.assert_called_once_with(agent_output=response, expectations=["Responded"])

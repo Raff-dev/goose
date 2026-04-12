@@ -105,6 +105,8 @@ celerybeat.pid
 
 # Environments
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/
@@ -146,8 +148,6 @@ dmypy.json
 ehthumbs.db
 Thumbs.db
 
-
-.env
 node_modules/
 .pypirc
 .npmrc
