@@ -1,6 +1,6 @@
 # Goose release publish handover
 
-This branch exists to hand off Goose release work to an agent running on the user machine with local publish credentials.
+This document records the Goose 0.2.0 release handover and the safe publish flow for future releases.
 
 ## Baseline
 
@@ -32,7 +32,7 @@ Update after the handover branch audit on the current machine:
 - current suite now passes without `OPENAI_API_KEY`
 - current result: `199 passed`
 
-## Why publish did not happen yet
+## Why publish had not happened at handover time
 
 The preflight machine did not have publish auth:
 
@@ -40,6 +40,17 @@ The preflight machine did not have publish auth:
 - no npm auth (`npm whoami` returned `ENEEDAUTH`)
 
 This branch contains no secrets.
+
+## 0.2.0 outcome
+
+Goose 0.2.0 has now been published successfully:
+
+- `llm-goose` 0.2.0 on PyPI
+- `@llm-goose/dashboard-cli` 0.2.0 on npm
+
+The repo changes on this branch exist to sync `main` with that already-published release and to preserve the hardened release flow.
+
+Do not re-run `make pub-minor` expecting to publish 0.2.0 again. From the repo state produced by this branch, the next minor publish would be `0.3.0`.
 
 ## Important repo behavior
 
@@ -59,7 +70,7 @@ Goose now has a safer release flow:
 - `make pub VERSION_BUMP=minor`
   - equivalent explicit form of `make pub-minor`
 
-For the planned next release, use:
+For the next future minor release after 0.2.0 (for example `0.3.0`), use:
 
 ```bash
 make pub-minor
@@ -78,7 +89,7 @@ From `Makefile`:
   - builds frontend and CLI bundle
   - publishes to npm
 
-## Continue on the user machine
+## Continue on the user machine for future releases
 
 Run everything from the repo root unless noted otherwise.
 
@@ -126,7 +137,7 @@ make pub-minor
 
 ## Expected file changes after publish
 
-After a successful `make pub-minor`, expect version bumps at least in:
+After a successful future `make pub-minor`, expect version bumps at least in:
 
 - `pyproject.toml`
 - `web/package.json`
@@ -140,7 +151,7 @@ Review the diff before committing.
 2. Commit only the version bump files and any lockfile changes caused by publish prep.
 3. Push the branch and open a PR back to `main` so the repo matches the published versions.
 
-## Suggested local command sequence
+## Suggested local command sequence for the next minor release
 
 ```bash
 git checkout chore/release-publish-handover
